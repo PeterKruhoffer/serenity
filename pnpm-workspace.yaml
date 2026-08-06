@@ -1,5 +1,7 @@
 allowBuilds:
-  esbuild: set this to true or false
+  '@parcel/watcher': true
+  esbuild: true
+  msgpackr-extract: true
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.2.8
   vite-plus: 0.2.8
