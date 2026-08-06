@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@solidjs/router": "^1.0.0",
+    "convex": "^1.43.0",
     "solid-js": "^1.9.14"
   },
   "devDependencies": {
