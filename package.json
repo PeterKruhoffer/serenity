@@ -1,0 +1,30 @@
+{
+  "name": "serenity",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "tsc && vp build",
+    "preview": "vp preview"
+  },
+  "dependencies": {
+    "@solidjs/router": "^1.0.0",
+    "solid-js": "^1.9.14"
+  },
+  "devDependencies": {
+    "jsdom": "^30.0.1",
+    "typescript": "~6.0.2",
+    "vite": "catalog:",
+    "vite-plugin-solid": "^2.11.14",
+    "vite-plus": "catalog:",
+    "vitest": "^4.1.10"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.20.0",
+      "onFail": "download"
+    }
+  }
+}
