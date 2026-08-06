@@ -92,6 +92,23 @@ a {
   box-shadow: 0 0 0 4px rgb(110 140 86 / 12%);
 }
 
+button {
+  font: inherit;
+}
+
+.text-button {
+  padding: 8px 0;
+  color: #60665c;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.text-button:hover {
+  color: #20231f;
+}
+
 .app-main {
   width: min(1120px, calc(100% - 48px));
   margin: 0 auto;
@@ -136,6 +153,143 @@ h1 {
   color: #686d65;
   font-size: clamp(17px, 2.2vw, 20px);
   line-height: 1.6;
+}
+
+.primary-button {
+  min-height: 50px;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  color: #f7faef;
+  background: #293225;
+  border: 1px solid #293225;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgb(41 50 37 / 12%);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 650;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.secondary-button,
+.email-button {
+  min-height: 50px;
+  padding: 0 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.secondary-button {
+  color: #293225;
+  background: transparent;
+  border: 1px solid #bfc4b9;
+}
+
+.email-button {
+  color: #696f65;
+  background: transparent;
+  border: 0;
+}
+
+.secondary-button:hover {
+  background: rgb(41 50 37 / 5%);
+}
+
+.email-button:hover {
+  color: #20231f;
+}
+
+.primary-button:hover {
+  background: #364230;
+  transform: translateY(-1px);
+}
+
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.email-button:focus-visible,
+.text-button:focus-visible {
+  outline: 3px solid rgb(110 140 86 / 32%);
+  outline-offset: 3px;
+}
+
+.auth-note,
+.auth-error {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.auth-note {
+  color: #858a81;
+}
+
+.auth-error {
+  color: #9a3f35;
+}
+
+.setup-note {
+  width: fit-content;
+  padding: 12px 14px;
+  color: #6b5a35;
+  background: #eee7d6;
+  border: 1px solid #ded2b7;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.setup-note code {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+.identity-card {
+  max-width: 570px;
+  padding-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid #dfe1d8;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #eff7dd;
+  background: #596d4d;
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: 16px;
+}
+
+.identity-card div {
+  display: grid;
+  gap: 4px;
+}
+
+.identity-card strong {
+  color: #282c26;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.identity-card div span {
+  color: #858a81;
+  font-size: 12px;
 }
 
 .next-step {

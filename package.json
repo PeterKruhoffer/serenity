@@ -16,13 +16,16 @@
     "@confect/core": "^9.3.0",
     "@confect/js": "^9.3.0",
     "@confect/server": "^9.3.0",
+    "@convex-dev/workos-authkit": "^0.2.7",
     "@solidjs/router": "^1.0.0",
+    "@workos-inc/authkit-js": "^0.20.2",
     "convex": "^1.43.0",
     "convex-solidjs": "^0.0.3",
     "effect": "^3.22.1",
     "solid-js": "^1.9.14"
   },
   "devDependencies": {
+    "@types/node": "^26.1.2",
     "jsdom": "^30.0.1",
     "typescript": "~6.0.2",
     "vite": "catalog:",

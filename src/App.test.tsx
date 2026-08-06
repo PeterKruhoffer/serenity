@@ -11,13 +11,13 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-describe("Serenity starter", () => {
-  it("renders the clean starting point", () => {
+describe("Serenity authentication", () => {
+  it("explains when WorkOS still needs configuration", () => {
     const host = document.createElement("div");
     document.body.append(host);
     disposers.push(render(() => <App />, host));
 
-    expect(host.querySelector("h1")?.textContent).toBe("Start with what matters.");
-    expect(host.textContent).toContain("Serenity is ready");
+    expect(host.querySelector("h1")?.textContent).toBe("Connect WorkOS to continue.");
+    expect(host.textContent).toContain("VITE_WORKOS_CLIENT_ID");
   });
 });
