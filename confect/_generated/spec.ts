@@ -1,8 +1,5 @@
-import { GroupSpec, Spec } from "@confect/core";
-import incidents from "../incidents.spec";
+import { Spec } from "@confect/core";
 
-const spec: Spec.Spec<
-  | GroupSpec.NamedAt<typeof incidents, "incidents">
-> = Spec.make().addAt("incidents", incidents);
+const spec: Spec.Spec = Spec.make();
 
 export default spec;
