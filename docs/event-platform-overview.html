@@ -1,0 +1,1724 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Event Platform Overview</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        background: light-dark(rgb(255 255 255), rgb(24 24 24));
+      }
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        box-sizing: border-box;
+        padding: 1rem;
+        background: inherit;
+      }
+      iframe {
+        display: block;
+        width: 100%;
+        max-width: 736px;
+        height: calc(100vh - 2rem);
+        margin: 0 auto;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe
+      sandbox="allow-scripts"
+      referrerpolicy="no-referrer"
+      title="Event Platform Overview"
+      srcdoc='&lt;!doctype html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+&lt;meta charset="utf-8"&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+&lt;meta name="referrer" content="no-referrer"&gt;
+&lt;meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;"&gt;
+&lt;title&gt;Event Platform Overview&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(--background) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: light-dark(rgb(255 255 255), rgb(24 24 24));
+  --foreground: light-dark(rgb(26 28 31), rgb(255 255 255));
+  --card: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --card-foreground: var(--foreground);
+  --popover: light-dark(rgb(255 255 255), rgb(45 45 45));
+  --popover-foreground: var(--foreground);
+  --primary: light-dark(rgb(51 156 255), rgb(131 195 255));
+  --primary-foreground: light-dark(rgb(255 255 255), rgb(13 13 13));
+  --secondary: light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%));
+  --secondary-foreground: var(--foreground);
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: light-dark(
+    rgb(26 28 31 / 49.4%),
+    rgb(255 255 255 / 49.8%)
+  );
+  --accent: light-dark(rgb(229 242 255), rgb(13 39 63));
+  --accent-foreground: var(--primary);
+  --destructive: light-dark(rgb(226 85 7), rgb(255 133 73));
+  --border: light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%));
+  --input: light-dark(
+    rgb(26 28 31 / 11.8%),
+    color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+  );
+  --ring: light-dark(rgb(51 156 255), rgb(131 195 255 / 76%));
+  --font-size-base: 14px;
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: 12.5px;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url("data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E");
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+  --color-background-primary: var(--background);
+  --color-text-primary: var(--foreground);
+  --color-border-secondary: var(--border);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--viz-font-weight-medium);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: superellipse(1.5);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type="file"] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type="file"]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type="file"]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type="color"] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: superellipse(1.5);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type="checkbox"]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: "";
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type="radio"]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: "";
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed="true"],
+    [aria-selected="true"],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed="true"], [aria-selected="true"], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id="serenity-product-map"&gt;
+  &lt;style&gt;
+    #serenity-product-map {
+      color: var(--foreground);
+      display: grid;
+      gap: 24px;
+    }
+
+    #serenity-product-map * {
+      box-sizing: border-box;
+    }
+
+    #serenity-product-map .eyebrow {
+      color: var(--muted-foreground);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    #serenity-product-map .hero {
+      display: grid;
+      gap: 10px;
+      max-width: 74ch;
+    }
+
+    #serenity-product-map .hero p,
+    #serenity-product-map .section-heading p {
+      color: var(--muted-foreground);
+      margin: 0;
+    }
+
+    #serenity-product-map .status-line {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    #serenity-product-map .status-confirmed {
+      background: color-mix(in srgb, var(--viz-series-1) 16%, transparent);
+    }
+
+    #serenity-product-map .status-proposed {
+      background: color-mix(in srgb, var(--viz-series-2) 16%, transparent);
+    }
+
+    #serenity-product-map .status-open {
+      background: color-mix(in srgb, var(--viz-series-3) 16%, transparent);
+    }
+
+    #serenity-product-map .summary-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    #serenity-product-map .summary-grid .card {
+      min-width: 0;
+    }
+
+    #serenity-product-map .summary-grid p {
+      margin-bottom: 0;
+    }
+
+    #serenity-product-map .tabbar {
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding-bottom: 8px;
+    }
+
+    #serenity-product-map .panel {
+      display: grid;
+      gap: 24px;
+    }
+
+    #serenity-product-map .panel[hidden] {
+      display: none;
+    }
+
+    #serenity-product-map .section-heading {
+      display: grid;
+      gap: 6px;
+      max-width: 76ch;
+    }
+
+    #serenity-product-map .domain-map {
+      align-items: stretch;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    #serenity-product-map .domain {
+      background: color-mix(in srgb, var(--muted) 62%, transparent);
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    #serenity-product-map .domain[data-series="1"] {
+      background: color-mix(in srgb, var(--viz-series-1) 10%, var(--muted));
+    }
+
+    #serenity-product-map .domain[data-series="2"] {
+      background: color-mix(in srgb, var(--viz-series-2) 10%, var(--muted));
+    }
+
+    #serenity-product-map .domain[data-series="3"] {
+      background: color-mix(in srgb, var(--viz-series-3) 10%, var(--muted));
+    }
+
+    #serenity-product-map .domain[data-series="4"] {
+      background: color-mix(in srgb, var(--viz-series-4) 10%, var(--muted));
+    }
+
+    #serenity-product-map .domain[data-series="5"] {
+      background: color-mix(in srgb, var(--viz-series-5) 10%, var(--muted));
+    }
+
+    #serenity-product-map .domain h3,
+    #serenity-product-map .domain p {
+      margin: 0;
+    }
+
+    #serenity-product-map .domain ol,
+    #serenity-product-map .domain ul,
+    #serenity-product-map .primitive-group ul,
+    #serenity-product-map .guardrails ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    #serenity-product-map li + li {
+      margin-top: 6px;
+    }
+
+    #serenity-product-map .relationship {
+      align-items: center;
+      color: var(--muted-foreground);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      text-align: center;
+    }
+
+    #serenity-product-map .relationship code {
+      color: var(--foreground);
+    }
+
+    #serenity-product-map .primitive-grid {
+      display: grid;
+      gap: 0 24px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #serenity-product-map .primitive-group {
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 8px;
+      padding: 16px 0;
+    }
+
+    #serenity-product-map .primitive-group h3,
+    #serenity-product-map .primitive-group p {
+      margin: 0;
+    }
+
+    #serenity-product-map .composition-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #serenity-product-map .composition {
+      border-left: 3px solid var(--viz-series-1);
+      padding: 4px 0 4px 14px;
+    }
+
+    #serenity-product-map .composition h3,
+    #serenity-product-map .composition p {
+      margin: 0;
+    }
+
+    #serenity-product-map .composition p {
+      color: var(--muted-foreground);
+      margin-top: 4px;
+    }
+
+    #serenity-product-map .workflow {
+      align-items: stretch;
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(9, minmax(0, auto));
+    }
+
+    #serenity-product-map .workflow-node {
+      align-items: center;
+      background: color-mix(in srgb, var(--muted) 72%, transparent);
+      display: flex;
+      justify-content: center;
+      min-height: 72px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    #serenity-product-map .workflow-node.is-live {
+      background: color-mix(in srgb, var(--viz-series-1) 16%, var(--muted));
+    }
+
+    #serenity-product-map .workflow-arrow {
+      align-items: center;
+      color: var(--muted-foreground);
+      display: flex;
+      justify-content: center;
+    }
+
+    #serenity-product-map .branch-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    #serenity-product-map .guardrails {
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 10px;
+      padding-top: 16px;
+    }
+
+    #serenity-product-map .guardrails h3 {
+      margin: 0;
+    }
+
+    #serenity-product-map .api-boundary {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+
+    #serenity-product-map .api-zone {
+      background: color-mix(in srgb, var(--muted) 72%, transparent);
+      display: grid;
+      gap: 8px;
+      padding: 16px;
+    }
+
+    #serenity-product-map .api-zone h3,
+    #serenity-product-map .api-zone p {
+      margin: 0;
+    }
+
+    #serenity-product-map .api-zone p {
+      color: var(--muted-foreground);
+    }
+
+    #serenity-product-map .decision-list {
+      counter-reset: decisions;
+      display: grid;
+      gap: 0;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    #serenity-product-map .decision {
+      align-items: start;
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 12px;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      padding: 16px 0;
+    }
+
+    #serenity-product-map .decision::before {
+      color: var(--muted-foreground);
+      content: counter(decisions, decimal-leading-zero);
+      counter-increment: decisions;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #serenity-product-map .decision h3,
+    #serenity-product-map .decision p {
+      margin: 0;
+    }
+
+    #serenity-product-map .decision p {
+      color: var(--muted-foreground);
+      margin-top: 4px;
+    }
+
+    #serenity-product-map .mvp-sequence {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    #serenity-product-map .mvp-step {
+      border-top: 3px solid var(--viz-series-2);
+      padding-top: 12px;
+    }
+
+    #serenity-product-map .mvp-step h3,
+    #serenity-product-map .mvp-step p {
+      margin: 0;
+    }
+
+    #serenity-product-map .mvp-step p {
+      color: var(--muted-foreground);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 640px) {
+      #serenity-product-map .summary-grid,
+      #serenity-product-map .domain-map,
+      #serenity-product-map .composition-grid,
+      #serenity-product-map .branch-grid,
+      #serenity-product-map .mvp-sequence {
+        grid-template-columns: 1fr;
+      }
+
+      #serenity-product-map .primitive-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #serenity-product-map .workflow {
+        grid-template-columns: 1fr;
+      }
+
+      #serenity-product-map .workflow-arrow {
+        min-height: 28px;
+        transform: rotate(90deg);
+      }
+
+      #serenity-product-map .api-boundary {
+        grid-template-columns: 1fr;
+      }
+
+      #serenity-product-map .api-boundary .workflow-arrow {
+        transform: rotate(90deg);
+      }
+    }
+
+    @media (max-width: 480px) {
+      #serenity-product-map .decision {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      #serenity-product-map .decision .viz-badge {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+  &lt;/style&gt;
+
+  &lt;section class="hero" aria-labelledby="serenity-direction-heading"&gt;
+    &lt;div class="eyebrow text-small"&gt;Serenity · current product direction&lt;/div&gt;
+    &lt;h1 id="serenity-direction-heading"&gt;Fast, safe event operations for teams who live in the product&lt;/h1&gt;
+    &lt;p&gt;Organizations define their own event types, compose rich event programs, work in drafts, approve changes before publication, and expose only the published truth to external websites.&lt;/p&gt;
+    &lt;div class="status-line" aria-label="Decision status legend"&gt;
+      &lt;span class="viz-badge status-confirmed"&gt;Confirmed&lt;/span&gt;
+      &lt;span class="viz-badge status-proposed"&gt;Proposed foundation&lt;/span&gt;
+      &lt;span class="viz-badge status-open"&gt;Open decision&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class="summary-grid" aria-label="Product principles"&gt;
+    &lt;article class="card"&gt;
+      &lt;div class="eyebrow text-small"&gt;Experience&lt;/div&gt;
+      &lt;h2&gt;Instant by default&lt;/h2&gt;
+      &lt;p&gt;Optimistic interactions, local feedback, keyboard-friendly flows, fast search, and no avoidable waiting between routine actions.&lt;/p&gt;
+    &lt;/article&gt;
+    &lt;article class="card"&gt;
+      &lt;div class="eyebrow text-small"&gt;Trust&lt;/div&gt;
+      &lt;h2&gt;Published truth stays stable&lt;/h2&gt;
+      &lt;p&gt;Draft work cannot affect production until approval. Every consequential action is attributable, reviewable, and recoverable.&lt;/p&gt;
+    &lt;/article&gt;
+    &lt;article class="card"&gt;
+      &lt;div class="eyebrow text-small"&gt;Architecture&lt;/div&gt;
+      &lt;h2&gt;Compose from primitives&lt;/h2&gt;
+      &lt;p&gt;A small set of durable domain building blocks supports courses, conferences, recurring meetings, and future event types.&lt;/p&gt;
+    &lt;/article&gt;
+  &lt;/section&gt;
+
+  &lt;nav class="tabbar" role="tablist" aria-label="Product overview sections"&gt;
+    &lt;button class="btn" type="button" role="tab" id="tab-system" aria-controls="panel-system" aria-selected="true" data-panel="system"&gt;System map&lt;/button&gt;
+    &lt;button class="btn" type="button" role="tab" id="tab-primitives" aria-controls="panel-primitives" aria-selected="false" data-panel="primitives"&gt;Composable primitives&lt;/button&gt;
+    &lt;button class="btn" type="button" role="tab" id="tab-safety" aria-controls="panel-safety" aria-selected="false" data-panel="safety"&gt;Workflow &amp;amp; safety&lt;/button&gt;
+    &lt;button class="btn" type="button" role="tab" id="tab-decisions" aria-controls="panel-decisions" aria-selected="false" data-panel="decisions"&gt;Open decisions&lt;/button&gt;
+    &lt;button class="btn" type="button" role="tab" id="tab-mvp" aria-controls="panel-mvp" aria-selected="false" data-panel="mvp"&gt;Initial release&lt;/button&gt;
+  &lt;/nav&gt;
+
+  &lt;section class="panel" id="panel-system" role="tabpanel" aria-labelledby="tab-system"&gt;
+    &lt;div class="section-heading"&gt;
+      &lt;h2&gt;System map&lt;/h2&gt;
+      &lt;p&gt;The event is an aggregate assembled from reusable concepts. Organization and access sit above it; publishing and integrations consume controlled versions of it.&lt;/p&gt;
+    &lt;/div&gt;
+
+    &lt;div class="domain-map" role="img" aria-label="Organizations contain teams and users. Event types configure event series, occurrences and sessions. Events reference people, places and commercial details. Registrations track participation. Approved snapshots are published through APIs."&gt;
+      &lt;section class="domain" data-series="1"&gt;
+        &lt;h3&gt;Organization&lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;Teams&lt;/li&gt;
+          &lt;li&gt;Users&lt;/li&gt;
+          &lt;li&gt;Roles &amp;amp; scopes&lt;/li&gt;
+          &lt;li&gt;API clients&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="domain" data-series="2"&gt;
+        &lt;h3&gt;Definition&lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;Event type&lt;/li&gt;
+          &lt;li&gt;Feature modules&lt;/li&gt;
+          &lt;li&gt;Custom fields&lt;/li&gt;
+          &lt;li&gt;Validation rules&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="domain" data-series="3"&gt;
+        &lt;h3&gt;Program&lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;Event series&lt;/li&gt;
+          &lt;li&gt;Occurrences&lt;/li&gt;
+          &lt;li&gt;Sessions&lt;/li&gt;
+          &lt;li&gt;Venues &amp;amp; speakers&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="domain" data-series="4"&gt;
+        &lt;h3&gt;Participation&lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;Registration&lt;/li&gt;
+          &lt;li&gt;Per-date booking&lt;/li&gt;
+          &lt;li&gt;Cancellation&lt;/li&gt;
+          &lt;li&gt;Attendance &amp;amp; certificate&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="domain" data-series="5"&gt;
+        &lt;h3&gt;Publication&lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;Draft revision&lt;/li&gt;
+          &lt;li&gt;Approval request&lt;/li&gt;
+          &lt;li&gt;Published snapshot&lt;/li&gt;
+          &lt;li&gt;Read &amp;amp; registration APIs&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/section&gt;
+    &lt;/div&gt;
+
+    &lt;div class="relationship" aria-label="Primary relationship"&gt;
+      &lt;code&gt;Organization&lt;/code&gt;&lt;span aria-hidden="true"&gt;→&lt;/span&gt;
+      &lt;code&gt;Teams&lt;/code&gt;&lt;span aria-hidden="true"&gt;→&lt;/span&gt;
+      &lt;code&gt;Event types&lt;/code&gt;&lt;span aria-hidden="true"&gt;→&lt;/span&gt;
+      &lt;code&gt;Event series&lt;/code&gt;&lt;span aria-hidden="true"&gt;→&lt;/span&gt;
+      &lt;code&gt;Occurrences&lt;/code&gt;&lt;span aria-hidden="true"&gt;→&lt;/span&gt;
+      &lt;code&gt;Sessions&lt;/code&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class="panel" id="panel-primitives" role="tabpanel" aria-labelledby="tab-primitives" hidden&gt;
+    &lt;div class="section-heading"&gt;
+      &lt;h2&gt;Composable domain primitives&lt;/h2&gt;
+      &lt;p&gt;Prefer stable capabilities and relationships over one-off event screens. Event types select, configure, and validate these primitives instead of creating entirely separate data models.&lt;/p&gt;
+    &lt;/div&gt;
+
+    &lt;div class="primitive-grid"&gt;
+      &lt;section class="primitive-group"&gt;
+        &lt;h3&gt;Identity &amp;amp; authorization&lt;/h3&gt;
+        &lt;p class="text-muted"&gt;Who may act, and within which boundary.&lt;/p&gt;
+        &lt;ul&gt;&lt;li&gt;Organization · Team · User · Role · Capability · Resource scope&lt;/li&gt;&lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="primitive-group"&gt;
+        &lt;h3&gt;Configuration&lt;/h3&gt;
+        &lt;p class="text-muted"&gt;How customers shape the system without code.&lt;/p&gt;
+        &lt;ul&gt;&lt;li&gt;Event type · Feature module · Field definition · Default · Validation rule&lt;/li&gt;&lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="primitive-group"&gt;
+        &lt;h3&gt;Time &amp;amp; program&lt;/h3&gt;
+        &lt;p class="text-muted"&gt;Reusable scheduling at several levels.&lt;/p&gt;
+        &lt;ul&gt;&lt;li&gt;Event series · Occurrence · Session · Schedule slot · Time zone&lt;/li&gt;&lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="primitive-group"&gt;
+        &lt;h3&gt;People &amp;amp; places&lt;/h3&gt;
+        &lt;p class="text-muted"&gt;Shared references, not copied text blobs.&lt;/p&gt;
+        &lt;ul&gt;&lt;li&gt;Speaker · Sponsor · Venue · Room · Contact&lt;/li&gt;&lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="primitive-group"&gt;
+        &lt;h3&gt;Commercial&lt;/h3&gt;
+        &lt;p class="text-muted"&gt;Works for free and paid experiences.&lt;/p&gt;
+        &lt;ul&gt;&lt;li&gt;Ticket type · Price · Capacity · Availability window · External payment reference&lt;/li&gt;&lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="primitive-group"&gt;
+        &lt;h3&gt;Participation&lt;/h3&gt;
+        &lt;p class="text-muted"&gt;Separate intent, booked dates, and actual attendance.&lt;/p&gt;
+        &lt;ul&gt;&lt;li&gt;Participant · Registration · Booking · Cancellation · Waitlist · Attendance · Certificate&lt;/li&gt;&lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="primitive-group"&gt;
+        &lt;h3&gt;Publishing&lt;/h3&gt;
+        &lt;p class="text-muted"&gt;The safety boundary between proposed and real-world state.&lt;/p&gt;
+        &lt;ul&gt;&lt;li&gt;Draft revision · Change set · Submission · Approval · Published snapshot · Archive&lt;/li&gt;&lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="primitive-group"&gt;
+        &lt;h3&gt;Platform services&lt;/h3&gt;
+        &lt;p class="text-muted"&gt;Cross-cutting capabilities every domain can reuse.&lt;/p&gt;
+        &lt;ul&gt;&lt;li&gt;Audit entry · Comment · Notification · Search projection · API credential · Idempotency key&lt;/li&gt;&lt;/ul&gt;
+      &lt;/section&gt;
+    &lt;/div&gt;
+
+    &lt;div class="section-heading"&gt;
+      &lt;h2&gt;Example compositions&lt;/h2&gt;
+      &lt;p&gt;The same primitives produce substantially different customer workflows.&lt;/p&gt;
+    &lt;/div&gt;
+
+    &lt;div class="composition-grid"&gt;
+      &lt;section class="composition"&gt;
+        &lt;h3&gt;Recurring network meeting&lt;/h3&gt;
+        &lt;p&gt;Series + five occurrences + series registration + per-occurrence cancellations&lt;/p&gt;
+      &lt;/section&gt;
+      &lt;section class="composition"&gt;
+        &lt;h3&gt;Paid course&lt;/h3&gt;
+        &lt;p&gt;Series + occurrences + sessions + ticket type + attendance + certificate&lt;/p&gt;
+      &lt;/section&gt;
+      &lt;section class="composition"&gt;
+        &lt;h3&gt;Full-day conference&lt;/h3&gt;
+        &lt;p&gt;Occurrence + parallel sessions + speakers + rooms + sponsors + selectable workshops&lt;/p&gt;
+      &lt;/section&gt;
+      &lt;section class="composition"&gt;
+        &lt;h3&gt;Free meetup&lt;/h3&gt;
+        &lt;p&gt;Event-type defaults + occurrence + venue + capacity + waitlist&lt;/p&gt;
+      &lt;/section&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class="panel" id="panel-safety" role="tabpanel" aria-labelledby="tab-safety" hidden&gt;
+    &lt;div class="section-heading"&gt;
+      &lt;h2&gt;Draft-to-production workflow&lt;/h2&gt;
+      &lt;p&gt;Editing creates a new revision. The currently published snapshot remains unchanged until an approved revision replaces it atomically.&lt;/p&gt;
+    &lt;/div&gt;
+
+    &lt;div class="workflow" role="img" aria-label="Published version N is copied into a draft. The draft is edited, submitted, reviewed and then atomically published as version N plus one."&gt;
+      &lt;div class="workflow-node is-live"&gt;Published&lt;br&gt;vN&lt;/div&gt;
+      &lt;div class="workflow-arrow" aria-hidden="true"&gt;→&lt;/div&gt;
+      &lt;div class="workflow-node"&gt;Draft&lt;br&gt;revision&lt;/div&gt;
+      &lt;div class="workflow-arrow" aria-hidden="true"&gt;→&lt;/div&gt;
+      &lt;div class="workflow-node"&gt;Submitted&lt;/div&gt;
+      &lt;div class="workflow-arrow" aria-hidden="true"&gt;→&lt;/div&gt;
+      &lt;div class="workflow-node"&gt;Review&lt;/div&gt;
+      &lt;div class="workflow-arrow" aria-hidden="true"&gt;→&lt;/div&gt;
+      &lt;div class="workflow-node is-live"&gt;Published&lt;br&gt;vN+1&lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div class="branch-grid"&gt;
+      &lt;section class="guardrails"&gt;
+        &lt;h3&gt;Proposed invariants&lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;Draft changes never leak into published API responses.&lt;/li&gt;
+          &lt;li&gt;Publishing is atomic: consumers see either vN or vN+1.&lt;/li&gt;
+          &lt;li&gt;Rejection returns the revision to an editable draft.&lt;/li&gt;
+          &lt;li&gt;Withdrawal and deletion are recoverable archival actions.&lt;/li&gt;
+          &lt;li&gt;All changes, submissions, approvals, and API mutations are audited.&lt;/li&gt;
+          &lt;li&gt;Authorization is enforced by organization, team, capability, and resource.&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section class="guardrails"&gt;
+        &lt;h3&gt;Role baseline&lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;&lt;strong&gt;Event manager:&lt;/strong&gt; creates and edits events within assigned teams; submits revisions.&lt;/li&gt;
+          &lt;li&gt;&lt;strong&gt;Super user:&lt;/strong&gt; works across the organization; reviews and approves revisions.&lt;/li&gt;
+          &lt;li&gt;&lt;strong&gt;Administrator:&lt;/strong&gt; manages organization settings, users, teams, event types, and credentials.&lt;/li&gt;
+          &lt;li&gt;&lt;strong&gt;Proposed:&lt;/strong&gt; the author of a revision cannot approve that same revision.&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/section&gt;
+    &lt;/div&gt;
+
+    &lt;div class="section-heading"&gt;
+      &lt;h2&gt;External API boundary&lt;/h2&gt;
+      &lt;p&gt;External applications may consume production data and change participation state without gaining authority over event definitions.&lt;/p&gt;
+    &lt;/div&gt;
+
+    &lt;div class="api-boundary"&gt;
+      &lt;section class="api-zone"&gt;
+        &lt;h3&gt;Allowed&lt;/h3&gt;
+        &lt;p&gt;Read approved event snapshots · sign up a participant · cancel a registration or individual occurrence · retrieve registration state&lt;/p&gt;
+      &lt;/section&gt;
+      &lt;div class="workflow-arrow" aria-hidden="true"&gt;↔&lt;/div&gt;
+      &lt;section class="api-zone"&gt;
+        &lt;h3&gt;Not allowed&lt;/h3&gt;
+        &lt;p&gt;Edit event definitions · bypass approval · hard-delete events · access another organization or team · read unpublished drafts&lt;/p&gt;
+      &lt;/section&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class="panel" id="panel-decisions" role="tabpanel" aria-labelledby="tab-decisions" hidden&gt;
+    &lt;div class="section-heading"&gt;
+      &lt;h2&gt;High-impact open decisions&lt;/h2&gt;
+      &lt;p&gt;These questions affect the data model, authorization boundary, and first complete workflow.&lt;/p&gt;
+    &lt;/div&gt;
+
+    &lt;ol class="decision-list"&gt;
+      &lt;li class="decision"&gt;
+        &lt;div&gt;&lt;h3&gt;Event-type flexibility&lt;/h3&gt;&lt;p&gt;Feature switches and typed custom fields, or fully arbitrary nested customer schemas?&lt;/p&gt;&lt;/div&gt;
+        &lt;span class="viz-badge status-open"&gt;Open&lt;/span&gt;
+      &lt;/li&gt;
+      &lt;li class="decision"&gt;
+        &lt;div&gt;&lt;h3&gt;Registration granularity&lt;/h3&gt;&lt;p&gt;Register for a whole series, selected occurrences, or both—and where do capacity and waitlists apply?&lt;/p&gt;&lt;/div&gt;
+        &lt;span class="viz-badge status-open"&gt;Open&lt;/span&gt;
+      &lt;/li&gt;
+      &lt;li class="decision"&gt;
+        &lt;div&gt;&lt;h3&gt;Bookable sessions&lt;/h3&gt;&lt;p&gt;Are sessions schedule-only, individually selectable, or configurable per event type?&lt;/p&gt;&lt;/div&gt;
+        &lt;span class="viz-badge status-open"&gt;Open&lt;/span&gt;
+      &lt;/li&gt;
+      &lt;li class="decision"&gt;
+        &lt;div&gt;&lt;h3&gt;Approval scope&lt;/h3&gt;&lt;p&gt;Approve the complete event revision initially, or support approval of individual changes?&lt;/p&gt;&lt;/div&gt;
+        &lt;span class="viz-badge status-proposed"&gt;Whole revision&lt;/span&gt;
+      &lt;/li&gt;
+      &lt;li class="decision"&gt;
+        &lt;div&gt;&lt;h3&gt;Team ownership&lt;/h3&gt;&lt;p&gt;Can an event belong to more than one team, and can managers work across assigned teams?&lt;/p&gt;&lt;/div&gt;
+        &lt;span class="viz-badge status-open"&gt;Open&lt;/span&gt;
+      &lt;/li&gt;
+      &lt;li class="decision"&gt;
+        &lt;div&gt;&lt;h3&gt;Participant identity&lt;/h3&gt;&lt;p&gt;Anonymous contacts, platform accounts, external identities, or a combination?&lt;/p&gt;&lt;/div&gt;
+        &lt;span class="viz-badge status-open"&gt;Open&lt;/span&gt;
+      &lt;/li&gt;
+      &lt;li class="decision"&gt;
+        &lt;div&gt;&lt;h3&gt;Payments&lt;/h3&gt;&lt;p&gt;Represent ticket prices and external links, or eventually collect payments, refunds, and invoices?&lt;/p&gt;&lt;/div&gt;
+        &lt;span class="viz-badge status-open"&gt;Open&lt;/span&gt;
+      &lt;/li&gt;
+      &lt;li class="decision"&gt;
+        &lt;div&gt;&lt;h3&gt;API visibility&lt;/h3&gt;&lt;p&gt;Public read endpoints for public events, scoped API credentials for all access, or both?&lt;/p&gt;&lt;/div&gt;
+        &lt;span class="viz-badge status-open"&gt;Open&lt;/span&gt;
+      &lt;/li&gt;
+      &lt;li class="decision"&gt;
+        &lt;div&gt;&lt;h3&gt;Localization&lt;/h3&gt;&lt;p&gt;Do event content, schedules, and venues need multiple languages and time zones from the start?&lt;/p&gt;&lt;/div&gt;
+        &lt;span class="viz-badge status-open"&gt;Open&lt;/span&gt;
+      &lt;/li&gt;
+      &lt;li class="decision"&gt;
+        &lt;div&gt;&lt;h3&gt;Concurrency model&lt;/h3&gt;&lt;p&gt;Real-time collaborative editing, visible edit presence, optimistic conflict detection, or locking?&lt;/p&gt;&lt;/div&gt;
+        &lt;span class="viz-badge status-open"&gt;Open&lt;/span&gt;
+      &lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/section&gt;
+
+  &lt;section class="panel" id="panel-mvp" role="tabpanel" aria-labelledby="tab-mvp" hidden&gt;
+    &lt;div class="section-heading"&gt;
+      &lt;h2&gt;Initial release sequence&lt;/h2&gt;
+      &lt;p&gt;Build one realistic vertical slice around a recurring event. Each phase introduces primitives that remain useful across future event types.&lt;/p&gt;
+    &lt;/div&gt;
+
+    &lt;div class="mvp-sequence"&gt;
+      &lt;section class="mvp-step"&gt;
+        &lt;div class="eyebrow text-small"&gt;01 · Foundation&lt;/div&gt;
+        &lt;h3&gt;Identity &amp;amp; boundaries&lt;/h3&gt;
+        &lt;p&gt;Authentication, organizations, teams, roles, capabilities, authorization, and audit entries.&lt;/p&gt;
+      &lt;/section&gt;
+      &lt;section class="mvp-step"&gt;
+        &lt;div class="eyebrow text-small"&gt;02 · Event core&lt;/div&gt;
+        &lt;h3&gt;Compose a recurring event&lt;/h3&gt;
+        &lt;p&gt;Event-type template, custom fields, series, occurrences, sessions, people, places, and fast list/search.&lt;/p&gt;
+      &lt;/section&gt;
+      &lt;section class="mvp-step"&gt;
+        &lt;div class="eyebrow text-small"&gt;03 · Safe publication&lt;/div&gt;
+        &lt;h3&gt;Draft, review, publish&lt;/h3&gt;
+        &lt;p&gt;Revision editing, change summary, submission, approval, atomic snapshot publication, archive, and history.&lt;/p&gt;
+      &lt;/section&gt;
+      &lt;section class="mvp-step"&gt;
+        &lt;div class="eyebrow text-small"&gt;04 · Distribution&lt;/div&gt;
+        &lt;h3&gt;API &amp;amp; participation&lt;/h3&gt;
+        &lt;p&gt;Scoped read API, registrations, per-occurrence cancellation, idempotent mutations, capacity, and API audit trail.&lt;/p&gt;
+      &lt;/section&gt;
+    &lt;/div&gt;
+
+    &lt;section class="guardrails"&gt;
+      &lt;h3&gt;Reference workflow for the vertical slice&lt;/h3&gt;
+      &lt;p class="text-muted"&gt;A recurring paid course with several dates, a full session schedule, attendee registration, per-date cancellation, approval, publication, and JSON API delivery. It exercises nearly every foundational relationship without requiring every future feature.&lt;/p&gt;
+    &lt;/section&gt;
+  &lt;/section&gt;
+
+  &lt;script&gt;
+    (() =&gt; {
+      const root = document.getElementById(&#x27;serenity-product-map&#x27;);
+      if (!root) return;
+
+      const tabs = Array.from(root.querySelectorAll(&#x27;[role="tab"]&#x27;));
+      const panels = Array.from(root.querySelectorAll(&#x27;[role="tabpanel"]&#x27;));
+
+      const selectPanel = (name) =&gt; {
+        tabs.forEach((tab) =&gt; {
+          tab.setAttribute(&#x27;aria-selected&#x27;, String(tab.dataset.panel === name));
+        });
+        panels.forEach((panel) =&gt; {
+          panel.hidden = panel.id !== `panel-${name}`;
+        });
+      };
+
+      tabs.forEach((tab) =&gt; {
+        tab.addEventListener(&#x27;click&#x27;, () =&gt; selectPanel(tab.dataset.panel));
+      });
+    })();
+  &lt;/script&gt;
+&lt;/div&gt;
+
+&lt;script src="https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set(["top", "right", "bottom", "left"]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest("[data-tooltip]")
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute("data-tooltip")?.trim() ?? "";
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute("data-tooltip-placement");
+    return tooltipPlacements.has(placement) ? placement : "top";
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement("div");
+      tooltip.id = tooltipId;
+      tooltip.className = "tooltip";
+      tooltip.setAttribute("role", "tooltip");
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute("aria-describedby") ?? "")
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute("aria-describedby");
+    } else {
+      trigger.setAttribute("aria-describedby", [...ids].join(" "));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              "--tooltip-available-width",
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              "--tooltip-available-height",
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: "fixed",
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = "visible";
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = "hidden";
+    floating.style.transform = "translate(0, 0)";
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === "touch") {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(":focus-visible")) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === "Escape") {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    document.removeEventListener("pointerover", handlePointerOpen);
+    document.removeEventListener("pointerout", handleLeave);
+    document.removeEventListener("focusin", handleFocusIn);
+    document.removeEventListener("focusout", handleLeave);
+    document.removeEventListener("keydown", handleKeyDown);
+    document.removeEventListener("contextmenu", handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener("pointerover", handlePointerOpen);
+  document.addEventListener("pointerout", handleLeave);
+  document.addEventListener("focusin", handleFocusIn);
+  document.addEventListener("focusout", handleLeave);
+  document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("contextmenu", handleContextMenu);
+  window.addEventListener("pagehide", destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id="codex-visualization-lucide" async src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById("codex-visualization-lucide")
+    ?.addEventListener("load", initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+'
+    ></iframe>
+  </body>
+</html>

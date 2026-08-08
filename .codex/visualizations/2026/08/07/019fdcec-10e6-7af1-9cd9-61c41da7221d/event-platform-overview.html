@@ -1,0 +1,909 @@
+<div id="serenity-product-map">
+  <style>
+    #serenity-product-map {
+      color: var(--foreground);
+      display: grid;
+      gap: 24px;
+    }
+
+    #serenity-product-map * {
+      box-sizing: border-box;
+    }
+
+    #serenity-product-map .eyebrow {
+      color: var(--muted-foreground);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    #serenity-product-map .hero {
+      display: grid;
+      gap: 10px;
+      max-width: 74ch;
+    }
+
+    #serenity-product-map .hero p,
+    #serenity-product-map .section-heading p {
+      color: var(--muted-foreground);
+      margin: 0;
+    }
+
+    #serenity-product-map .status-line {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    #serenity-product-map .status-confirmed {
+      background: color-mix(in srgb, var(--viz-series-1) 16%, transparent);
+    }
+
+    #serenity-product-map .status-proposed {
+      background: color-mix(in srgb, var(--viz-series-2) 16%, transparent);
+    }
+
+    #serenity-product-map .status-open {
+      background: color-mix(in srgb, var(--viz-series-3) 16%, transparent);
+    }
+
+    #serenity-product-map .summary-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    #serenity-product-map .summary-grid .card {
+      min-width: 0;
+    }
+
+    #serenity-product-map .summary-grid p {
+      margin-bottom: 0;
+    }
+
+    #serenity-product-map .tabbar {
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding-bottom: 8px;
+    }
+
+    #serenity-product-map .panel {
+      display: grid;
+      gap: 24px;
+    }
+
+    #serenity-product-map .panel[hidden] {
+      display: none;
+    }
+
+    #serenity-product-map .section-heading {
+      display: grid;
+      gap: 6px;
+      max-width: 76ch;
+    }
+
+    #serenity-product-map .domain-map {
+      align-items: stretch;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    #serenity-product-map .domain {
+      background: color-mix(in srgb, var(--muted) 62%, transparent);
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    #serenity-product-map .domain[data-series="1"] {
+      background: color-mix(in srgb, var(--viz-series-1) 10%, var(--muted));
+    }
+
+    #serenity-product-map .domain[data-series="2"] {
+      background: color-mix(in srgb, var(--viz-series-2) 10%, var(--muted));
+    }
+
+    #serenity-product-map .domain[data-series="3"] {
+      background: color-mix(in srgb, var(--viz-series-3) 10%, var(--muted));
+    }
+
+    #serenity-product-map .domain[data-series="4"] {
+      background: color-mix(in srgb, var(--viz-series-4) 10%, var(--muted));
+    }
+
+    #serenity-product-map .domain[data-series="5"] {
+      background: color-mix(in srgb, var(--viz-series-5) 10%, var(--muted));
+    }
+
+    #serenity-product-map .domain h3,
+    #serenity-product-map .domain p {
+      margin: 0;
+    }
+
+    #serenity-product-map .domain ol,
+    #serenity-product-map .domain ul,
+    #serenity-product-map .primitive-group ul,
+    #serenity-product-map .guardrails ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    #serenity-product-map li + li {
+      margin-top: 6px;
+    }
+
+    #serenity-product-map .relationship {
+      align-items: center;
+      color: var(--muted-foreground);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      text-align: center;
+    }
+
+    #serenity-product-map .relationship code {
+      color: var(--foreground);
+    }
+
+    #serenity-product-map .primitive-grid {
+      display: grid;
+      gap: 0 24px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #serenity-product-map .primitive-group {
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 8px;
+      padding: 16px 0;
+    }
+
+    #serenity-product-map .primitive-group h3,
+    #serenity-product-map .primitive-group p {
+      margin: 0;
+    }
+
+    #serenity-product-map .composition-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #serenity-product-map .composition {
+      border-left: 3px solid var(--viz-series-1);
+      padding: 4px 0 4px 14px;
+    }
+
+    #serenity-product-map .composition h3,
+    #serenity-product-map .composition p {
+      margin: 0;
+    }
+
+    #serenity-product-map .composition p {
+      color: var(--muted-foreground);
+      margin-top: 4px;
+    }
+
+    #serenity-product-map .workflow {
+      align-items: stretch;
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(9, minmax(0, auto));
+    }
+
+    #serenity-product-map .workflow-node {
+      align-items: center;
+      background: color-mix(in srgb, var(--muted) 72%, transparent);
+      display: flex;
+      justify-content: center;
+      min-height: 72px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    #serenity-product-map .workflow-node.is-live {
+      background: color-mix(in srgb, var(--viz-series-1) 16%, var(--muted));
+    }
+
+    #serenity-product-map .workflow-arrow {
+      align-items: center;
+      color: var(--muted-foreground);
+      display: flex;
+      justify-content: center;
+    }
+
+    #serenity-product-map .branch-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    #serenity-product-map .guardrails {
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 10px;
+      padding-top: 16px;
+    }
+
+    #serenity-product-map .guardrails h3 {
+      margin: 0;
+    }
+
+    #serenity-product-map .api-boundary {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+
+    #serenity-product-map .api-zone {
+      background: color-mix(in srgb, var(--muted) 72%, transparent);
+      display: grid;
+      gap: 8px;
+      padding: 16px;
+    }
+
+    #serenity-product-map .api-zone h3,
+    #serenity-product-map .api-zone p {
+      margin: 0;
+    }
+
+    #serenity-product-map .api-zone p {
+      color: var(--muted-foreground);
+    }
+
+    #serenity-product-map .decision-list {
+      counter-reset: decisions;
+      display: grid;
+      gap: 0;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    #serenity-product-map .decision {
+      align-items: start;
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 12px;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      padding: 16px 0;
+    }
+
+    #serenity-product-map .decision::before {
+      color: var(--muted-foreground);
+      content: counter(decisions, decimal-leading-zero);
+      counter-increment: decisions;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #serenity-product-map .decision h3,
+    #serenity-product-map .decision p {
+      margin: 0;
+    }
+
+    #serenity-product-map .decision p {
+      color: var(--muted-foreground);
+      margin-top: 4px;
+    }
+
+    #serenity-product-map .mvp-sequence {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    #serenity-product-map .mvp-step {
+      border-top: 3px solid var(--viz-series-2);
+      padding-top: 12px;
+    }
+
+    #serenity-product-map .mvp-step h3,
+    #serenity-product-map .mvp-step p {
+      margin: 0;
+    }
+
+    #serenity-product-map .mvp-step p {
+      color: var(--muted-foreground);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 640px) {
+      #serenity-product-map .summary-grid,
+      #serenity-product-map .domain-map,
+      #serenity-product-map .composition-grid,
+      #serenity-product-map .branch-grid,
+      #serenity-product-map .mvp-sequence {
+        grid-template-columns: 1fr;
+      }
+
+      #serenity-product-map .primitive-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #serenity-product-map .workflow {
+        grid-template-columns: 1fr;
+      }
+
+      #serenity-product-map .workflow-arrow {
+        min-height: 28px;
+        transform: rotate(90deg);
+      }
+
+      #serenity-product-map .api-boundary {
+        grid-template-columns: 1fr;
+      }
+
+      #serenity-product-map .api-boundary .workflow-arrow {
+        transform: rotate(90deg);
+      }
+    }
+
+    @media (max-width: 480px) {
+      #serenity-product-map .decision {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      #serenity-product-map .decision .viz-badge {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+  </style>
+
+  <section class="hero" aria-labelledby="serenity-direction-heading">
+    <div class="eyebrow text-small">Serenity · current product direction</div>
+    <h1 id="serenity-direction-heading">
+      Fast, safe event operations for teams who live in the product
+    </h1>
+    <p>
+      Organizations define their own event types, compose rich event programs, work in drafts,
+      approve changes before publication, and expose only the published truth to external websites.
+    </p>
+    <div class="status-line" aria-label="Decision status legend">
+      <span class="viz-badge status-confirmed">Confirmed</span>
+      <span class="viz-badge status-proposed">Proposed foundation</span>
+      <span class="viz-badge status-open">Open decision</span>
+    </div>
+  </section>
+
+  <section class="summary-grid" aria-label="Product principles">
+    <article class="card">
+      <div class="eyebrow text-small">Experience</div>
+      <h2>Instant by default</h2>
+      <p>
+        Optimistic interactions, local feedback, keyboard-friendly flows, fast search, and no
+        avoidable waiting between routine actions.
+      </p>
+    </article>
+    <article class="card">
+      <div class="eyebrow text-small">Trust</div>
+      <h2>Published truth stays stable</h2>
+      <p>
+        Draft work cannot affect production until approval. Every consequential action is
+        attributable, reviewable, and recoverable.
+      </p>
+    </article>
+    <article class="card">
+      <div class="eyebrow text-small">Architecture</div>
+      <h2>Compose from primitives</h2>
+      <p>
+        A small set of durable domain building blocks supports courses, conferences, recurring
+        meetings, and future event types.
+      </p>
+    </article>
+  </section>
+
+  <nav class="tabbar" role="tablist" aria-label="Product overview sections">
+    <button
+      class="btn"
+      type="button"
+      role="tab"
+      id="tab-system"
+      aria-controls="panel-system"
+      aria-selected="true"
+      data-panel="system"
+    >
+      System map
+    </button>
+    <button
+      class="btn"
+      type="button"
+      role="tab"
+      id="tab-primitives"
+      aria-controls="panel-primitives"
+      aria-selected="false"
+      data-panel="primitives"
+    >
+      Composable primitives
+    </button>
+    <button
+      class="btn"
+      type="button"
+      role="tab"
+      id="tab-safety"
+      aria-controls="panel-safety"
+      aria-selected="false"
+      data-panel="safety"
+    >
+      Workflow &amp; safety
+    </button>
+    <button
+      class="btn"
+      type="button"
+      role="tab"
+      id="tab-decisions"
+      aria-controls="panel-decisions"
+      aria-selected="false"
+      data-panel="decisions"
+    >
+      Open decisions
+    </button>
+    <button
+      class="btn"
+      type="button"
+      role="tab"
+      id="tab-mvp"
+      aria-controls="panel-mvp"
+      aria-selected="false"
+      data-panel="mvp"
+    >
+      Initial release
+    </button>
+  </nav>
+
+  <section class="panel" id="panel-system" role="tabpanel" aria-labelledby="tab-system">
+    <div class="section-heading">
+      <h2>System map</h2>
+      <p>
+        The event is an aggregate assembled from reusable concepts. Organization and access sit
+        above it; publishing and integrations consume controlled versions of it.
+      </p>
+    </div>
+
+    <div
+      class="domain-map"
+      role="img"
+      aria-label="Organizations contain teams and users. Event types configure event series, occurrences and sessions. Events reference people, places and commercial details. Registrations track participation. Approved snapshots are published through APIs."
+    >
+      <section class="domain" data-series="1">
+        <h3>Organization</h3>
+        <ul>
+          <li>Teams</li>
+          <li>Users</li>
+          <li>Roles &amp; scopes</li>
+          <li>API clients</li>
+        </ul>
+      </section>
+      <section class="domain" data-series="2">
+        <h3>Definition</h3>
+        <ul>
+          <li>Event type</li>
+          <li>Feature modules</li>
+          <li>Custom fields</li>
+          <li>Validation rules</li>
+        </ul>
+      </section>
+      <section class="domain" data-series="3">
+        <h3>Program</h3>
+        <ul>
+          <li>Event series</li>
+          <li>Occurrences</li>
+          <li>Sessions</li>
+          <li>Venues &amp; speakers</li>
+        </ul>
+      </section>
+      <section class="domain" data-series="4">
+        <h3>Participation</h3>
+        <ul>
+          <li>Registration</li>
+          <li>Per-date booking</li>
+          <li>Cancellation</li>
+          <li>Attendance &amp; certificate</li>
+        </ul>
+      </section>
+      <section class="domain" data-series="5">
+        <h3>Publication</h3>
+        <ul>
+          <li>Draft revision</li>
+          <li>Approval request</li>
+          <li>Published snapshot</li>
+          <li>Read &amp; registration APIs</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="relationship" aria-label="Primary relationship">
+      <code>Organization</code><span aria-hidden="true">→</span> <code>Teams</code
+      ><span aria-hidden="true">→</span> <code>Event types</code><span aria-hidden="true">→</span>
+      <code>Event series</code><span aria-hidden="true">→</span> <code>Occurrences</code
+      ><span aria-hidden="true">→</span>
+      <code>Sessions</code>
+    </div>
+  </section>
+
+  <section
+    class="panel"
+    id="panel-primitives"
+    role="tabpanel"
+    aria-labelledby="tab-primitives"
+    hidden
+  >
+    <div class="section-heading">
+      <h2>Composable domain primitives</h2>
+      <p>
+        Prefer stable capabilities and relationships over one-off event screens. Event types select,
+        configure, and validate these primitives instead of creating entirely separate data models.
+      </p>
+    </div>
+
+    <div class="primitive-grid">
+      <section class="primitive-group">
+        <h3>Identity &amp; authorization</h3>
+        <p class="text-muted">Who may act, and within which boundary.</p>
+        <ul>
+          <li>Organization · Team · User · Role · Capability · Resource scope</li>
+        </ul>
+      </section>
+      <section class="primitive-group">
+        <h3>Configuration</h3>
+        <p class="text-muted">How customers shape the system without code.</p>
+        <ul>
+          <li>Event type · Feature module · Field definition · Default · Validation rule</li>
+        </ul>
+      </section>
+      <section class="primitive-group">
+        <h3>Time &amp; program</h3>
+        <p class="text-muted">Reusable scheduling at several levels.</p>
+        <ul>
+          <li>Event series · Occurrence · Session · Schedule slot · Time zone</li>
+        </ul>
+      </section>
+      <section class="primitive-group">
+        <h3>People &amp; places</h3>
+        <p class="text-muted">Shared references, not copied text blobs.</p>
+        <ul>
+          <li>Speaker · Sponsor · Venue · Room · Contact</li>
+        </ul>
+      </section>
+      <section class="primitive-group">
+        <h3>Commercial</h3>
+        <p class="text-muted">Works for free and paid experiences.</p>
+        <ul>
+          <li>Ticket type · Price · Capacity · Availability window · External payment reference</li>
+        </ul>
+      </section>
+      <section class="primitive-group">
+        <h3>Participation</h3>
+        <p class="text-muted">Separate intent, booked dates, and actual attendance.</p>
+        <ul>
+          <li>
+            Participant · Registration · Booking · Cancellation · Waitlist · Attendance ·
+            Certificate
+          </li>
+        </ul>
+      </section>
+      <section class="primitive-group">
+        <h3>Publishing</h3>
+        <p class="text-muted">The safety boundary between proposed and real-world state.</p>
+        <ul>
+          <li>
+            Draft revision · Change set · Submission · Approval · Published snapshot · Archive
+          </li>
+        </ul>
+      </section>
+      <section class="primitive-group">
+        <h3>Platform services</h3>
+        <p class="text-muted">Cross-cutting capabilities every domain can reuse.</p>
+        <ul>
+          <li>
+            Audit entry · Comment · Notification · Search projection · API credential · Idempotency
+            key
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="section-heading">
+      <h2>Example compositions</h2>
+      <p>The same primitives produce substantially different customer workflows.</p>
+    </div>
+
+    <div class="composition-grid">
+      <section class="composition">
+        <h3>Recurring network meeting</h3>
+        <p>Series + five occurrences + series registration + per-occurrence cancellations</p>
+      </section>
+      <section class="composition">
+        <h3>Paid course</h3>
+        <p>Series + occurrences + sessions + ticket type + attendance + certificate</p>
+      </section>
+      <section class="composition">
+        <h3>Full-day conference</h3>
+        <p>Occurrence + parallel sessions + speakers + rooms + sponsors + selectable workshops</p>
+      </section>
+      <section class="composition">
+        <h3>Free meetup</h3>
+        <p>Event-type defaults + occurrence + venue + capacity + waitlist</p>
+      </section>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-safety" role="tabpanel" aria-labelledby="tab-safety" hidden>
+    <div class="section-heading">
+      <h2>Draft-to-production workflow</h2>
+      <p>
+        Editing creates a new revision. The currently published snapshot remains unchanged until an
+        approved revision replaces it atomically.
+      </p>
+    </div>
+
+    <div
+      class="workflow"
+      role="img"
+      aria-label="Published version N is copied into a draft. The draft is edited, submitted, reviewed and then atomically published as version N plus one."
+    >
+      <div class="workflow-node is-live">Published<br />vN</div>
+      <div class="workflow-arrow" aria-hidden="true">→</div>
+      <div class="workflow-node">Draft<br />revision</div>
+      <div class="workflow-arrow" aria-hidden="true">→</div>
+      <div class="workflow-node">Submitted</div>
+      <div class="workflow-arrow" aria-hidden="true">→</div>
+      <div class="workflow-node">Review</div>
+      <div class="workflow-arrow" aria-hidden="true">→</div>
+      <div class="workflow-node is-live">Published<br />vN+1</div>
+    </div>
+
+    <div class="branch-grid">
+      <section class="guardrails">
+        <h3>Proposed invariants</h3>
+        <ul>
+          <li>Draft changes never leak into published API responses.</li>
+          <li>Publishing is atomic: consumers see either vN or vN+1.</li>
+          <li>Rejection returns the revision to an editable draft.</li>
+          <li>Withdrawal and deletion are recoverable archival actions.</li>
+          <li>All changes, submissions, approvals, and API mutations are audited.</li>
+          <li>Authorization is enforced by organization, team, capability, and resource.</li>
+        </ul>
+      </section>
+      <section class="guardrails">
+        <h3>Role baseline</h3>
+        <ul>
+          <li>
+            <strong>Event manager:</strong> creates and edits events within assigned teams; submits
+            revisions.
+          </li>
+          <li>
+            <strong>Super user:</strong> works across the organization; reviews and approves
+            revisions.
+          </li>
+          <li>
+            <strong>Administrator:</strong> manages organization settings, users, teams, event
+            types, and credentials.
+          </li>
+          <li>
+            <strong>Proposed:</strong> the author of a revision cannot approve that same revision.
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="section-heading">
+      <h2>External API boundary</h2>
+      <p>
+        External applications may consume production data and change participation state without
+        gaining authority over event definitions.
+      </p>
+    </div>
+
+    <div class="api-boundary">
+      <section class="api-zone">
+        <h3>Allowed</h3>
+        <p>
+          Read approved event snapshots · sign up a participant · cancel a registration or
+          individual occurrence · retrieve registration state
+        </p>
+      </section>
+      <div class="workflow-arrow" aria-hidden="true">↔</div>
+      <section class="api-zone">
+        <h3>Not allowed</h3>
+        <p>
+          Edit event definitions · bypass approval · hard-delete events · access another
+          organization or team · read unpublished drafts
+        </p>
+      </section>
+    </div>
+  </section>
+
+  <section
+    class="panel"
+    id="panel-decisions"
+    role="tabpanel"
+    aria-labelledby="tab-decisions"
+    hidden
+  >
+    <div class="section-heading">
+      <h2>High-impact open decisions</h2>
+      <p>
+        These questions affect the data model, authorization boundary, and first complete workflow.
+      </p>
+    </div>
+
+    <ol class="decision-list">
+      <li class="decision">
+        <div>
+          <h3>Event-type flexibility</h3>
+          <p>
+            Feature switches and typed custom fields, or fully arbitrary nested customer schemas?
+          </p>
+        </div>
+        <span class="viz-badge status-open">Open</span>
+      </li>
+      <li class="decision">
+        <div>
+          <h3>Registration granularity</h3>
+          <p>
+            Register for a whole series, selected occurrences, or both—and where do capacity and
+            waitlists apply?
+          </p>
+        </div>
+        <span class="viz-badge status-open">Open</span>
+      </li>
+      <li class="decision">
+        <div>
+          <h3>Bookable sessions</h3>
+          <p>
+            Are sessions schedule-only, individually selectable, or configurable per event type?
+          </p>
+        </div>
+        <span class="viz-badge status-open">Open</span>
+      </li>
+      <li class="decision">
+        <div>
+          <h3>Approval scope</h3>
+          <p>
+            Approve the complete event revision initially, or support approval of individual
+            changes?
+          </p>
+        </div>
+        <span class="viz-badge status-proposed">Whole revision</span>
+      </li>
+      <li class="decision">
+        <div>
+          <h3>Team ownership</h3>
+          <p>
+            Can an event belong to more than one team, and can managers work across assigned teams?
+          </p>
+        </div>
+        <span class="viz-badge status-open">Open</span>
+      </li>
+      <li class="decision">
+        <div>
+          <h3>Participant identity</h3>
+          <p>Anonymous contacts, platform accounts, external identities, or a combination?</p>
+        </div>
+        <span class="viz-badge status-open">Open</span>
+      </li>
+      <li class="decision">
+        <div>
+          <h3>Payments</h3>
+          <p>
+            Represent ticket prices and external links, or eventually collect payments, refunds, and
+            invoices?
+          </p>
+        </div>
+        <span class="viz-badge status-open">Open</span>
+      </li>
+      <li class="decision">
+        <div>
+          <h3>API visibility</h3>
+          <p>
+            Public read endpoints for public events, scoped API credentials for all access, or both?
+          </p>
+        </div>
+        <span class="viz-badge status-open">Open</span>
+      </li>
+      <li class="decision">
+        <div>
+          <h3>Localization</h3>
+          <p>
+            Do event content, schedules, and venues need multiple languages and time zones from the
+            start?
+          </p>
+        </div>
+        <span class="viz-badge status-open">Open</span>
+      </li>
+      <li class="decision">
+        <div>
+          <h3>Concurrency model</h3>
+          <p>
+            Real-time collaborative editing, visible edit presence, optimistic conflict detection,
+            or locking?
+          </p>
+        </div>
+        <span class="viz-badge status-open">Open</span>
+      </li>
+    </ol>
+  </section>
+
+  <section class="panel" id="panel-mvp" role="tabpanel" aria-labelledby="tab-mvp" hidden>
+    <div class="section-heading">
+      <h2>Initial release sequence</h2>
+      <p>
+        Build one realistic vertical slice around a recurring event. Each phase introduces
+        primitives that remain useful across future event types.
+      </p>
+    </div>
+
+    <div class="mvp-sequence">
+      <section class="mvp-step">
+        <div class="eyebrow text-small">01 · Foundation</div>
+        <h3>Identity &amp; boundaries</h3>
+        <p>
+          Authentication, organizations, teams, roles, capabilities, authorization, and audit
+          entries.
+        </p>
+      </section>
+      <section class="mvp-step">
+        <div class="eyebrow text-small">02 · Event core</div>
+        <h3>Compose a recurring event</h3>
+        <p>
+          Event-type template, custom fields, series, occurrences, sessions, people, places, and
+          fast list/search.
+        </p>
+      </section>
+      <section class="mvp-step">
+        <div class="eyebrow text-small">03 · Safe publication</div>
+        <h3>Draft, review, publish</h3>
+        <p>
+          Revision editing, change summary, submission, approval, atomic snapshot publication,
+          archive, and history.
+        </p>
+      </section>
+      <section class="mvp-step">
+        <div class="eyebrow text-small">04 · Distribution</div>
+        <h3>API &amp; participation</h3>
+        <p>
+          Scoped read API, registrations, per-occurrence cancellation, idempotent mutations,
+          capacity, and API audit trail.
+        </p>
+      </section>
+    </div>
+
+    <section class="guardrails">
+      <h3>Reference workflow for the vertical slice</h3>
+      <p class="text-muted">
+        A recurring paid course with several dates, a full session schedule, attendee registration,
+        per-date cancellation, approval, publication, and JSON API delivery. It exercises nearly
+        every foundational relationship without requiring every future feature.
+      </p>
+    </section>
+  </section>
+
+  <script>
+    (() => {
+      const root = document.getElementById("serenity-product-map");
+      if (!root) return;
+
+      const tabs = Array.from(root.querySelectorAll('[role="tab"]'));
+      const panels = Array.from(root.querySelectorAll('[role="tabpanel"]'));
+
+      const selectPanel = (name) => {
+        tabs.forEach((tab) => {
+          tab.setAttribute("aria-selected", String(tab.dataset.panel === name));
+        });
+        panels.forEach((panel) => {
+          panel.hidden = panel.id !== `panel-${name}`;
+        });
+      };
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => selectPanel(tab.dataset.panel));
+      });
+    })();
+  </script>
+</div>
