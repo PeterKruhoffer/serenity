@@ -4,7 +4,8 @@ import solid from "vite-plugin-solid";
 export default defineConfig({
   plugins: [solid()],
   test: {
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "convex/**/*.test.ts"],
+    environment: "edge-runtime",
   },
   fmt: {
     ignorePatterns: [
