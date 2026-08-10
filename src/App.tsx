@@ -1031,26 +1031,13 @@ const App: Component = () => {
               <p class="eyebrow">Your work, in one calm place</p>
               <h1 id="welcome-title">Start with what matters.</h1>
               <p class="intro">
-                Sign in securely with Google or GitHub to open your Serenity workspace.
+                Continue to AuthKit to choose Google, GitHub, or email and open your Serenity
+                workspace.
               </p>
               <div class="auth-actions">
-                <button
-                  class="primary-button"
-                  type="button"
-                  onClick={() => void auth.signIn("GoogleOAuth")}
-                >
-                  Continue with Google
+                <button class="primary-button" type="button" onClick={() => void auth.signIn()}>
+                  Continue to sign in
                   <span aria-hidden="true">→</span>
-                </button>
-                <button
-                  class="secondary-button"
-                  type="button"
-                  onClick={() => void auth.signIn("GitHubOAuth")}
-                >
-                  Continue with GitHub
-                </button>
-                <button class="email-button" type="button" onClick={() => void auth.signIn()}>
-                  Continue with email
                 </button>
               </div>
               <Show when={auth.error()}>
@@ -1058,7 +1045,9 @@ const App: Component = () => {
                   {auth.error()}
                 </p>
               </Show>
-              <p class="auth-note">Authentication is securely handled by WorkOS AuthKit.</p>
+              <p class="auth-note">
+                Provider selection and verification are securely handled by WorkOS AuthKit.
+              </p>
             </section>
           </Match>
         </Switch>

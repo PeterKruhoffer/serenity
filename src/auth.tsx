@@ -21,12 +21,11 @@ type WorkOSAuth = {
   isConfigured: Accessor<boolean>;
   isLoading: Accessor<boolean>;
   error: Accessor<string | null>;
-  signIn: (provider?: OAuthProvider) => Promise<void>;
+  signIn: () => Promise<void>;
   signOut: () => void;
 };
 
 type WorkOSClient = Awaited<ReturnType<typeof createClient>>;
-type OAuthProvider = "GoogleOAuth" | "GitHubOAuth";
 
 const unavailableAuth: WorkOSAuth = {
   user: () => null,
@@ -116,21 +115,18 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
     isConfigured: () => Boolean(clientId),
     isLoading,
     error,
-    signIn: async (provider) => {
+    signIn: async () => {
       setError(null);
       const workOSClient = authClient();
       if (!workOSClient) {
         setError("WorkOS AuthKit is not ready yet");
         return;
       }
-      if (!provider) {
+      try {
         await workOSClient.signIn();
-        return;
+      } catch (authError) {
+        setError(authError instanceof Error ? authError.message : "Unable to start sign in");
       }
-
-      const signInUrl = new URL(await workOSClient.getSignInUrl());
-      signInUrl.searchParams.set("provider", provider);
-      window.location.assign(signInUrl);
     },
     signOut: () => {
       const workOSClient = authClient();
