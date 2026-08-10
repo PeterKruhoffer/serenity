@@ -973,6 +973,12 @@ const Workspace: Component = () => {
 
 const App: Component = () => {
   const auth = useWorkOSAuth();
+  const signedInName = () => {
+    const currentUser = auth.user();
+    if (!currentUser) return "Signed in";
+    const fullName = [currentUser.firstName, currentUser.lastName].filter(Boolean).join(" ");
+    return fullName || currentUser.email;
+  };
 
   return (
     <div class="app">
@@ -993,9 +999,18 @@ const App: Component = () => {
             </span>
           }
         >
-          <button class="text-button" type="button" onClick={auth.signOut}>
-            Sign out
-          </button>
+          <div class="account-summary" aria-label={`Signed in as ${signedInName()}`}>
+            <span class="header-avatar" aria-hidden="true">
+              {signedInName().slice(0, 1).toUpperCase()}
+            </span>
+            <span class="account-copy">
+              <strong>{signedInName()}</strong>
+              <small>{auth.user()?.email || "WorkOS authenticated"}</small>
+            </span>
+            <button class="text-button" type="button" onClick={auth.signOut}>
+              Sign out
+            </button>
+          </div>
         </Show>
       </header>
 

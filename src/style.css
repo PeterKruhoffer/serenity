@@ -109,6 +109,57 @@ button {
   color: #20231f;
 }
 
+.account-summary {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.header-avatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #eff7dd;
+  background: #596d4d;
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: 12px;
+}
+
+.account-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.account-copy strong,
+.account-copy small {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-copy strong {
+  color: #30352e;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.account-copy small {
+  color: #8b9087;
+  font-size: 9px;
+}
+
+.account-summary .text-button {
+  margin-left: 5px;
+  padding-left: 14px;
+  border-left: 1px solid #dfe1d8;
+}
+
 .app-main {
   width: min(1320px, calc(100% - 48px));
   margin: 0 auto;
@@ -1384,6 +1435,14 @@ textarea:focus {
 
   .status {
     font-size: 0;
+  }
+
+  .account-copy {
+    display: none;
+  }
+
+  .account-summary .text-button {
+    margin-left: 0;
   }
 
   .app-footer {
