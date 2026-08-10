@@ -20,6 +20,7 @@
 html {
   min-width: 320px;
   min-height: 100%;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -502,6 +503,7 @@ textarea:focus {
   display: grid;
   grid-template-columns: 210px minmax(0, 1fr);
   gap: clamp(36px, 6vw, 90px);
+  align-self: start;
   align-items: start;
 }
 
@@ -573,6 +575,10 @@ textarea:focus {
   min-width: 0;
 }
 
+.workspace-page {
+  min-width: 0;
+}
+
 .content-heading {
   display: flex;
   align-items: flex-end;
@@ -591,6 +597,65 @@ textarea:focus {
   margin: 0;
   color: #747970;
   font-size: 15px;
+}
+
+.page-heading {
+  align-items: center;
+  padding-bottom: 46px;
+  border-bottom: 1px solid #dfe1d8;
+}
+
+.page-heading h1 {
+  margin-bottom: 15px;
+}
+
+.page-total {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  color: #66705e;
+  background: #e9ece2;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.empty-page-state {
+  margin-top: 38px;
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: #8a9086;
+  background: rgb(255 255 255 / 42%);
+  border: 1px dashed #cdd1c8;
+  border-radius: 14px;
+}
+
+.empty-page-state > span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #687460;
+  background: #e9ece2;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+.empty-page-state h2 {
+  margin: 0 0 6px;
+  color: #3b4038;
+  font-size: 14px;
+}
+
+.empty-page-state p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.compact-empty-state {
+  margin-top: 0;
 }
 
 .metric-grid {
@@ -1052,6 +1117,112 @@ textarea:focus {
   border-top: 1px solid rgb(255 255 255 / 12%);
 }
 
+.participants-layout {
+  margin-top: 38px;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.6fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.participant-event-picker {
+  min-width: 0;
+  padding: 22px;
+  background: rgb(255 255 255 / 46%);
+  border: 1px solid #dfe1d8;
+  border-radius: 15px;
+}
+
+.participant-event-picker .section-title-row {
+  align-items: start;
+}
+
+.participant-event-picker .section-title-row h2 {
+  font-size: 24px;
+}
+
+.participant-event-list {
+  margin-top: 18px;
+  display: grid;
+  gap: 7px;
+}
+
+.participant-event-option {
+  width: 100%;
+  min-width: 0;
+  padding: 13px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  color: #6f756b;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.participant-event-option:hover,
+.participant-event-option.is-selected {
+  color: #2d3528;
+  background: #eef0e9;
+  border-color: #d9ddd3;
+}
+
+.participant-event-option > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.participant-event-option strong,
+.participant-event-option small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.participant-event-option strong {
+  font-size: 11px;
+}
+
+.participant-event-option small {
+  color: #91968d;
+  font-size: 9px;
+}
+
+.participant-empty-state {
+  min-height: 190px;
+  margin-top: 0;
+}
+
+.standalone-registration-panel {
+  min-height: 260px;
+  margin-top: 0;
+  padding: 26px;
+  background: #2c3328;
+  border: 0;
+  border-radius: 15px;
+  box-shadow: 0 18px 44px rgb(26 31 24 / 12%);
+}
+
+.standalone-registration-panel .registration-heading {
+  align-items: flex-start;
+}
+
+.standalone-registration-panel .registration-heading p {
+  margin: 7px 0 0;
+  color: #9fa79a;
+  font-size: 10px;
+}
+
+.registration-note {
+  margin: 18px 0 0;
+  color: #aeb6a7;
+  font-size: 11px;
+}
+
 .registration-heading,
 .registration-list article,
 .registration-actions {
@@ -1297,6 +1468,10 @@ textarea:focus {
 }
 
 @media (max-width: 1000px) {
+  .participants-layout {
+    grid-template-columns: 1fr;
+  }
+
   .date-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1355,6 +1530,10 @@ textarea:focus {
   .content-heading {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .page-heading {
+    padding-bottom: 34px;
   }
 
   .metric-grid {

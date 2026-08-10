@@ -2,6 +2,7 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Match, Show, Switch, createSignal, type Component } from "solid-js";
+import { A, useLocation } from "@solidjs/router";
 import { useWorkOSAuth } from "./auth";
 import { accountNameFor, greetingNameFor } from "./display-name";
 
@@ -22,8 +23,17 @@ const errorMessage = (error: unknown) => {
   return error instanceof Error ? error.message : "Something went wrong. Please try again.";
 };
 
+export type WorkspacePage = "events" | "approvals" | "participants" | "settings";
+
+export const workspacePageForPath = (pathname: string): WorkspacePage => {
+  const page = pathname.split("/").filter(Boolean)[0];
+  return page === "approvals" || page === "participants" || page === "settings" ? page : "events";
+};
+
 const Workspace: Component = () => {
   const auth = useWorkOSAuth();
+  const location = useLocation();
+  const currentPage = () => workspacePageForPath(location.pathname);
   const workspace = useQuery(api.workspace.list, {});
   const activeOrganization = () => workspace.data()?.organizations[0];
   const events = useQuery(
@@ -341,209 +351,270 @@ const Workspace: Component = () => {
                 <span>{roleLabel(data().organizations[0]?.role ?? "event_manager")}</span>
               </div>
               <nav>
-                <a class="nav-item is-active" href="#events" aria-current="page">
+                <A
+                  class="nav-item"
+                  classList={{ "is-active": currentPage() === "events" }}
+                  href="/events"
+                  aria-current={currentPage() === "events" ? "page" : undefined}
+                >
                   <span aria-hidden="true">◫</span> Events
-                </a>
-                <a class="nav-item" href="#approvals">
+                </A>
+                <A
+                  class="nav-item"
+                  classList={{ "is-active": currentPage() === "approvals" }}
+                  href="/approvals"
+                  aria-current={currentPage() === "approvals" ? "page" : undefined}
+                >
                   <span aria-hidden="true">✓</span> Approvals
-                </a>
-                <a class="nav-item" href="#participants">
+                </A>
+                <A
+                  class="nav-item"
+                  classList={{ "is-active": currentPage() === "participants" }}
+                  href="/participants"
+                  aria-current={currentPage() === "participants" ? "page" : undefined}
+                >
                   <span aria-hidden="true">○</span> Participants
-                </a>
-                <a class="nav-item" href="#settings">
+                </A>
+                <A
+                  class="nav-item"
+                  classList={{ "is-active": currentPage() === "settings" }}
+                  href="/settings"
+                  aria-current={currentPage() === "settings" ? "page" : undefined}
+                >
                   <span aria-hidden="true">⌘</span> Settings
-                </a>
+                </A>
               </nav>
             </aside>
 
-            <section class="workspace-content" id="events" aria-labelledby="events-title">
-              <div class="content-heading">
-                <div>
-                  <p class="eyebrow">Event operations</p>
-                  <h1 id="events-title">
-                    Good afternoon, {greetingNameFor(auth.user(), data().viewer.displayName)}.
-                  </h1>
-                  <p>Everything your teams are preparing, reviewing, and publishing.</p>
-                </div>
-                <button
-                  class="primary-button"
-                  type="button"
-                  disabled={data().organizations[0]?.teams.length === 0}
-                  onClick={() => {
-                    setFormError(null);
-                    setShowEventForm((visible) => !visible);
-                  }}
-                >
-                  {showEventForm() ? "Close" : "New event"} <span aria-hidden="true">＋</span>
-                </button>
-              </div>
-
-              <Show when={showEventForm() && data().organizations[0]}>
-                {(organization) => (
-                  <form class="event-form" onSubmit={handleEventCreate}>
-                    <div class="form-heading">
-                      <div>
-                        <p class="eyebrow">New draft</p>
-                        <h2>Compose a recurring event</h2>
-                      </div>
-                      <span>{timezone}</span>
-                    </div>
-                    <div class="form-grid">
-                      <label class="wide-field">
-                        <span>Event title</span>
-                        <input
-                          placeholder="Leadership essentials"
-                          value={eventTitle()}
-                          onInput={(event) => setEventTitle(event.currentTarget.value)}
-                          required
-                          autofocus
-                        />
-                      </label>
-                      <label>
-                        <span>Owning team</span>
-                        <select
-                          value={eventTeamId() || organization().teams[0]?.id}
-                          onChange={(event) =>
-                            setEventTeamId(event.currentTarget.value as Id<"teams">)
-                          }
-                          required
-                        >
-                          <For each={organization().teams}>
-                            {(team) => <option value={team.id}>{team.name}</option>}
-                          </For>
-                        </select>
-                      </label>
-                      <label class="wide-field">
-                        <span>Description</span>
-                        <textarea
-                          placeholder="What participants will learn and experience"
-                          value={eventDescription()}
-                          onInput={(event) => setEventDescription(event.currentTarget.value)}
-                          rows="3"
-                        />
-                      </label>
-                      <label>
-                        <span>First date starts</span>
-                        <input
-                          type="datetime-local"
-                          value={eventStartsAt()}
-                          onInput={(event) => setEventStartsAt(event.currentTarget.value)}
-                          required
-                        />
-                      </label>
-                      <label>
-                        <span>First date ends</span>
-                        <input
-                          type="datetime-local"
-                          value={eventEndsAt()}
-                          onInput={(event) => setEventEndsAt(event.currentTarget.value)}
-                          required
-                        />
-                      </label>
-                      <label>
-                        <span>Venue</span>
-                        <input
-                          placeholder="Harbor House"
-                          value={eventVenue()}
-                          onInput={(event) => setEventVenue(event.currentTarget.value)}
-                          required
-                        />
-                      </label>
-                    </div>
-                    <Show when={formError()}>
-                      <p class="auth-error" role="alert">
-                        {formError()}
-                      </p>
-                    </Show>
-                    <div class="form-actions">
-                      <button
-                        class="primary-button"
-                        type="submit"
-                        disabled={createEvent.isLoading()}
-                      >
-                        {createEvent.isLoading() ? "Creating draft…" : "Create draft"}
-                        <span aria-hidden="true">→</span>
-                      </button>
-                      <small>The draft is visible only inside Serenity.</small>
-                    </div>
-                  </form>
-                )}
-              </Show>
-
-              <div class="metric-grid" aria-label="Workspace overview">
-                <article>
-                  <span>Active events</span>
-                  <strong>{events.data()?.length ?? 0}</strong>
-                  <small>
-                    {events.data()?.length ? "Across your teams" : "Ready for your first event"}
-                  </small>
-                </article>
-                <article>
-                  <span>Awaiting review</span>
-                  <strong>
-                    {activeOrganization()?.role === "super_user"
-                      ? (pendingRevisions.data()?.length ?? 0)
-                      : (events.data()?.filter((event) => event.status === "submitted").length ??
-                        0)}
-                  </strong>
-                  <small>Submitted revisions</small>
-                </article>
-                <article>
-                  <span>Teams</span>
-                  <strong>{data().organizations[0]?.teams.length ?? 0}</strong>
-                  <small>In this organization</small>
-                </article>
-              </div>
-
-              <Show when={activeOrganization()?.role === "super_user"}>
-                <section class="approvals-section" id="approvals" aria-labelledby="approvals-title">
-                  <div class="section-title-row">
+            <section class="workspace-content">
+              <Show when={currentPage() === "events"}>
+                <section class="workspace-page" aria-labelledby="events-title">
+                  <div class="content-heading">
                     <div>
-                      <p class="eyebrow">Safety boundary</p>
-                      <h2 id="approvals-title">Awaiting review</h2>
+                      <p class="eyebrow">Event operations</p>
+                      <h1 id="events-title">
+                        Good afternoon, {greetingNameFor(auth.user(), data().viewer.displayName)}.
+                      </h1>
+                      <p>Everything your teams are preparing, reviewing, and publishing.</p>
                     </div>
-                    <span class="section-count">
-                      {pendingRevisions.data()?.length ?? 0} pending
-                    </span>
+                    <button
+                      class="primary-button"
+                      type="button"
+                      disabled={data().organizations[0]?.teams.length === 0}
+                      onClick={() => {
+                        setFormError(null);
+                        setShowEventForm((visible) => !visible);
+                      }}
+                    >
+                      {showEventForm() ? "Close" : "New event"} <span aria-hidden="true">＋</span>
+                    </button>
                   </div>
-                  <div class="approval-list">
-                    <For each={pendingRevisions.data()}>
-                      {(revision) => (
-                        <article class="approval-card">
+
+                  <Show when={showEventForm() && data().organizations[0]}>
+                    {(organization) => (
+                      <form class="event-form" onSubmit={handleEventCreate}>
+                        <div class="form-heading">
                           <div>
-                            <span>Revision {revision.revisionNumber}</span>
-                            <h3>{revision.title}</h3>
-                            <p>
-                              {revision.teamName} · {revision.occurrenceCount} dates ·{" "}
-                              {revision.sessionCount} sessions
-                            </p>
+                            <p class="eyebrow">New draft</p>
+                            <h2>Compose a recurring event</h2>
                           </div>
-                          <div class="approval-actions">
-                            <button
-                              class="secondary-button compact-button"
-                              type="button"
-                              disabled={rejectRevision.isLoading()}
-                              onClick={() => void handleReview(revision.id, "reject")}
+                          <span>{timezone}</span>
+                        </div>
+                        <div class="form-grid">
+                          <label class="wide-field">
+                            <span>Event title</span>
+                            <input
+                              placeholder="Leadership essentials"
+                              value={eventTitle()}
+                              onInput={(event) => setEventTitle(event.currentTarget.value)}
+                              required
+                              autofocus
+                            />
+                          </label>
+                          <label>
+                            <span>Owning team</span>
+                            <select
+                              value={eventTeamId() || organization().teams[0]?.id}
+                              onChange={(event) =>
+                                setEventTeamId(event.currentTarget.value as Id<"teams">)
+                              }
+                              required
                             >
-                              Request changes
-                            </button>
-                            <button
-                              class="primary-button compact-button"
-                              type="button"
-                              disabled={approveRevision.isLoading()}
-                              onClick={() => void handleReview(revision.id, "approve")}
-                            >
-                              Approve & publish
-                            </button>
-                          </div>
-                        </article>
-                      )}
-                    </For>
+                              <For each={organization().teams}>
+                                {(team) => <option value={team.id}>{team.name}</option>}
+                              </For>
+                            </select>
+                          </label>
+                          <label class="wide-field">
+                            <span>Description</span>
+                            <textarea
+                              placeholder="What participants will learn and experience"
+                              value={eventDescription()}
+                              onInput={(event) => setEventDescription(event.currentTarget.value)}
+                              rows="3"
+                            />
+                          </label>
+                          <label>
+                            <span>First date starts</span>
+                            <input
+                              type="datetime-local"
+                              value={eventStartsAt()}
+                              onInput={(event) => setEventStartsAt(event.currentTarget.value)}
+                              required
+                            />
+                          </label>
+                          <label>
+                            <span>First date ends</span>
+                            <input
+                              type="datetime-local"
+                              value={eventEndsAt()}
+                              onInput={(event) => setEventEndsAt(event.currentTarget.value)}
+                              required
+                            />
+                          </label>
+                          <label>
+                            <span>Venue</span>
+                            <input
+                              placeholder="Harbor House"
+                              value={eventVenue()}
+                              onInput={(event) => setEventVenue(event.currentTarget.value)}
+                              required
+                            />
+                          </label>
+                        </div>
+                        <Show when={formError()}>
+                          <p class="auth-error" role="alert">
+                            {formError()}
+                          </p>
+                        </Show>
+                        <div class="form-actions">
+                          <button
+                            class="primary-button"
+                            type="submit"
+                            disabled={createEvent.isLoading()}
+                          >
+                            {createEvent.isLoading() ? "Creating draft…" : "Create draft"}
+                            <span aria-hidden="true">→</span>
+                          </button>
+                          <small>The draft is visible only inside Serenity.</small>
+                        </div>
+                      </form>
+                    )}
+                  </Show>
+
+                  <div class="metric-grid" aria-label="Workspace overview">
+                    <article>
+                      <span>Active events</span>
+                      <strong>{events.data()?.length ?? 0}</strong>
+                      <small>
+                        {events.data()?.length ? "Across your teams" : "Ready for your first event"}
+                      </small>
+                    </article>
+                    <article>
+                      <span>Awaiting review</span>
+                      <strong>
+                        {activeOrganization()?.role === "super_user"
+                          ? (pendingRevisions.data()?.length ?? 0)
+                          : (events.data()?.filter((event) => event.status === "submitted")
+                              .length ?? 0)}
+                      </strong>
+                      <small>Submitted revisions</small>
+                    </article>
+                    <article>
+                      <span>Teams</span>
+                      <strong>{data().organizations[0]?.teams.length ?? 0}</strong>
+                      <small>In this organization</small>
+                    </article>
                   </div>
                 </section>
               </Show>
 
-              <Show when={selectedEventId()}>
+              <Show when={currentPage() === "approvals"}>
+                <section class="workspace-page" aria-labelledby="approvals-page-title">
+                  <div class="content-heading page-heading">
+                    <div>
+                      <p class="eyebrow">Publication review</p>
+                      <h1 id="approvals-page-title">Approvals</h1>
+                      <p>Review submitted revisions before they are published.</p>
+                    </div>
+                    <span class="page-total">{pendingRevisions.data()?.length ?? 0} pending</span>
+                  </div>
+
+                  <Show
+                    when={activeOrganization()?.role === "super_user"}
+                    fallback={
+                      <div class="empty-page-state">
+                        <span aria-hidden="true">✓</span>
+                        <div>
+                          <h2>Approvals are handled by super users.</h2>
+                          <p>You can still track submitted events from the Events page.</p>
+                        </div>
+                      </div>
+                    }
+                  >
+                    <section class="approvals-section" aria-labelledby="approvals-title">
+                      <div class="section-title-row">
+                        <div>
+                          <p class="eyebrow">Safety boundary</p>
+                          <h2 id="approvals-title">Awaiting review</h2>
+                        </div>
+                        <span class="section-count">
+                          {pendingRevisions.data()?.length ?? 0} pending
+                        </span>
+                      </div>
+                      <div class="approval-list">
+                        <Show
+                          when={(pendingRevisions.data()?.length ?? 0) > 0}
+                          fallback={
+                            <div class="empty-page-state compact-empty-state">
+                              <span aria-hidden="true">✓</span>
+                              <div>
+                                <h2>Everything is reviewed.</h2>
+                                <p>New submissions will appear here when they are ready.</p>
+                              </div>
+                            </div>
+                          }
+                        >
+                          <For each={pendingRevisions.data()}>
+                            {(revision) => (
+                              <article class="approval-card">
+                                <div>
+                                  <span>Revision {revision.revisionNumber}</span>
+                                  <h3>{revision.title}</h3>
+                                  <p>
+                                    {revision.teamName} · {revision.occurrenceCount} dates ·{" "}
+                                    {revision.sessionCount} sessions
+                                  </p>
+                                </div>
+                                <div class="approval-actions">
+                                  <button
+                                    class="secondary-button compact-button"
+                                    type="button"
+                                    disabled={rejectRevision.isLoading()}
+                                    onClick={() => void handleReview(revision.id, "reject")}
+                                  >
+                                    Request changes
+                                  </button>
+                                  <button
+                                    class="primary-button compact-button"
+                                    type="button"
+                                    disabled={approveRevision.isLoading()}
+                                    onClick={() => void handleReview(revision.id, "approve")}
+                                  >
+                                    Approve & publish
+                                  </button>
+                                </div>
+                              </article>
+                            )}
+                          </For>
+                        </Show>
+                      </div>
+                    </section>
+                  </Show>
+                </section>
+              </Show>
+
+              <Show when={currentPage() === "events" && selectedEventId()}>
                 <section class="event-detail" aria-label="Event editor">
                   <Show when={eventDetail.data()} fallback={<p>Opening event…</p>}>
                     {(detail) => (
@@ -749,222 +820,335 @@ const Workspace: Component = () => {
                             )}
                           </For>
                         </div>
-
-                        <section class="registration-panel" id="participants">
-                          <div class="registration-heading">
-                            <div>
-                              <span>Participation</span>
-                              <h3>Registrations</h3>
-                            </div>
-                            <strong>{registrationList.data()?.length ?? 0}</strong>
-                          </div>
-                          <Show when={detail().event.status === "published"}>
-                            <form class="registration-form" onSubmit={handleRegistrationCreate}>
-                              <input
-                                aria-label="Participant name"
-                                placeholder="Participant name"
-                                value={participantName()}
-                                onInput={(event) => setParticipantName(event.currentTarget.value)}
-                                required
-                              />
-                              <input
-                                aria-label="Participant email"
-                                type="email"
-                                placeholder="participant@example.com"
-                                value={participantEmail()}
-                                onInput={(event) => setParticipantEmail(event.currentTarget.value)}
-                                required
-                              />
-                              <button
-                                class="primary-button compact-button"
-                                type="submit"
-                                disabled={registerParticipant.isLoading()}
-                              >
-                                {registerParticipant.isLoading() ? "Registering…" : "Register"}
-                              </button>
-                            </form>
-                          </Show>
-                          <div class="registration-list">
-                            <For each={registrationList.data()}>
-                              {(registration) => (
-                                <article>
-                                  <div class="participant-avatar" aria-hidden="true">
-                                    {registration.participantName.slice(0, 1).toUpperCase()}
-                                  </div>
-                                  <div>
-                                    <h4>{registration.participantName}</h4>
-                                    <p>
-                                      {registration.participantEmail ||
-                                        registration.externalParticipantId}
-                                    </p>
-                                  </div>
-                                  <span class={`registration-status is-${registration.status}`}>
-                                    {registration.status}
-                                  </span>
-                                  <div class="registration-actions">
-                                    <Show
-                                      when={
-                                        registration.status === "pending" ||
-                                        registration.status === "waitlisted"
-                                      }
-                                    >
-                                      <button
-                                        class="text-button"
-                                        type="button"
-                                        onClick={() =>
-                                          void handleRegistrationStatus(registration.id, "accept")
-                                        }
-                                      >
-                                        Accept
-                                      </button>
-                                    </Show>
-                                    <Show when={registration.status !== "withdrawn"}>
-                                      <button
-                                        class="text-button danger-button"
-                                        type="button"
-                                        onClick={() =>
-                                          void handleRegistrationStatus(registration.id, "withdraw")
-                                        }
-                                      >
-                                        Withdraw
-                                      </button>
-                                    </Show>
-                                  </div>
-                                </article>
-                              )}
-                            </For>
-                          </div>
-                        </section>
                       </>
                     )}
                   </Show>
                 </section>
               </Show>
 
-              <section class="events-section" aria-labelledby="event-list-title">
-                <div class="section-title-row">
-                  <div>
-                    <p class="eyebrow">Program</p>
-                    <h2 id="event-list-title">Events</h2>
-                  </div>
-                  <span class="section-count">{events.data()?.length ?? 0} total</span>
-                </div>
-                <Show
-                  when={(events.data()?.length ?? 0) > 0}
-                  fallback={
-                    <div class="empty-events">
-                      <span aria-hidden="true">◇</span>
-                      <div>
-                        <h3>Your event list is ready.</h3>
-                        <p>Create the first draft to begin composing dates and sessions.</p>
-                      </div>
+              <Show when={currentPage() === "events"}>
+                <section class="events-section" aria-labelledby="event-list-title">
+                  <div class="section-title-row">
+                    <div>
+                      <p class="eyebrow">Program</p>
+                      <h2 id="event-list-title">Events</h2>
                     </div>
-                  }
-                >
-                  <div class="event-grid">
-                    <For each={events.data()}>
-                      {(event) => (
-                        <button
-                          class="event-card"
-                          classList={{ "is-selected": selectedEventId() === event.id }}
-                          type="button"
-                          onClick={() => {
-                            setFormError(null);
-                            setSelectedEventId(event.id);
-                            setSelectedDateId(null);
-                          }}
-                        >
-                          <div class="event-card-topline">
-                            <span class={`event-status status-${event.status}`}>
-                              {event.status}
-                            </span>
-                            <span>{event.teamName}</span>
-                          </div>
-                          <h3>{event.title}</h3>
-                          <p>{event.description || "No description yet."}</p>
-                          <div class="event-card-stats">
-                            <span>{event.occurrenceCount} dates</span>
-                            <span>{event.sessionCount} sessions</span>
-                            <span aria-hidden="true">→</span>
-                          </div>
-                        </button>
-                      )}
-                    </For>
+                    <span class="section-count">{events.data()?.length ?? 0} total</span>
                   </div>
-                </Show>
-              </section>
-
-              <section class="teams-section" aria-labelledby="teams-title">
-                <div class="section-title-row">
-                  <div>
-                    <p class="eyebrow">Your boundaries</p>
-                    <h2 id="teams-title">Teams</h2>
-                  </div>
-                  <Show when={data().organizations[0]?.role === "administrator"}>
-                    <button
-                      class="secondary-button compact-button"
-                      type="button"
-                      onClick={() => setShowTeamForm((visible) => !visible)}
-                    >
-                      {showTeamForm() ? "Cancel" : "Add team"}
-                    </button>
-                  </Show>
-                </div>
-
-                <Show when={showTeamForm() && data().organizations[0]}>
-                  {(organization) => (
-                    <form
-                      class="inline-form"
-                      onSubmit={(event) => handleTeamCreate(event, organization().id)}
-                    >
-                      <label>
-                        <span class="sr-only">Team name</span>
-                        <input
-                          placeholder="Team name"
-                          value={newTeamName()}
-                          onInput={(event) => setNewTeamName(event.currentTarget.value)}
-                          required
-                          autofocus
-                        />
-                      </label>
-                      <button
-                        class="primary-button compact-button"
-                        type="submit"
-                        disabled={createTeam.isLoading()}
-                      >
-                        {createTeam.isLoading() ? "Adding…" : "Add team"}
-                      </button>
-                    </form>
-                  )}
-                </Show>
-                <Show when={formError()}>
-                  <p class="auth-error" role="alert">
-                    {formError()}
-                  </p>
-                </Show>
-
-                <div class="team-grid">
-                  <For each={data().organizations[0]?.teams}>
-                    {(team) => (
-                      <article class="team-card">
-                        <span class="team-monogram" aria-hidden="true">
-                          {team.name.slice(0, 2).toUpperCase()}
-                        </span>
+                  <Show
+                    when={(events.data()?.length ?? 0) > 0}
+                    fallback={
+                      <div class="empty-events">
+                        <span aria-hidden="true">◇</span>
                         <div>
-                          <h3>{team.name}</h3>
-                          <p>
-                            {events.data()?.filter((event) => event.teamId === team.id).length ?? 0}{" "}
-                            events
-                          </p>
+                          <h3>Your event list is ready.</h3>
+                          <p>Create the first draft to begin composing dates and sessions.</p>
                         </div>
-                        <span class="card-arrow" aria-hidden="true">
-                          →
-                        </span>
-                      </article>
-                    )}
-                  </For>
-                </div>
-              </section>
+                      </div>
+                    }
+                  >
+                    <div class="event-grid">
+                      <For each={events.data()}>
+                        {(event) => (
+                          <button
+                            class="event-card"
+                            classList={{ "is-selected": selectedEventId() === event.id }}
+                            type="button"
+                            onClick={() => {
+                              setFormError(null);
+                              setSelectedEventId(event.id);
+                              setSelectedDateId(null);
+                            }}
+                          >
+                            <div class="event-card-topline">
+                              <span class={`event-status status-${event.status}`}>
+                                {event.status}
+                              </span>
+                              <span>{event.teamName}</span>
+                            </div>
+                            <h3>{event.title}</h3>
+                            <p>{event.description || "No description yet."}</p>
+                            <div class="event-card-stats">
+                              <span>{event.occurrenceCount} dates</span>
+                              <span>{event.sessionCount} sessions</span>
+                              <span aria-hidden="true">→</span>
+                            </div>
+                          </button>
+                        )}
+                      </For>
+                    </div>
+                  </Show>
+                </section>
+              </Show>
+
+              <Show when={currentPage() === "participants"}>
+                <section class="workspace-page" aria-labelledby="participants-page-title">
+                  <div class="content-heading page-heading">
+                    <div>
+                      <p class="eyebrow">Attendance operations</p>
+                      <h1 id="participants-page-title">Participants</h1>
+                      <p>Choose an event to manage its registrations and attendance.</p>
+                    </div>
+                    <span class="page-total">{events.data()?.length ?? 0} events</span>
+                  </div>
+
+                  <div class="participants-layout">
+                    <section
+                      class="participant-event-picker"
+                      aria-labelledby="participant-events-title"
+                    >
+                      <div class="section-title-row">
+                        <div>
+                          <p class="eyebrow">Program</p>
+                          <h2 id="participant-events-title">Select an event</h2>
+                        </div>
+                      </div>
+                      <div class="participant-event-list">
+                        <For each={events.data()}>
+                          {(event) => (
+                            <button
+                              class="participant-event-option"
+                              classList={{ "is-selected": selectedEventId() === event.id }}
+                              type="button"
+                              aria-pressed={selectedEventId() === event.id}
+                              onClick={() => {
+                                setFormError(null);
+                                setSelectedEventId(event.id);
+                              }}
+                            >
+                              <span class={`event-status status-${event.status}`}>
+                                {event.status}
+                              </span>
+                              <span>
+                                <strong>{event.title}</strong>
+                                <small>{event.teamName}</small>
+                              </span>
+                              <span aria-hidden="true">→</span>
+                            </button>
+                          )}
+                        </For>
+                      </div>
+                    </section>
+
+                    <Show
+                      when={selectedEventId()}
+                      fallback={
+                        <div class="empty-page-state participant-empty-state">
+                          <span aria-hidden="true">○</span>
+                          <div>
+                            <h2>Select an event to begin.</h2>
+                            <p>Its registrations will appear here.</p>
+                          </div>
+                        </div>
+                      }
+                    >
+                      <Show when={eventDetail.data()} fallback={<p>Opening participants…</p>}>
+                        {(detail) => (
+                          <section class="registration-panel standalone-registration-panel">
+                            <div class="registration-heading">
+                              <div>
+                                <span>{detail().event.teamName}</span>
+                                <h3>{detail().event.title}</h3>
+                                <p>Registrations</p>
+                              </div>
+                              <strong>{registrationList.data()?.length ?? 0}</strong>
+                            </div>
+
+                            <Show
+                              when={detail().event.status === "published"}
+                              fallback={
+                                <p class="registration-note">
+                                  Registration opens when this event is published.
+                                </p>
+                              }
+                            >
+                              <form class="registration-form" onSubmit={handleRegistrationCreate}>
+                                <input
+                                  aria-label="Participant name"
+                                  placeholder="Participant name"
+                                  value={participantName()}
+                                  onInput={(event) => setParticipantName(event.currentTarget.value)}
+                                  required
+                                />
+                                <input
+                                  aria-label="Participant email"
+                                  type="email"
+                                  placeholder="participant@example.com"
+                                  value={participantEmail()}
+                                  onInput={(event) =>
+                                    setParticipantEmail(event.currentTarget.value)
+                                  }
+                                  required
+                                />
+                                <button
+                                  class="primary-button compact-button"
+                                  type="submit"
+                                  disabled={registerParticipant.isLoading()}
+                                >
+                                  {registerParticipant.isLoading() ? "Registering…" : "Register"}
+                                </button>
+                              </form>
+                            </Show>
+
+                            <Show when={formError()}>
+                              <p class="auth-error" role="alert">
+                                {formError()}
+                              </p>
+                            </Show>
+
+                            <div class="registration-list">
+                              <Show
+                                when={(registrationList.data()?.length ?? 0) > 0}
+                                fallback={<p class="registration-note">No participants yet.</p>}
+                              >
+                                <For each={registrationList.data()}>
+                                  {(registration) => (
+                                    <article>
+                                      <div class="participant-avatar" aria-hidden="true">
+                                        {registration.participantName.slice(0, 1).toUpperCase()}
+                                      </div>
+                                      <div>
+                                        <h4>{registration.participantName}</h4>
+                                        <p>
+                                          {registration.participantEmail ||
+                                            registration.externalParticipantId}
+                                        </p>
+                                      </div>
+                                      <span class={`registration-status is-${registration.status}`}>
+                                        {registration.status}
+                                      </span>
+                                      <div class="registration-actions">
+                                        <Show
+                                          when={
+                                            registration.status === "pending" ||
+                                            registration.status === "waitlisted"
+                                          }
+                                        >
+                                          <button
+                                            class="text-button"
+                                            type="button"
+                                            onClick={() =>
+                                              void handleRegistrationStatus(
+                                                registration.id,
+                                                "accept",
+                                              )
+                                            }
+                                          >
+                                            Accept
+                                          </button>
+                                        </Show>
+                                        <Show when={registration.status !== "withdrawn"}>
+                                          <button
+                                            class="text-button danger-button"
+                                            type="button"
+                                            onClick={() =>
+                                              void handleRegistrationStatus(
+                                                registration.id,
+                                                "withdraw",
+                                              )
+                                            }
+                                          >
+                                            Withdraw
+                                          </button>
+                                        </Show>
+                                      </div>
+                                    </article>
+                                  )}
+                                </For>
+                              </Show>
+                            </div>
+                          </section>
+                        )}
+                      </Show>
+                    </Show>
+                  </div>
+                </section>
+              </Show>
+
+              <Show when={currentPage() === "settings"}>
+                <section class="workspace-page" aria-labelledby="settings-page-title">
+                  <div class="content-heading page-heading">
+                    <div>
+                      <p class="eyebrow">Workspace administration</p>
+                      <h1 id="settings-page-title">Settings</h1>
+                      <p>Manage the teams that own and deliver your organization’s events.</p>
+                    </div>
+                  </div>
+
+                  <section class="teams-section" aria-labelledby="teams-title">
+                    <div class="section-title-row">
+                      <div>
+                        <p class="eyebrow">Your boundaries</p>
+                        <h2 id="teams-title">Teams</h2>
+                      </div>
+                      <Show when={data().organizations[0]?.role === "administrator"}>
+                        <button
+                          class="secondary-button compact-button"
+                          type="button"
+                          onClick={() => setShowTeamForm((visible) => !visible)}
+                        >
+                          {showTeamForm() ? "Cancel" : "Add team"}
+                        </button>
+                      </Show>
+                    </div>
+
+                    <Show when={showTeamForm() && data().organizations[0]}>
+                      {(organization) => (
+                        <form
+                          class="inline-form"
+                          onSubmit={(event) => handleTeamCreate(event, organization().id)}
+                        >
+                          <label>
+                            <span class="sr-only">Team name</span>
+                            <input
+                              placeholder="Team name"
+                              value={newTeamName()}
+                              onInput={(event) => setNewTeamName(event.currentTarget.value)}
+                              required
+                              autofocus
+                            />
+                          </label>
+                          <button
+                            class="primary-button compact-button"
+                            type="submit"
+                            disabled={createTeam.isLoading()}
+                          >
+                            {createTeam.isLoading() ? "Adding…" : "Add team"}
+                          </button>
+                        </form>
+                      )}
+                    </Show>
+                    <Show when={formError()}>
+                      <p class="auth-error" role="alert">
+                        {formError()}
+                      </p>
+                    </Show>
+
+                    <div class="team-grid">
+                      <For each={data().organizations[0]?.teams}>
+                        {(team) => (
+                          <article class="team-card">
+                            <span class="team-monogram" aria-hidden="true">
+                              {team.name.slice(0, 2).toUpperCase()}
+                            </span>
+                            <div>
+                              <h3>{team.name}</h3>
+                              <p>
+                                {events.data()?.filter((event) => event.teamId === team.id)
+                                  .length ?? 0}{" "}
+                                events
+                              </p>
+                            </div>
+                            <span class="card-arrow" aria-hidden="true">
+                              →
+                            </span>
+                          </article>
+                        )}
+                      </For>
+                    </div>
+                  </section>
+                </section>
+              </Show>
             </section>
           </div>
         )}
