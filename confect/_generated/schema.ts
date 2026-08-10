@@ -1,6 +1,7 @@
 import { DatabaseSchema as $DatabaseSchema } from "@confect/server";
 
 import audit_entries from "./tables/audit_entries";
+import date_declines from "./tables/date_declines";
 import event_dates from "./tables/event_dates";
 import event_revisions from "./tables/event_revisions";
 import event_type_versions from "./tables/event_type_versions";
@@ -8,6 +9,8 @@ import event_types from "./tables/event_types";
 import events from "./tables/events";
 import organization_memberships from "./tables/organization_memberships";
 import organizations from "./tables/organizations";
+import participants from "./tables/participants";
+import registrations from "./tables/registrations";
 import revision_dates from "./tables/revision_dates";
 import revision_sessions from "./tables/revision_sessions";
 import sessions from "./tables/sessions";
@@ -16,6 +19,7 @@ import teams from "./tables/teams";
 
 const databaseSchema: $DatabaseSchema.DatabaseSchema<
   typeof audit_entries |
+  typeof date_declines |
   typeof event_dates |
   typeof event_revisions |
   typeof event_type_versions |
@@ -23,6 +27,8 @@ const databaseSchema: $DatabaseSchema.DatabaseSchema<
   typeof events |
   typeof organization_memberships |
   typeof organizations |
+  typeof participants |
+  typeof registrations |
   typeof revision_dates |
   typeof revision_sessions |
   typeof sessions |
@@ -30,6 +36,7 @@ const databaseSchema: $DatabaseSchema.DatabaseSchema<
   typeof teams
 > = $DatabaseSchema.make({
   audit_entries,
+  date_declines,
   event_dates,
   event_revisions,
   event_type_versions,
@@ -37,6 +44,8 @@ const databaseSchema: $DatabaseSchema.DatabaseSchema<
   events,
   organization_memberships,
   organizations,
+  participants,
+  registrations,
   revision_dates,
   revision_sessions,
   sessions,

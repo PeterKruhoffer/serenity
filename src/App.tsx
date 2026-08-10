@@ -69,6 +69,16 @@ const Workspace: Component = () => {
     () => ({ eventId: selectedEventId() ?? ("" as Id<"events">) }),
     () => ({ enabled: selectedEventId() !== null }),
   );
+  const registrationList = useQuery(
+    api.registrations.list,
+    () => ({ eventId: selectedEventId() ?? ("" as Id<"events">) }),
+    () => ({ enabled: selectedEventId() !== null }),
+  );
+  const registerParticipant = useMutation(api.registrations.register);
+  const acceptRegistration = useMutation(api.registrations.accept);
+  const withdrawRegistration = useMutation(api.registrations.withdraw);
+  const [participantName, setParticipantName] = createSignal("");
+  const [participantEmail, setParticipantEmail] = createSignal("");
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const formatDate = (timestamp: number) =>
@@ -210,6 +220,45 @@ const Workspace: Component = () => {
         await approveRevision.mutate({ revisionId, note: "" });
       } else {
         await rejectRevision.mutate({ revisionId, note: "Changes requested by reviewer" });
+      }
+    } catch (error) {
+      setFormError(errorMessage(error));
+    }
+  };
+
+  const handleRegistrationCreate = async (event: SubmitEvent) => {
+    event.preventDefault();
+    const eventId = selectedEventId();
+    if (!eventId) return;
+    setFormError(null);
+    try {
+      await registerParticipant.mutate({
+        eventId,
+        externalParticipantId: participantEmail().trim().toLowerCase(),
+        displayName: participantName(),
+        email: participantEmail(),
+        locale: navigator.language || "en",
+        ticketName: "Standard",
+        priceMinor: 0,
+        paymentStatus: "not_required",
+      });
+      setParticipantName("");
+      setParticipantEmail("");
+    } catch (error) {
+      setFormError(errorMessage(error));
+    }
+  };
+
+  const handleRegistrationStatus = async (
+    registrationId: Id<"registrations">,
+    action: "accept" | "withdraw",
+  ) => {
+    setFormError(null);
+    try {
+      if (action === "accept") {
+        await acceptRegistration.mutate({ registrationId });
+      } else {
+        await withdrawRegistration.mutate({ registrationId });
       }
     } catch (error) {
       setFormError(errorMessage(error));
@@ -698,6 +747,92 @@ const Workspace: Component = () => {
                             )}
                           </For>
                         </div>
+
+                        <section class="registration-panel" id="participants">
+                          <div class="registration-heading">
+                            <div>
+                              <span>Participation</span>
+                              <h3>Registrations</h3>
+                            </div>
+                            <strong>{registrationList.data()?.length ?? 0}</strong>
+                          </div>
+                          <Show when={detail().event.status === "published"}>
+                            <form class="registration-form" onSubmit={handleRegistrationCreate}>
+                              <input
+                                aria-label="Participant name"
+                                placeholder="Participant name"
+                                value={participantName()}
+                                onInput={(event) => setParticipantName(event.currentTarget.value)}
+                                required
+                              />
+                              <input
+                                aria-label="Participant email"
+                                type="email"
+                                placeholder="participant@example.com"
+                                value={participantEmail()}
+                                onInput={(event) => setParticipantEmail(event.currentTarget.value)}
+                                required
+                              />
+                              <button
+                                class="primary-button compact-button"
+                                type="submit"
+                                disabled={registerParticipant.isLoading()}
+                              >
+                                {registerParticipant.isLoading() ? "Registering…" : "Register"}
+                              </button>
+                            </form>
+                          </Show>
+                          <div class="registration-list">
+                            <For each={registrationList.data()}>
+                              {(registration) => (
+                                <article>
+                                  <div class="participant-avatar" aria-hidden="true">
+                                    {registration.participantName.slice(0, 1).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <h4>{registration.participantName}</h4>
+                                    <p>
+                                      {registration.participantEmail ||
+                                        registration.externalParticipantId}
+                                    </p>
+                                  </div>
+                                  <span class={`registration-status is-${registration.status}`}>
+                                    {registration.status}
+                                  </span>
+                                  <div class="registration-actions">
+                                    <Show
+                                      when={
+                                        registration.status === "pending" ||
+                                        registration.status === "waitlisted"
+                                      }
+                                    >
+                                      <button
+                                        class="text-button"
+                                        type="button"
+                                        onClick={() =>
+                                          void handleRegistrationStatus(registration.id, "accept")
+                                        }
+                                      >
+                                        Accept
+                                      </button>
+                                    </Show>
+                                    <Show when={registration.status !== "withdrawn"}>
+                                      <button
+                                        class="text-button danger-button"
+                                        type="button"
+                                        onClick={() =>
+                                          void handleRegistrationStatus(registration.id, "withdraw")
+                                        }
+                                      >
+                                        Withdraw
+                                      </button>
+                                    </Show>
+                                  </div>
+                                </article>
+                              )}
+                            </For>
+                          </div>
+                        </section>
                       </>
                     )}
                   </Show>

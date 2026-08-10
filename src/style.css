@@ -994,6 +994,140 @@ textarea:focus {
   font-size: 10px;
 }
 
+.registration-panel {
+  margin-top: 28px;
+  padding-top: 26px;
+  border-top: 1px solid rgb(255 255 255 / 12%);
+}
+
+.registration-heading,
+.registration-list article,
+.registration-actions {
+  display: flex;
+  align-items: center;
+}
+
+.registration-heading {
+  justify-content: space-between;
+}
+
+.registration-heading span {
+  color: #aeb6a7;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.registration-heading h3 {
+  margin: 5px 0 0;
+  color: #f0f3eb;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.registration-heading > strong {
+  color: #f0f3eb;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.registration-form {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: 8px;
+}
+
+.registration-form input {
+  min-height: 40px;
+  font-size: 11px;
+}
+
+.registration-list {
+  margin-top: 16px;
+  display: grid;
+  gap: 7px;
+}
+
+.registration-list article {
+  min-height: 58px;
+  padding: 9px 12px;
+  gap: 12px;
+  background: rgb(255 255 255 / 6%);
+  border-radius: 10px;
+}
+
+.participant-avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #e8eee1;
+  background: #607157;
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: 12px;
+}
+
+.registration-list article > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.registration-list h4 {
+  margin: 0 0 3px;
+  color: #edf1e8;
+  font-size: 11px;
+}
+
+.registration-list p {
+  margin: 0;
+  overflow: hidden;
+  color: #9fa79a;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.registration-status {
+  padding: 4px 7px;
+  color: #b8c3b1;
+  background: rgb(255 255 255 / 7%);
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.registration-status.is-accepted {
+  color: #c8e0bf;
+  background: rgb(104 145 88 / 18%);
+}
+
+.registration-status.is-waitlisted,
+.registration-status.is-pending {
+  color: #e3d4aa;
+  background: rgb(170 143 72 / 16%);
+}
+
+.registration-actions {
+  gap: 10px;
+}
+
+.registration-actions .text-button {
+  color: #cbd1c5;
+  font-size: 9px;
+}
+
+.registration-actions .danger-button {
+  color: #d9aaa4;
+}
+
 .teams-section {
   padding-top: 52px;
 }
@@ -1212,6 +1346,20 @@ textarea:focus {
   .event-detail-actions,
   .approval-actions {
     flex-wrap: wrap;
+  }
+
+  .registration-form {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-list article {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .registration-actions {
+    width: 100%;
+    padding-left: 46px;
   }
 
   .event-detail-heading h2 {

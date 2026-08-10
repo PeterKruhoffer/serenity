@@ -196,6 +196,9 @@ const submit = FunctionImpl.make(databaseSchema, publication, "submit", ({ event
       timezone: event.timezone,
       occurrenceCount: event.occurrenceCount,
       sessionCount: event.sessionCount,
+      capacity: event.capacity ?? 40,
+      autoAccept: event.autoAccept ?? false,
+      waitingListEnabled: event.waitingListEnabled ?? true,
       submittedByIdentity: identity.tokenIdentifier,
       submittedAt: now,
     });
