@@ -29,11 +29,20 @@ const Workspace: Component = () => {
     () => ({ organizationId: activeOrganization()?.id ?? ("" as Id<"organizations">) }),
     () => ({ enabled: Boolean(activeOrganization()) }),
   );
+  const pendingRevisions = useQuery(
+    api.publication.listPending,
+    () => ({ organizationId: activeOrganization()?.id ?? ("" as Id<"organizations">) }),
+    () => ({ enabled: activeOrganization()?.role === "super_user" }),
+  );
   const createOrganization = useMutation(api.workspace.createOrganization);
   const createTeam = useMutation(api.workspace.createTeam);
   const createEvent = useMutation(api.events.create);
   const addEventDate = useMutation(api.events.addDate);
   const addSession = useMutation(api.events.addSession);
+  const submitRevision = useMutation(api.publication.submit);
+  const approveRevision = useMutation(api.publication.approve);
+  const rejectRevision = useMutation(api.publication.reject);
+  const startDraft = useMutation(api.publication.startDraft);
   const [organizationName, setOrganizationName] = createSignal("");
   const [firstTeamName, setFirstTeamName] = createSignal("");
   const [newTeamName, setNewTeamName] = createSignal("");
@@ -168,6 +177,40 @@ const Workspace: Component = () => {
       setSessionEndsAt("");
       setSessionRoom("");
       setSelectedDateId(null);
+    } catch (error) {
+      setFormError(errorMessage(error));
+    }
+  };
+
+  const handleSubmitRevision = async (eventId: Id<"events">) => {
+    setFormError(null);
+    try {
+      await submitRevision.mutate({ eventId });
+    } catch (error) {
+      setFormError(errorMessage(error));
+    }
+  };
+
+  const handleStartDraft = async (eventId: Id<"events">) => {
+    setFormError(null);
+    try {
+      await startDraft.mutate({ eventId });
+    } catch (error) {
+      setFormError(errorMessage(error));
+    }
+  };
+
+  const handleReview = async (
+    revisionId: Id<"event_revisions">,
+    decision: "approve" | "reject",
+  ) => {
+    setFormError(null);
+    try {
+      if (decision === "approve") {
+        await approveRevision.mutate({ revisionId, note: "" });
+      } else {
+        await rejectRevision.mutate({ revisionId, note: "Changes requested by reviewer" });
+      }
     } catch (error) {
       setFormError(errorMessage(error));
     }
@@ -387,9 +430,12 @@ const Workspace: Component = () => {
                 <article>
                   <span>Awaiting review</span>
                   <strong>
-                    {events.data()?.filter((event) => event.status === "submitted").length ?? 0}
+                    {activeOrganization()?.role === "super_user"
+                      ? (pendingRevisions.data()?.length ?? 0)
+                      : (events.data()?.filter((event) => event.status === "submitted").length ??
+                        0)}
                   </strong>
-                  <small>No revisions waiting</small>
+                  <small>Submitted revisions</small>
                 </article>
                 <article>
                   <span>Teams</span>
@@ -397,6 +443,54 @@ const Workspace: Component = () => {
                   <small>In this organization</small>
                 </article>
               </div>
+
+              <Show when={activeOrganization()?.role === "super_user"}>
+                <section class="approvals-section" id="approvals" aria-labelledby="approvals-title">
+                  <div class="section-title-row">
+                    <div>
+                      <p class="eyebrow">Safety boundary</p>
+                      <h2 id="approvals-title">Awaiting review</h2>
+                    </div>
+                    <span class="section-count">
+                      {pendingRevisions.data()?.length ?? 0} pending
+                    </span>
+                  </div>
+                  <div class="approval-list">
+                    <For each={pendingRevisions.data()}>
+                      {(revision) => (
+                        <article class="approval-card">
+                          <div>
+                            <span>Revision {revision.revisionNumber}</span>
+                            <h3>{revision.title}</h3>
+                            <p>
+                              {revision.teamName} · {revision.occurrenceCount} dates ·{" "}
+                              {revision.sessionCount} sessions
+                            </p>
+                          </div>
+                          <div class="approval-actions">
+                            <button
+                              class="secondary-button compact-button"
+                              type="button"
+                              disabled={rejectRevision.isLoading()}
+                              onClick={() => void handleReview(revision.id, "reject")}
+                            >
+                              Request changes
+                            </button>
+                            <button
+                              class="primary-button compact-button"
+                              type="button"
+                              disabled={approveRevision.isLoading()}
+                              onClick={() => void handleReview(revision.id, "approve")}
+                            >
+                              Approve & publish
+                            </button>
+                          </div>
+                        </article>
+                      )}
+                    </For>
+                  </div>
+                </section>
+              </Show>
 
               <Show when={selectedEventId()}>
                 <section class="event-detail" aria-label="Event editor">
@@ -414,58 +508,82 @@ const Workspace: Component = () => {
                             <h2>{detail().event.title}</h2>
                             <p>{detail().event.description || "No description yet."}</p>
                           </div>
-                          <button
-                            class="text-button"
-                            type="button"
-                            onClick={() => {
-                              setSelectedEventId(null);
-                              setSelectedDateId(null);
-                            }}
-                          >
-                            Close editor
-                          </button>
+                          <div class="event-detail-actions">
+                            <Show when={detail().event.status === "draft"}>
+                              <button
+                                class="primary-button compact-button"
+                                type="button"
+                                disabled={submitRevision.isLoading()}
+                                onClick={() => void handleSubmitRevision(detail().event.id)}
+                              >
+                                {submitRevision.isLoading() ? "Submitting…" : "Submit for review"}
+                              </button>
+                            </Show>
+                            <Show when={detail().event.status === "published"}>
+                              <button
+                                class="secondary-button compact-button inverse-button"
+                                type="button"
+                                disabled={startDraft.isLoading()}
+                                onClick={() => void handleStartDraft(detail().event.id)}
+                              >
+                                {startDraft.isLoading() ? "Starting…" : "Start new draft"}
+                              </button>
+                            </Show>
+                            <button
+                              class="text-button"
+                              type="button"
+                              onClick={() => {
+                                setSelectedEventId(null);
+                                setSelectedDateId(null);
+                              }}
+                            >
+                              Close editor
+                            </button>
+                          </div>
                         </div>
 
-                        <form class="date-form" onSubmit={handleDateCreate}>
-                          <div>
-                            <strong>Add another date</strong>
-                            <span>Build the recurring program one occurrence at a time.</span>
-                          </div>
-                          <label>
-                            <span>Starts</span>
-                            <input
-                              type="datetime-local"
-                              value={newDateStartsAt()}
-                              onInput={(event) => setNewDateStartsAt(event.currentTarget.value)}
-                              required
-                            />
-                          </label>
-                          <label>
-                            <span>Ends</span>
-                            <input
-                              type="datetime-local"
-                              value={newDateEndsAt()}
-                              onInput={(event) => setNewDateEndsAt(event.currentTarget.value)}
-                              required
-                            />
-                          </label>
-                          <label>
-                            <span>Venue</span>
-                            <input
-                              placeholder="Venue"
-                              value={newDateVenue()}
-                              onInput={(event) => setNewDateVenue(event.currentTarget.value)}
-                              required
-                            />
-                          </label>
-                          <button
-                            class="secondary-button compact-button"
-                            type="submit"
-                            disabled={addEventDate.isLoading()}
-                          >
-                            {addEventDate.isLoading() ? "Adding…" : "Add date"}
-                          </button>
-                        </form>
+                        <Show when={detail().event.status === "draft"}>
+                          <form class="date-form" onSubmit={handleDateCreate}>
+                            <div>
+                              <strong>Add another date</strong>
+                              <span>Build the recurring program one occurrence at a time.</span>
+                            </div>
+                            <label>
+                              <span>Starts</span>
+                              <input
+                                type="datetime-local"
+                                value={newDateStartsAt()}
+                                onInput={(event) => setNewDateStartsAt(event.currentTarget.value)}
+                                required
+                              />
+                            </label>
+                            <label>
+                              <span>Ends</span>
+                              <input
+                                type="datetime-local"
+                                value={newDateEndsAt()}
+                                onInput={(event) => setNewDateEndsAt(event.currentTarget.value)}
+                                required
+                              />
+                            </label>
+                            <label>
+                              <span>Venue</span>
+                              <input
+                                placeholder="Venue"
+                                value={newDateVenue()}
+                                onInput={(event) => setNewDateVenue(event.currentTarget.value)}
+                                required
+                              />
+                            </label>
+                            <button
+                              class="secondary-button compact-button inverse-button"
+                              type="submit"
+                              disabled={addEventDate.isLoading()}
+                            >
+                              {addEventDate.isLoading() ? "Adding…" : "Add date"}
+                            </button>
+                          </form>
+                        </Show>
 
                         <Show when={formError()}>
                           <p class="auth-error" role="alert">
@@ -488,17 +606,19 @@ const Workspace: Component = () => {
                                         {date.venueName} · ends {formatDate(date.endsAt)}
                                       </p>
                                     </div>
-                                    <button
-                                      class="text-button"
-                                      type="button"
-                                      onClick={() =>
-                                        setSelectedDateId((current) =>
-                                          current === date.id ? null : date.id,
-                                        )
-                                      }
-                                    >
-                                      {selectedDateId() === date.id ? "Cancel" : "Add session"}
-                                    </button>
+                                    <Show when={detail().event.status === "draft"}>
+                                      <button
+                                        class="text-button"
+                                        type="button"
+                                        onClick={() =>
+                                          setSelectedDateId((current) =>
+                                            current === date.id ? null : date.id,
+                                          )
+                                        }
+                                      >
+                                        {selectedDateId() === date.id ? "Cancel" : "Add session"}
+                                      </button>
+                                    </Show>
                                   </div>
 
                                   <Show when={selectedDateId() === date.id}>

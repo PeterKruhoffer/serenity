@@ -10,6 +10,7 @@
 
 import type * as events from "../events.js";
 import type * as http from "../http.js";
+import type * as publication from "../publication.js";
 import type * as workspace from "../workspace.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   events: typeof events;
   http: typeof http;
+  publication: typeof publication;
   workspace: typeof workspace;
 }>;
 

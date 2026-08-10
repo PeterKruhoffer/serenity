@@ -817,6 +817,22 @@ textarea:focus {
   color: #c4cabe;
 }
 
+.event-detail-actions,
+.approval-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inverse-button {
+  color: #e7ecdf;
+  border-color: #697263;
+}
+
+.inverse-button:hover {
+  background: rgb(255 255 255 / 7%);
+}
+
 .event-meta {
   color: #aeb6a7;
   font-size: 10px;
@@ -935,6 +951,47 @@ textarea:focus {
 .session-list strong {
   color: #393e36;
   font-size: 11px;
+}
+
+.approvals-section {
+  padding-top: 52px;
+}
+
+.approval-list {
+  margin-top: 22px;
+  display: grid;
+  gap: 10px;
+}
+
+.approval-card {
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: #fafbf7;
+  border: 1px solid #dfe1d8;
+  border-radius: 13px;
+}
+
+.approval-card > div:first-child > span {
+  color: #8a8f86;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.approval-card h3 {
+  margin: 7px 0 5px;
+  color: #30352e;
+  font-size: 14px;
+}
+
+.approval-card p {
+  margin: 0;
+  color: #858a81;
+  font-size: 10px;
 }
 
 .teams-section {
@@ -1146,9 +1203,15 @@ textarea:focus {
   .form-heading,
   .event-detail-heading,
   .date-heading,
-  .form-actions {
+  .form-actions,
+  .approval-card {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .event-detail-actions,
+  .approval-actions {
+    flex-wrap: wrap;
   }
 
   .event-detail-heading h2 {

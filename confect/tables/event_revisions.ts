@@ -5,22 +5,25 @@ import { Id } from "../_generated/id";
 export default Table.make(() =>
   Schema.Struct({
     organizationId: Id("organizations"),
+    eventId: Id("events"),
     teamId: Id("teams"),
     eventTypeVersionId: Id("event_type_versions"),
+    revisionNumber: Schema.Number,
+    status: Schema.Literal("submitted", "approved", "rejected"),
     title: Schema.String,
     slug: Schema.String,
     description: Schema.String,
     timezone: Schema.String,
-    status: Schema.Literal("draft", "submitted", "published", "archived"),
-    publishedRevisionId: Schema.optional(Id("event_revisions")),
-    publishedVersion: Schema.optional(Schema.Number),
     occurrenceCount: Schema.Number,
     sessionCount: Schema.Number,
-    createdByIdentity: Schema.String,
-    createdAt: Schema.Number,
-    updatedAt: Schema.Number,
+    submittedByIdentity: Schema.String,
+    submittedAt: Schema.Number,
+    reviewedByIdentity: Schema.optional(Schema.String),
+    reviewedAt: Schema.optional(Schema.Number),
+    reviewNote: Schema.optional(Schema.String),
+    publishedVersion: Schema.optional(Schema.Number),
   }),
 )
   .index("by_organizationId_and_status", ["organizationId", "status"])
-  .index("by_teamId_and_status", ["teamId", "status"])
-  .index("by_organizationId_and_slug", ["organizationId", "slug"]);
+  .index("by_eventId_and_status", ["eventId", "status"])
+  .index("by_eventId_and_revisionNumber", ["eventId", "revisionNumber"]);
