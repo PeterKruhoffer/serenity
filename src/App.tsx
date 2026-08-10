@@ -3,6 +3,7 @@ import type { Id } from "../convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Match, Show, Switch, createSignal, type Component } from "solid-js";
 import { useWorkOSAuth } from "./auth";
+import { accountNameFor, greetingNameFor } from "./display-name";
 
 const roleLabel = (role: "administrator" | "super_user" | "event_manager") =>
   ({
@@ -22,6 +23,7 @@ const errorMessage = (error: unknown) => {
 };
 
 const Workspace: Component = () => {
+  const auth = useWorkOSAuth();
   const workspace = useQuery(api.workspace.list, {});
   const activeOrganization = () => workspace.data()?.organizations[0];
   const events = useQuery(
@@ -359,7 +361,7 @@ const Workspace: Component = () => {
                 <div>
                   <p class="eyebrow">Event operations</p>
                   <h1 id="events-title">
-                    Good afternoon, {data().viewer.displayName.split(" ")[0]}.
+                    Good afternoon, {greetingNameFor(auth.user(), data().viewer.displayName)}.
                   </h1>
                   <p>Everything your teams are preparing, reviewing, and publishing.</p>
                 </div>
@@ -973,12 +975,7 @@ const Workspace: Component = () => {
 
 const App: Component = () => {
   const auth = useWorkOSAuth();
-  const signedInName = () => {
-    const currentUser = auth.user();
-    if (!currentUser) return "Signed in";
-    const fullName = [currentUser.firstName, currentUser.lastName].filter(Boolean).join(" ");
-    return fullName || currentUser.email;
-  };
+  const signedInName = () => accountNameFor(auth.user());
 
   return (
     <div class="app">
