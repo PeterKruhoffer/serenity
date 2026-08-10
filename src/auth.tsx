@@ -5,6 +5,7 @@ import {
   type User,
 } from "@workos-inc/authkit-js";
 import type { ConvexClient } from "convex/browser";
+import { useNavigate } from "@solidjs/router";
 import {
   createContext,
   createSignal,
@@ -42,6 +43,7 @@ const unavailableAuth: WorkOSAuth = {
 const WorkOSAuthContext = createContext<WorkOSAuth>(unavailableAuth);
 
 export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (props) => {
+  const navigate = useNavigate();
   const clientId = import.meta.env.VITE_WORKOS_CLIENT_ID;
   const redirectUri =
     import.meta.env.VITE_WORKOS_REDIRECT_URI || `${window.location.origin}/callback`;
@@ -58,7 +60,7 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
     void createClient(clientId, {
       redirectUri,
       onRedirectCallback: () => {
-        window.history.replaceState({}, "", window.location.origin);
+        navigate("/", { replace: true, scroll: false });
       },
       onRefresh: ({ user: refreshedUser }) => {
         if (!disposed) setUser(refreshedUser);

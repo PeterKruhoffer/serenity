@@ -1,8 +1,8 @@
 import { render } from "solid-js/web";
 import { ConvexProvider, setupConvex } from "convex-solidjs";
-import { Route, Router } from "@solidjs/router";
-import App from "./App";
+import { Router, type RouteSectionProps } from "@solidjs/router";
 import { WorkOSAuthProvider } from "./auth";
+import { SerenityRoutes } from "./routes";
 import "./style.css";
 
 const root = document.getElementById("app");
@@ -13,14 +13,15 @@ if (!root) {
 
 render(() => {
   const convex = setupConvex(import.meta.env.VITE_CONVEX_URL);
+  const AuthenticatedRoot = (props: RouteSectionProps) => (
+    <WorkOSAuthProvider client={convex}>{props.children}</WorkOSAuthProvider>
+  );
 
   return (
     <ConvexProvider client={convex}>
-      <WorkOSAuthProvider client={convex}>
-        <Router>
-          <Route path="*all" component={App} />
-        </Router>
-      </WorkOSAuthProvider>
+      <Router root={AuthenticatedRoot}>
+        <SerenityRoutes />
+      </Router>
     </ConvexProvider>
   );
 }, root);

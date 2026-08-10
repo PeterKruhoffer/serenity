@@ -2,16 +2,21 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Match, Show, Switch, createSignal, type Component } from "solid-js";
-import { A, useLocation } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { useWorkOSAuth } from "./auth";
 import { accountNameFor, greetingNameFor } from "./display-name";
 
-const roleLabel = (role: "administrator" | "super_user" | "event_manager") =>
+type OrganizationRole = "administrator" | "super_user" | "event_manager";
+
+const roleLabel = (role: OrganizationRole) =>
   ({
     administrator: "Administrator",
     super_user: "Super user",
     event_manager: "Event manager",
   })[role];
+
+const canReviewRevisions = (role: OrganizationRole | undefined) =>
+  role === "administrator" || role === "super_user";
 
 const errorMessage = (error: unknown) => {
   if (error && typeof error === "object" && "data" in error) {
@@ -25,15 +30,9 @@ const errorMessage = (error: unknown) => {
 
 export type WorkspacePage = "events" | "approvals" | "participants" | "settings";
 
-export const workspacePageForPath = (pathname: string): WorkspacePage => {
-  const page = pathname.split("/").filter(Boolean)[0];
-  return page === "approvals" || page === "participants" || page === "settings" ? page : "events";
-};
-
-const Workspace: Component = () => {
+const Workspace: Component<{ page: WorkspacePage }> = (props) => {
   const auth = useWorkOSAuth();
-  const location = useLocation();
-  const currentPage = () => workspacePageForPath(location.pathname);
+  const currentPage = () => props.page;
   const workspace = useQuery(api.workspace.list, {});
   const activeOrganization = () => workspace.data()?.organizations[0];
   const events = useQuery(
@@ -44,7 +43,7 @@ const Workspace: Component = () => {
   const pendingRevisions = useQuery(
     api.publication.listPending,
     () => ({ organizationId: activeOrganization()?.id ?? ("" as Id<"organizations">) }),
-    () => ({ enabled: activeOrganization()?.role === "super_user" }),
+    () => ({ enabled: canReviewRevisions(activeOrganization()?.role) }),
   );
   const createOrganization = useMutation(api.workspace.createOrganization);
   const createTeam = useMutation(api.workspace.createTeam);
@@ -513,7 +512,7 @@ const Workspace: Component = () => {
                     <article>
                       <span>Awaiting review</span>
                       <strong>
-                        {activeOrganization()?.role === "super_user"
+                        {canReviewRevisions(activeOrganization()?.role)
                           ? (pendingRevisions.data()?.length ?? 0)
                           : (events.data()?.filter((event) => event.status === "submitted")
                               .length ?? 0)}
@@ -541,12 +540,12 @@ const Workspace: Component = () => {
                   </div>
 
                   <Show
-                    when={activeOrganization()?.role === "super_user"}
+                    when={canReviewRevisions(activeOrganization()?.role)}
                     fallback={
                       <div class="empty-page-state">
                         <span aria-hidden="true">✓</span>
                         <div>
-                          <h2>Approvals are handled by super users.</h2>
+                          <h2>Approvals are handled by administrators and super users.</h2>
                           <p>You can still track submitted events from the Events page.</p>
                         </div>
                       </div>
@@ -1157,7 +1156,7 @@ const Workspace: Component = () => {
   );
 };
 
-const App: Component = () => {
+const App: Component<{ page?: WorkspacePage }> = (props) => {
   const auth = useWorkOSAuth();
   const signedInName = () => accountNameFor(auth.user());
 
@@ -1219,7 +1218,7 @@ const App: Component = () => {
           </Match>
 
           <Match when={auth.isWorkspaceAuthenticated()}>
-            <Workspace />
+            <Workspace page={props.page ?? "events"} />
           </Match>
 
           <Match when={auth.isAuthenticated()}>

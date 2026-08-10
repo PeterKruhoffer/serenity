@@ -61,6 +61,9 @@ const reviewNote = (note: string) => {
   return Effect.succeed(normalized);
 };
 
+const canReviewRevisions = (role: "administrator" | "super_user" | "event_manager") =>
+  role === "administrator" || role === "super_user";
+
 const listPending = FunctionImpl.make(
   databaseSchema,
   publication,
@@ -70,9 +73,11 @@ const listPending = FunctionImpl.make(
       const identity = yield* getIdentity;
       const reader = yield* DatabaseReader;
       const membership = yield* membershipFor(organizationId, identity.tokenIdentifier);
-      if (membership.role !== "super_user") {
+      if (!canReviewRevisions(membership.role)) {
         return yield* Effect.fail(
-          new Forbidden({ message: "Only super users can review event revisions." }),
+          new Forbidden({
+            message: "Only administrators and super users can review event revisions.",
+          }),
         );
       }
       const revisions = yield* reader
@@ -261,14 +266,9 @@ const approve = FunctionImpl.make(databaseSchema, publication, "approve", ({ rev
       .get(revisionId)
       .pipe(Effect.mapError(() => new Forbidden({ message: "Revision not found." })));
     const membership = yield* membershipFor(revision.organizationId, identity.tokenIdentifier);
-    if (membership.role !== "super_user") {
+    if (!canReviewRevisions(membership.role)) {
       return yield* Effect.fail(
-        new Forbidden({ message: "Only super users can approve revisions." }),
-      );
-    }
-    if (revision.submittedByIdentity === identity.tokenIdentifier) {
-      return yield* Effect.fail(
-        new Forbidden({ message: "Revision authors cannot approve their own work." }),
+        new Forbidden({ message: "Only administrators and super users can approve revisions." }),
       );
     }
     if (revision.status !== "submitted") {
@@ -322,9 +322,9 @@ const reject = FunctionImpl.make(databaseSchema, publication, "reject", ({ revis
       .get(revisionId)
       .pipe(Effect.mapError(() => new Forbidden({ message: "Revision not found." })));
     const membership = yield* membershipFor(revision.organizationId, identity.tokenIdentifier);
-    if (membership.role !== "super_user") {
+    if (!canReviewRevisions(membership.role)) {
       return yield* Effect.fail(
-        new Forbidden({ message: "Only super users can reject revisions." }),
+        new Forbidden({ message: "Only administrators and super users can reject revisions." }),
       );
     }
     if (revision.status !== "submitted") {

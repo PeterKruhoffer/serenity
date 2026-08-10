@@ -9,7 +9,10 @@ const modules = import.meta.glob("../convex/**/*.ts");
 const startsAt = Date.UTC(2026, 9, 1, 8, 0);
 const endsAt = Date.UTC(2026, 9, 1, 16, 0);
 
-const setupSubmission = async () => {
+const setupSubmission = async (
+  reviewerRole: "administrator" | "super_user" = "super_user",
+  authorRole: "administrator" | "super_user" = "administrator",
+) => {
   const t = convexTest(schema, modules);
   const authorToken = "issuer|author";
   const reviewerToken = "issuer|reviewer";
@@ -24,10 +27,21 @@ const setupSubmission = async () => {
       organizationId: workspace.organizationId,
       identityToken: reviewerToken,
       displayName: "Review Lead",
-      role: "super_user",
+      role: reviewerRole,
       status: "active",
       joinedAt: Date.now(),
     });
+    if (authorRole === "super_user") {
+      const authorMembership = await ctx.db
+        .query("organization_memberships")
+        .withIndex("by_organizationId_and_identityToken", (q) =>
+          q.eq("organizationId", workspace.organizationId).eq("identityToken", authorToken),
+        )
+        .unique();
+      if (authorMembership) {
+        await ctx.db.patch(authorMembership._id, { role: authorRole });
+      }
+    }
   });
   const event = await author.mutation(api.events.create, {
     organizationId: workspace.organizationId,
@@ -96,23 +110,53 @@ describe("safe publication", () => {
     ).resolves.toHaveProperty("eventDateId");
   });
 
-  it("prevents authors from approving their own revisions", async () => {
-    const { t, author, workspace, submitted } = await setupSubmission();
-    await t.run(async (ctx) => {
-      const membership = await ctx.db
-        .query("organization_memberships")
-        .withIndex("by_organizationId_and_identityToken", (q) =>
-          q.eq("organizationId", workspace.organizationId).eq("identityToken", "issuer|author"),
-        )
-        .unique();
-      if (membership) await ctx.db.patch(membership._id, { role: "super_user" });
-    });
+  it("allows an administrator to review and approve another author's revision", async () => {
+    const { author, reviewer, workspace, event, submitted } =
+      await setupSubmission("administrator");
 
     await expect(
-      author.mutation(api.publication.approve, {
-        revisionId: submitted.revisionId,
-        note: "Self approval",
+      reviewer.query(api.publication.listPending, {
+        organizationId: workspace.organizationId,
       }),
-    ).rejects.toMatchObject({ data: { _tag: "Forbidden" } });
+    ).resolves.toHaveLength(1);
+
+    await expect(
+      reviewer.mutation(api.publication.approve, {
+        revisionId: submitted.revisionId,
+        note: "Approved by an administrator",
+      }),
+    ).resolves.toEqual({ publishedVersion: 1 });
+
+    await expect(
+      author.query(api.publication.getPublished, { eventId: event.eventId }),
+    ).resolves.toMatchObject({ version: 1, title: "Safety in Practice" });
   });
+
+  it.each(["administrator", "super_user"] as const)(
+    "keeps a %s author's submission pending until they explicitly approve it",
+    async (authorRole) => {
+      const { author, workspace, event, submitted } = await setupSubmission(
+        "super_user",
+        authorRole,
+      );
+
+      const beforeApproval = await author.query(api.events.list, {
+        organizationId: workspace.organizationId,
+      });
+      expect(beforeApproval).toContainEqual(
+        expect.objectContaining({ id: event.eventId, status: "submitted" }),
+      );
+
+      await expect(
+        author.mutation(api.publication.approve, {
+          revisionId: submitted.revisionId,
+          note: "Explicit approval by the author",
+        }),
+      ).resolves.toEqual({ publishedVersion: 1 });
+
+      await expect(
+        author.query(api.publication.getPublished, { eventId: event.eventId }),
+      ).resolves.toMatchObject({ version: 1, title: "Safety in Practice" });
+    },
+  );
 });
