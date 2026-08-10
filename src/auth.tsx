@@ -18,6 +18,7 @@ import {
 type WorkOSAuth = {
   user: Accessor<User | null>;
   isAuthenticated: Accessor<boolean>;
+  isWorkspaceAuthenticated: Accessor<boolean>;
   isConfigured: Accessor<boolean>;
   isLoading: Accessor<boolean>;
   error: Accessor<string | null>;
@@ -30,6 +31,7 @@ type WorkOSClient = Awaited<ReturnType<typeof createClient>>;
 const unavailableAuth: WorkOSAuth = {
   user: () => null,
   isAuthenticated: () => false,
+  isWorkspaceAuthenticated: () => false,
   isConfigured: () => false,
   isLoading: () => false,
   error: () => null,
@@ -45,7 +47,7 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
     import.meta.env.VITE_WORKOS_REDIRECT_URI || `${window.location.origin}/callback`;
   const [authClient, setAuthClient] = createSignal<WorkOSClient | null>(null);
   const [user, setUser] = createSignal<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = createSignal(false);
+  const [isWorkspaceAuthenticated, setIsWorkspaceAuthenticated] = createSignal(false);
   const [isLoading, setIsLoading] = createSignal(Boolean(clientId));
   const [error, setError] = createSignal<string | null>(null);
   let disposed = false;
@@ -55,13 +57,16 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
 
     void createClient(clientId, {
       redirectUri,
+      onRedirectCallback: () => {
+        window.history.replaceState({}, "", window.location.origin);
+      },
       onRefresh: ({ user: refreshedUser }) => {
         if (!disposed) setUser(refreshedUser);
       },
       onRefreshFailure: () => {
         if (!disposed) {
           setUser(null);
-          setIsAuthenticated(false);
+          setIsWorkspaceAuthenticated(false);
         }
       },
     })
@@ -88,7 +93,12 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
           },
           (authenticated) => {
             if (!disposed) {
-              setIsAuthenticated(authenticated);
+              setIsWorkspaceAuthenticated(authenticated);
+              if (!authenticated && user()) {
+                setError(
+                  "WorkOS sign-in succeeded, but the secure workspace could not verify this session.",
+                );
+              }
               setIsLoading(false);
             }
           },
@@ -111,7 +121,8 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
 
   const value: WorkOSAuth = {
     user,
-    isAuthenticated,
+    isAuthenticated: () => user() !== null,
+    isWorkspaceAuthenticated,
     isConfigured: () => Boolean(clientId),
     isLoading,
     error,
@@ -137,7 +148,7 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
       } catch (authError) {
         if (authError instanceof NoSessionError) {
           setUser(null);
-          setIsAuthenticated(false);
+          setIsWorkspaceAuthenticated(false);
           return;
         }
         throw authError;

@@ -1037,8 +1037,34 @@ const App: Component = () => {
             </section>
           </Match>
 
-          <Match when={auth.isAuthenticated()}>
+          <Match when={auth.isWorkspaceAuthenticated()}>
             <Workspace />
+          </Match>
+
+          <Match when={auth.isAuthenticated()}>
+            <section class="welcome" aria-labelledby="welcome-title">
+              <p class="eyebrow">Authentication complete</p>
+              <h1 id="welcome-title">You’re signed in.</h1>
+              <p class="intro">
+                WorkOS recognized {auth.user()?.email}. Serenity is still waiting for the secure
+                workspace connection.
+              </p>
+              <div class="auth-actions">
+                <button
+                  class="primary-button"
+                  type="button"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry connection
+                  <span aria-hidden="true">→</span>
+                </button>
+              </div>
+              <Show when={auth.error()}>
+                <p class="auth-error" role="alert">
+                  {auth.error()}
+                </p>
+              </Show>
+            </section>
           </Match>
 
           <Match when={true}>
