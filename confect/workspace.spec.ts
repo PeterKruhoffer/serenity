@@ -42,7 +42,7 @@ export class InvalidInput extends Schema.TaggedError<InvalidInput>()("InvalidInp
   message: Schema.String,
 }) {}
 
-const WorkspaceError = Schema.Union(Unauthenticated, Forbidden, Conflict, InvalidInput);
+export const WorkspaceError = Schema.Union(Unauthenticated, Forbidden, Conflict, InvalidInput);
 
 export default GroupSpec.make()
   .addFunction(

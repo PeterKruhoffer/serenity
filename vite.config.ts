@@ -4,7 +4,12 @@ import solid from "vite-plugin-solid";
 export default defineConfig({
   plugins: [solid()],
   test: {
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "convex/**/*.test.ts"],
+    include: [
+      "src/**/*.test.ts",
+      "src/**/*.test.tsx",
+      "convex/**/*.test.ts",
+      "confect/**/*.test.ts",
+    ],
     environment: "edge-runtime",
   },
   fmt: {

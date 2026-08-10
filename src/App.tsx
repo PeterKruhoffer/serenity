@@ -23,13 +23,54 @@ const errorMessage = (error: unknown) => {
 
 const Workspace: Component = () => {
   const workspace = useQuery(api.workspace.list, {});
+  const activeOrganization = () => workspace.data()?.organizations[0];
+  const events = useQuery(
+    api.events.list,
+    () => ({ organizationId: activeOrganization()?.id ?? ("" as Id<"organizations">) }),
+    () => ({ enabled: Boolean(activeOrganization()) }),
+  );
   const createOrganization = useMutation(api.workspace.createOrganization);
   const createTeam = useMutation(api.workspace.createTeam);
+  const createEvent = useMutation(api.events.create);
+  const addEventDate = useMutation(api.events.addDate);
+  const addSession = useMutation(api.events.addSession);
   const [organizationName, setOrganizationName] = createSignal("");
   const [firstTeamName, setFirstTeamName] = createSignal("");
   const [newTeamName, setNewTeamName] = createSignal("");
   const [formError, setFormError] = createSignal<string | null>(null);
   const [showTeamForm, setShowTeamForm] = createSignal(false);
+  const [showEventForm, setShowEventForm] = createSignal(false);
+  const [selectedEventId, setSelectedEventId] = createSignal<Id<"events"> | null>(null);
+  const [selectedDateId, setSelectedDateId] = createSignal<Id<"event_dates"> | null>(null);
+  const [eventTitle, setEventTitle] = createSignal("");
+  const [eventDescription, setEventDescription] = createSignal("");
+  const [eventTeamId, setEventTeamId] = createSignal<Id<"teams"> | "">("");
+  const [eventStartsAt, setEventStartsAt] = createSignal("");
+  const [eventEndsAt, setEventEndsAt] = createSignal("");
+  const [eventVenue, setEventVenue] = createSignal("");
+  const [newDateStartsAt, setNewDateStartsAt] = createSignal("");
+  const [newDateEndsAt, setNewDateEndsAt] = createSignal("");
+  const [newDateVenue, setNewDateVenue] = createSignal("");
+  const [sessionTitle, setSessionTitle] = createSignal("");
+  const [sessionStartsAt, setSessionStartsAt] = createSignal("");
+  const [sessionEndsAt, setSessionEndsAt] = createSignal("");
+  const [sessionRoom, setSessionRoom] = createSignal("");
+  const eventDetail = useQuery(
+    api.events.get,
+    () => ({ eventId: selectedEventId() ?? ("" as Id<"events">) }),
+    () => ({ enabled: selectedEventId() !== null }),
+  );
+
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const formatDate = (timestamp: number) =>
+    new Intl.DateTimeFormat(undefined, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(timestamp);
 
   const handleOrganizationSetup = async (event: SubmitEvent) => {
     event.preventDefault();
@@ -51,6 +92,82 @@ const Workspace: Component = () => {
       await createTeam.mutate({ organizationId, name: newTeamName() });
       setNewTeamName("");
       setShowTeamForm(false);
+    } catch (error) {
+      setFormError(errorMessage(error));
+    }
+  };
+
+  const handleEventCreate = async (event: SubmitEvent) => {
+    event.preventDefault();
+    const organization = activeOrganization();
+    const teamId = eventTeamId() || organization?.teams[0]?.id;
+    if (!organization || !teamId) return;
+    setFormError(null);
+    try {
+      const result = await createEvent.mutate({
+        organizationId: organization.id,
+        teamId,
+        title: eventTitle(),
+        description: eventDescription(),
+        timezone,
+        firstDate: {
+          startsAt: new Date(eventStartsAt()).getTime(),
+          endsAt: new Date(eventEndsAt()).getTime(),
+          venueName: eventVenue(),
+        },
+      });
+      setEventTitle("");
+      setEventDescription("");
+      setEventStartsAt("");
+      setEventEndsAt("");
+      setEventVenue("");
+      setShowEventForm(false);
+      setSelectedEventId(result.eventId);
+    } catch (error) {
+      setFormError(errorMessage(error));
+    }
+  };
+
+  const handleDateCreate = async (event: SubmitEvent) => {
+    event.preventDefault();
+    const eventId = selectedEventId();
+    if (!eventId) return;
+    setFormError(null);
+    try {
+      await addEventDate.mutate({
+        eventId,
+        date: {
+          startsAt: new Date(newDateStartsAt()).getTime(),
+          endsAt: new Date(newDateEndsAt()).getTime(),
+          venueName: newDateVenue(),
+        },
+      });
+      setNewDateStartsAt("");
+      setNewDateEndsAt("");
+      setNewDateVenue("");
+    } catch (error) {
+      setFormError(errorMessage(error));
+    }
+  };
+
+  const handleSessionCreate = async (event: SubmitEvent) => {
+    event.preventDefault();
+    const eventDateId = selectedDateId();
+    if (!eventDateId) return;
+    setFormError(null);
+    try {
+      await addSession.mutate({
+        eventDateId,
+        title: sessionTitle(),
+        startsAt: new Date(sessionStartsAt()).getTime(),
+        endsAt: new Date(sessionEndsAt()).getTime(),
+        roomName: sessionRoom(),
+      });
+      setSessionTitle("");
+      setSessionStartsAt("");
+      setSessionEndsAt("");
+      setSessionRoom("");
+      setSelectedDateId(null);
     } catch (error) {
       setFormError(errorMessage(error));
     }
@@ -154,20 +271,124 @@ const Workspace: Component = () => {
                   </h1>
                   <p>Everything your teams are preparing, reviewing, and publishing.</p>
                 </div>
-                <button class="primary-button" type="button" disabled title="Available next">
-                  New event <span aria-hidden="true">＋</span>
+                <button
+                  class="primary-button"
+                  type="button"
+                  disabled={data().organizations[0]?.teams.length === 0}
+                  onClick={() => {
+                    setFormError(null);
+                    setShowEventForm((visible) => !visible);
+                  }}
+                >
+                  {showEventForm() ? "Close" : "New event"} <span aria-hidden="true">＋</span>
                 </button>
               </div>
+
+              <Show when={showEventForm() && data().organizations[0]}>
+                {(organization) => (
+                  <form class="event-form" onSubmit={handleEventCreate}>
+                    <div class="form-heading">
+                      <div>
+                        <p class="eyebrow">New draft</p>
+                        <h2>Compose a recurring event</h2>
+                      </div>
+                      <span>{timezone}</span>
+                    </div>
+                    <div class="form-grid">
+                      <label class="wide-field">
+                        <span>Event title</span>
+                        <input
+                          placeholder="Leadership essentials"
+                          value={eventTitle()}
+                          onInput={(event) => setEventTitle(event.currentTarget.value)}
+                          required
+                          autofocus
+                        />
+                      </label>
+                      <label>
+                        <span>Owning team</span>
+                        <select
+                          value={eventTeamId() || organization().teams[0]?.id}
+                          onChange={(event) =>
+                            setEventTeamId(event.currentTarget.value as Id<"teams">)
+                          }
+                          required
+                        >
+                          <For each={organization().teams}>
+                            {(team) => <option value={team.id}>{team.name}</option>}
+                          </For>
+                        </select>
+                      </label>
+                      <label class="wide-field">
+                        <span>Description</span>
+                        <textarea
+                          placeholder="What participants will learn and experience"
+                          value={eventDescription()}
+                          onInput={(event) => setEventDescription(event.currentTarget.value)}
+                          rows="3"
+                        />
+                      </label>
+                      <label>
+                        <span>First date starts</span>
+                        <input
+                          type="datetime-local"
+                          value={eventStartsAt()}
+                          onInput={(event) => setEventStartsAt(event.currentTarget.value)}
+                          required
+                        />
+                      </label>
+                      <label>
+                        <span>First date ends</span>
+                        <input
+                          type="datetime-local"
+                          value={eventEndsAt()}
+                          onInput={(event) => setEventEndsAt(event.currentTarget.value)}
+                          required
+                        />
+                      </label>
+                      <label>
+                        <span>Venue</span>
+                        <input
+                          placeholder="Harbor House"
+                          value={eventVenue()}
+                          onInput={(event) => setEventVenue(event.currentTarget.value)}
+                          required
+                        />
+                      </label>
+                    </div>
+                    <Show when={formError()}>
+                      <p class="auth-error" role="alert">
+                        {formError()}
+                      </p>
+                    </Show>
+                    <div class="form-actions">
+                      <button
+                        class="primary-button"
+                        type="submit"
+                        disabled={createEvent.isLoading()}
+                      >
+                        {createEvent.isLoading() ? "Creating draft…" : "Create draft"}
+                        <span aria-hidden="true">→</span>
+                      </button>
+                      <small>The draft is visible only inside Serenity.</small>
+                    </div>
+                  </form>
+                )}
+              </Show>
 
               <div class="metric-grid" aria-label="Workspace overview">
                 <article>
                   <span>Active events</span>
-                  <strong>0</strong>
-                  <small>Ready for your first event</small>
+                  <strong>{events.data()?.length ?? 0}</strong>
+                  <small>
+                    {events.data()?.length ? "Across your teams" : "Ready for your first event"}
+                  </small>
                 </article>
                 <article>
                   <span>Awaiting review</span>
-                  <strong>0</strong>
+                  <strong>
+                    {events.data()?.filter((event) => event.status === "submitted").length ?? 0}
+                  </strong>
                   <small>No revisions waiting</small>
                 </article>
                 <article>
@@ -176,6 +397,245 @@ const Workspace: Component = () => {
                   <small>In this organization</small>
                 </article>
               </div>
+
+              <Show when={selectedEventId()}>
+                <section class="event-detail" aria-label="Event editor">
+                  <Show when={eventDetail.data()} fallback={<p>Opening event…</p>}>
+                    {(detail) => (
+                      <>
+                        <div class="event-detail-heading">
+                          <div>
+                            <div class="event-meta">
+                              <span class={`event-status status-${detail().event.status}`}>
+                                {detail().event.status}
+                              </span>
+                              <span>{detail().event.teamName}</span>
+                            </div>
+                            <h2>{detail().event.title}</h2>
+                            <p>{detail().event.description || "No description yet."}</p>
+                          </div>
+                          <button
+                            class="text-button"
+                            type="button"
+                            onClick={() => {
+                              setSelectedEventId(null);
+                              setSelectedDateId(null);
+                            }}
+                          >
+                            Close editor
+                          </button>
+                        </div>
+
+                        <form class="date-form" onSubmit={handleDateCreate}>
+                          <div>
+                            <strong>Add another date</strong>
+                            <span>Build the recurring program one occurrence at a time.</span>
+                          </div>
+                          <label>
+                            <span>Starts</span>
+                            <input
+                              type="datetime-local"
+                              value={newDateStartsAt()}
+                              onInput={(event) => setNewDateStartsAt(event.currentTarget.value)}
+                              required
+                            />
+                          </label>
+                          <label>
+                            <span>Ends</span>
+                            <input
+                              type="datetime-local"
+                              value={newDateEndsAt()}
+                              onInput={(event) => setNewDateEndsAt(event.currentTarget.value)}
+                              required
+                            />
+                          </label>
+                          <label>
+                            <span>Venue</span>
+                            <input
+                              placeholder="Venue"
+                              value={newDateVenue()}
+                              onInput={(event) => setNewDateVenue(event.currentTarget.value)}
+                              required
+                            />
+                          </label>
+                          <button
+                            class="secondary-button compact-button"
+                            type="submit"
+                            disabled={addEventDate.isLoading()}
+                          >
+                            {addEventDate.isLoading() ? "Adding…" : "Add date"}
+                          </button>
+                        </form>
+
+                        <Show when={formError()}>
+                          <p class="auth-error" role="alert">
+                            {formError()}
+                          </p>
+                        </Show>
+
+                        <div class="date-list">
+                          <For each={detail().dates}>
+                            {(date, index) => (
+                              <article class="date-card">
+                                <div class="date-index" aria-hidden="true">
+                                  {String(index() + 1).padStart(2, "0")}
+                                </div>
+                                <div class="date-content">
+                                  <div class="date-heading">
+                                    <div>
+                                      <h3>{formatDate(date.startsAt)}</h3>
+                                      <p>
+                                        {date.venueName} · ends {formatDate(date.endsAt)}
+                                      </p>
+                                    </div>
+                                    <button
+                                      class="text-button"
+                                      type="button"
+                                      onClick={() =>
+                                        setSelectedDateId((current) =>
+                                          current === date.id ? null : date.id,
+                                        )
+                                      }
+                                    >
+                                      {selectedDateId() === date.id ? "Cancel" : "Add session"}
+                                    </button>
+                                  </div>
+
+                                  <Show when={selectedDateId() === date.id}>
+                                    <form class="session-form" onSubmit={handleSessionCreate}>
+                                      <input
+                                        aria-label="Session title"
+                                        placeholder="Session title"
+                                        value={sessionTitle()}
+                                        onInput={(event) =>
+                                          setSessionTitle(event.currentTarget.value)
+                                        }
+                                        required
+                                      />
+                                      <input
+                                        aria-label="Session starts"
+                                        type="datetime-local"
+                                        value={sessionStartsAt()}
+                                        onInput={(event) =>
+                                          setSessionStartsAt(event.currentTarget.value)
+                                        }
+                                        required
+                                      />
+                                      <input
+                                        aria-label="Session ends"
+                                        type="datetime-local"
+                                        value={sessionEndsAt()}
+                                        onInput={(event) =>
+                                          setSessionEndsAt(event.currentTarget.value)
+                                        }
+                                        required
+                                      />
+                                      <input
+                                        aria-label="Room"
+                                        placeholder="Room (optional)"
+                                        value={sessionRoom()}
+                                        onInput={(event) =>
+                                          setSessionRoom(event.currentTarget.value)
+                                        }
+                                      />
+                                      <button
+                                        class="primary-button compact-button"
+                                        type="submit"
+                                        disabled={addSession.isLoading()}
+                                      >
+                                        {addSession.isLoading() ? "Adding…" : "Add"}
+                                      </button>
+                                    </form>
+                                  </Show>
+
+                                  <Show
+                                    when={date.sessions.length > 0}
+                                    fallback={
+                                      <p class="empty-sessions">No sessions scheduled yet.</p>
+                                    }
+                                  >
+                                    <ul class="session-list">
+                                      <For each={date.sessions}>
+                                        {(session) => (
+                                          <li>
+                                            <span>
+                                              {new Intl.DateTimeFormat(undefined, {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                              }).format(session.startsAt)}
+                                            </span>
+                                            <strong>{session.title}</strong>
+                                            <small>
+                                              {session.roomName || "Room to be decided"}
+                                            </small>
+                                          </li>
+                                        )}
+                                      </For>
+                                    </ul>
+                                  </Show>
+                                </div>
+                              </article>
+                            )}
+                          </For>
+                        </div>
+                      </>
+                    )}
+                  </Show>
+                </section>
+              </Show>
+
+              <section class="events-section" aria-labelledby="event-list-title">
+                <div class="section-title-row">
+                  <div>
+                    <p class="eyebrow">Program</p>
+                    <h2 id="event-list-title">Events</h2>
+                  </div>
+                  <span class="section-count">{events.data()?.length ?? 0} total</span>
+                </div>
+                <Show
+                  when={(events.data()?.length ?? 0) > 0}
+                  fallback={
+                    <div class="empty-events">
+                      <span aria-hidden="true">◇</span>
+                      <div>
+                        <h3>Your event list is ready.</h3>
+                        <p>Create the first draft to begin composing dates and sessions.</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <div class="event-grid">
+                    <For each={events.data()}>
+                      {(event) => (
+                        <button
+                          class="event-card"
+                          classList={{ "is-selected": selectedEventId() === event.id }}
+                          type="button"
+                          onClick={() => {
+                            setFormError(null);
+                            setSelectedEventId(event.id);
+                            setSelectedDateId(null);
+                          }}
+                        >
+                          <div class="event-card-topline">
+                            <span class={`event-status status-${event.status}`}>
+                              {event.status}
+                            </span>
+                            <span>{event.teamName}</span>
+                          </div>
+                          <h3>{event.title}</h3>
+                          <p>{event.description || "No description yet."}</p>
+                          <div class="event-card-stats">
+                            <span>{event.occurrenceCount} dates</span>
+                            <span>{event.sessionCount} sessions</span>
+                            <span aria-hidden="true">→</span>
+                          </div>
+                        </button>
+                      )}
+                    </For>
+                  </div>
+                </Show>
+              </section>
 
               <section class="teams-section" aria-labelledby="teams-title">
                 <div class="section-title-row">
@@ -235,7 +695,10 @@ const Workspace: Component = () => {
                         </span>
                         <div>
                           <h3>{team.name}</h3>
-                          <p>No events yet</p>
+                          <p>
+                            {events.data()?.filter((event) => event.teamId === team.id).length ?? 0}{" "}
+                            events
+                          </p>
                         </div>
                         <span class="card-arrow" aria-hidden="true">
                           →
