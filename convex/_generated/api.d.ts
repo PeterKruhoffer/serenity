@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as attendee from "../attendee.js";
 import type * as events from "../events.js";
 import type * as http from "../http.js";
 import type * as publication from "../publication.js";
@@ -21,6 +22,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  attendee: typeof attendee;
   events: typeof events;
   http: typeof http;
   publication: typeof publication;

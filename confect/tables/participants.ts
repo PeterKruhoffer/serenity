@@ -11,4 +11,6 @@ export default Table.make(() =>
     locale: Schema.optional(Schema.String),
     synchronizedAt: Schema.Number,
   }),
-).index("by_organizationId_and_externalId", ["organizationId", "externalId"]);
+)
+  .index("by_organizationId_and_externalId", ["organizationId", "externalId"])
+  .index("by_externalId", ["externalId"]);

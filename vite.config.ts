@@ -14,6 +14,7 @@ export default defineConfig({
   },
   fmt: {
     ignorePatterns: [
+      "AGENTS.md",
       "confect/_generated/**",
       "convex/_generated/**",
       "convex/README.md",

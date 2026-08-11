@@ -20,4 +20,5 @@ export default Table.make(() =>
 )
   .index("by_eventId_and_status", ["eventId", "status"])
   .index("by_eventId_and_participantId", ["eventId", "participantId"])
+  .index("by_participantId_and_updatedAt", ["participantId", "updatedAt"])
   .index("by_organizationId_and_updatedAt", ["organizationId", "updatedAt"]);
