@@ -14,7 +14,12 @@ vi.mock("@workos-inc/authkit-js", async (importOriginal) => ({
   createClient: authKit.createClient,
 }));
 
-import { WorkOSAuthProvider } from "./auth";
+import {
+  WorkOSAuthProvider,
+  topLevelSignInUrl,
+  usesWorkOSDevelopmentStorage,
+  workOSRedirectUri,
+} from "./auth";
 
 const disposers: Array<() => void> = [];
 
@@ -26,6 +31,30 @@ afterEach(() => {
 });
 
 describe("WorkOS navigation", () => {
+  it("uses the active portal origin for the authentication callback", () => {
+    expect(
+      workOSRedirectUri(
+        "http://localhost:5173/callback",
+        "https://example-thread-p30836.onamp.dev",
+      ),
+    ).toBe("https://example-thread-p30836.onamp.dev/callback");
+    expect(workOSRedirectUri("http://localhost:5173/callback", "http://localhost:5173")).toBe(
+      "http://localhost:5173/callback",
+    );
+  });
+
+  it("creates a top-level sign-in URL without discarding the current route", () => {
+    expect(
+      topLevelSignInUrl({ href: "https://example-thread-p30836.onamp.dev/events?view=upcoming" }),
+    ).toBe("https://example-thread-p30836.onamp.dev/events?view=upcoming&workos-sign-in=true");
+  });
+
+  it("uses development session storage only for portal hosts", () => {
+    expect(usesWorkOSDevelopmentStorage("example-thread-p30836.onamp.dev")).toBe(true);
+    expect(usesWorkOSDevelopmentStorage("app.example.com")).toBe(false);
+    expect(usesWorkOSDevelopmentStorage("onamp.dev.example.com")).toBe(false);
+  });
+
   it("keeps the router location in sync after an authentication redirect", async () => {
     let finishRedirect: (() => void) | undefined;
     authKit.createClient.mockImplementation(

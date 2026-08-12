@@ -41,12 +41,28 @@ const unavailableAuth: WorkOSAuth = {
 };
 
 const WorkOSAuthContext = createContext<WorkOSAuth>(unavailableAuth);
+const portalSignInParameter = "workos-sign-in";
+
+export const workOSRedirectUri = (configuredRedirectUri: string | undefined, origin: string) =>
+  origin.endsWith(".onamp.dev")
+    ? `${origin}/callback`
+    : configuredRedirectUri || `${origin}/callback`;
+
+export const usesWorkOSDevelopmentStorage = (hostname: string) => hostname.endsWith(".onamp.dev");
+
+export const topLevelSignInUrl = (location: Pick<Location, "href">) => {
+  const url = new URL(location.href);
+  url.searchParams.set(portalSignInParameter, "true");
+  return url.toString();
+};
 
 export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (props) => {
   const navigate = useNavigate();
   const clientId = import.meta.env.VITE_WORKOS_CLIENT_ID;
-  const redirectUri =
-    import.meta.env.VITE_WORKOS_REDIRECT_URI || `${window.location.origin}/callback`;
+  const redirectUri = workOSRedirectUri(
+    import.meta.env.VITE_WORKOS_REDIRECT_URI,
+    window.location.origin,
+  );
   const [authClient, setAuthClient] = createSignal<WorkOSClient | null>(null);
   const [user, setUser] = createSignal<User | null>(null);
   const [isWorkspaceAuthenticated, setIsWorkspaceAuthenticated] = createSignal(false);
@@ -59,6 +75,7 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
 
     void createClient(clientId, {
       redirectUri,
+      devMode: usesWorkOSDevelopmentStorage(window.location.hostname) || undefined,
       onRedirectCallback: () => {
         navigate("/", { replace: true, scroll: false });
       },
@@ -106,6 +123,21 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
           },
         );
 
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.searchParams.has(portalSignInParameter)) {
+          currentUrl.searchParams.delete(portalSignInParameter);
+          window.history.replaceState({}, "", currentUrl);
+          if (!initialUser) {
+            void workOSClient.signIn().catch((authError: unknown) => {
+              if (!disposed) {
+                setError(
+                  authError instanceof Error ? authError.message : "Unable to start sign in",
+                );
+              }
+            });
+          }
+        }
+
         if (!initialUser) setIsLoading(false);
       })
       .catch((authError: unknown) => {
@@ -130,6 +162,15 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
     error,
     signIn: async () => {
       setError(null);
+      if (window.self !== window.top) {
+        const signInWindow = window.open(topLevelSignInUrl(window.location), "_blank");
+        if (!signInWindow) {
+          setError("Open Serenity in a new tab to sign in with WorkOS.");
+        } else {
+          signInWindow.opener = null;
+        }
+        return;
+      }
       const workOSClient = authClient();
       if (!workOSClient) {
         setError("WorkOS AuthKit is not ready yet");

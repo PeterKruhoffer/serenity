@@ -49,7 +49,7 @@ const setupSubmission = async (
     title: "Safety in Practice",
     description: "A complete publication workflow.",
     timezone: "UTC",
-    firstDate: { startsAt, endsAt, venueName: "Learning Center" },
+    dates: [{ startsAt, endsAt, venueName: "Learning Center", sessions: [] }],
   });
   const submitted = await author.mutation(api.publication.submit, { eventId: event.eventId });
   return { t, author, reviewer, workspace, event, submitted };

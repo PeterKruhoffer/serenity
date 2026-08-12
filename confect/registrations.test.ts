@@ -35,7 +35,7 @@ const publishedEvent = async (autoAccept: boolean) => {
     title: autoAccept ? "Automatic Course" : "Reviewed Course",
     description: "Registration behavior",
     timezone: "UTC",
-    firstDate: { startsAt, endsAt, venueName: "Main Hall" },
+    dates: [{ startsAt, endsAt, venueName: "Main Hall", sessions: [] }],
   });
   await manager.mutation(api.registrations.configure, {
     eventId: event.eventId,

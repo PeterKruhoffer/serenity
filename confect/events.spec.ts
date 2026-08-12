@@ -40,10 +40,18 @@ const EventDetail = Schema.Struct({
   dates: Schema.Array(DateSummary),
 });
 
+const SessionInput = Schema.Struct({
+  title: Schema.String,
+  startsAt: Schema.Number,
+  endsAt: Schema.Number,
+  roomName: Schema.String,
+});
+
 const DateInput = Schema.Struct({
   startsAt: Schema.Number,
   endsAt: Schema.Number,
   venueName: Schema.String,
+  sessions: Schema.Array(SessionInput),
 });
 
 export default GroupSpec.make()
@@ -73,7 +81,7 @@ export default GroupSpec.make()
           title: Schema.String,
           description: Schema.String,
           timezone: Schema.String,
-          firstDate: DateInput,
+          dates: Schema.Array(DateInput),
         }),
       returns: () => Schema.Struct({ eventId: Id("events") }),
       error: () => WorkspaceError,
@@ -82,7 +90,11 @@ export default GroupSpec.make()
   .addFunction(
     FunctionSpec.publicMutation({
       name: "addDate",
-      args: () => Schema.Struct({ eventId: Id("events"), date: DateInput }),
+      args: () =>
+        Schema.Struct({
+          eventId: Id("events"),
+          date: DateInput.omit("sessions"),
+        }),
       returns: () => Schema.Struct({ eventDateId: Id("event_dates") }),
       error: () => WorkspaceError,
     }),

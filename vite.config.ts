@@ -3,6 +3,9 @@ import solid from "vite-plugin-solid";
 
 export default defineConfig({
   plugins: [solid()],
+  server: {
+    allowedHosts: [".onamp.dev", ".e2b.app"],
+  },
   test: {
     include: [
       "src/**/*.test.ts",

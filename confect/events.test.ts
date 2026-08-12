@@ -31,26 +31,27 @@ describe("recurring event composition", () => {
       title: "Leadership Essentials",
       description: "A practical two-day course.",
       timezone: "Europe/Copenhagen",
-      firstDate: {
-        startsAt: dayOneStart,
-        endsAt: dayOneEnd,
-        venueName: "Harbor House",
-      },
-    });
-    const secondDate = await manager.mutation(api.events.addDate, {
-      eventId: created.eventId,
-      date: {
-        startsAt: dayOneStart + 86_400_000,
-        endsAt: dayOneEnd + 86_400_000,
-        venueName: "Harbor House",
-      },
-    });
-    await manager.mutation(api.events.addSession, {
-      eventDateId: secondDate.eventDateId,
-      title: "Leading through change",
-      startsAt: dayOneStart + 86_400_000 + 3_600_000,
-      endsAt: dayOneStart + 86_400_000 + 7_200_000,
-      roomName: "Studio 2",
+      dates: [
+        {
+          startsAt: dayOneStart,
+          endsAt: dayOneEnd,
+          venueName: "Harbor House",
+          sessions: [],
+        },
+        {
+          startsAt: dayOneStart + 86_400_000,
+          endsAt: dayOneEnd + 86_400_000,
+          venueName: "Harbor House",
+          sessions: [
+            {
+              title: "Leading through change",
+              startsAt: dayOneStart + 86_400_000 + 3_600_000,
+              endsAt: dayOneStart + 86_400_000 + 7_200_000,
+              roomName: "Studio 2",
+            },
+          ],
+        },
+      ],
     });
 
     const detail = await manager.query(api.events.get, { eventId: created.eventId });
@@ -82,8 +83,6 @@ describe("recurring event composition", () => {
       return entries.map((entry) => entry.action);
     });
     expect(auditActions).toContain("event.created");
-    expect(auditActions).toContain("event.date_added");
-    expect(auditActions).toContain("event.session_added");
   });
 
   it("keeps event details private from unrelated identities", async () => {
@@ -94,11 +93,14 @@ describe("recurring event composition", () => {
       title: "Private Program",
       description: "",
       timezone: "UTC",
-      firstDate: {
-        startsAt: dayOneStart,
-        endsAt: dayOneEnd,
-        venueName: "Main Hall",
-      },
+      dates: [
+        {
+          startsAt: dayOneStart,
+          endsAt: dayOneEnd,
+          venueName: "Main Hall",
+          sessions: [],
+        },
+      ],
     });
     const outsider = t.withIdentity({ tokenIdentifier: "issuer|outsider" });
 

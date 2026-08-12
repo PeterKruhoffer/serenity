@@ -37,7 +37,7 @@ const publishedEvent = async () => {
     title: "Autumn Supper",
     description: "A relaxed evening around one shared table.",
     timezone: "Europe/Copenhagen",
-    firstDate: { startsAt, endsAt, venueName: "The Glasshouse" },
+    dates: [{ startsAt, endsAt, venueName: "The Glasshouse", sessions: [] }],
   });
   await manager.mutation(api.registrations.configure, {
     eventId: event.eventId,

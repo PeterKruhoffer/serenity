@@ -209,7 +209,7 @@ const create = FunctionImpl.make(
   databaseSchema,
   events,
   "create",
-  ({ organizationId, teamId, title: rawTitle, description, timezone, firstDate }) =>
+  ({ organizationId, teamId, title: rawTitle, description, timezone, dates }) =>
     Effect.gen(function* () {
       const identity = yield* getIdentity;
       const reader = yield* DatabaseReader;
@@ -237,14 +237,42 @@ const create = FunctionImpl.make(
       }
 
       const title = yield* normalizeText(rawTitle, "Event title", 2, 120);
-      const venueName = yield* normalizeText(firstDate.venueName, "Venue", 2, 120);
       const normalizedTimezone = yield* normalizeText(timezone, "Timezone", 2, 80);
-      yield* validateDate(firstDate.startsAt, firstDate.endsAt);
       if (description.length > 5_000) {
         return yield* Effect.fail(
           new InvalidInput({ message: "Description cannot exceed 5,000 characters." }),
         );
       }
+      if (dates.length === 0) {
+        return yield* Effect.fail(
+          new InvalidInput({ message: "Add at least one date to the event." }),
+        );
+      }
+      const normalizedDates = yield* Effect.forEach(dates, (date) =>
+        Effect.gen(function* () {
+          yield* validateDate(date.startsAt, date.endsAt);
+          const venueName = yield* normalizeText(date.venueName, "Venue", 2, 120);
+          const sessions = yield* Effect.forEach(date.sessions, (session) =>
+            Effect.gen(function* () {
+              yield* validateDate(session.startsAt, session.endsAt);
+              if (session.startsAt < date.startsAt || session.endsAt > date.endsAt) {
+                return yield* Effect.fail(
+                  new InvalidInput({ message: "A session must fit within its event date." }),
+                );
+              }
+              const sessionTitle = yield* normalizeText(session.title, "Session title", 2, 120);
+              const roomName = session.roomName.trim();
+              if (roomName.length > 120) {
+                return yield* Effect.fail(
+                  new InvalidInput({ message: "Room name cannot exceed 120 characters." }),
+                );
+              }
+              return { ...session, title: sessionTitle, roomName };
+            }),
+          );
+          return { ...date, venueName, sessions };
+        }),
+      );
 
       const slug = toSlug(title);
       const existingEvent = yield* reader
@@ -310,23 +338,41 @@ const create = FunctionImpl.make(
         autoAccept: false,
         waitingListEnabled: true,
         acceptedCount: 0,
-        occurrenceCount: 1,
-        sessionCount: 0,
+        occurrenceCount: normalizedDates.length,
+        sessionCount: normalizedDates.reduce((count, date) => count + date.sessions.length, 0),
         createdByIdentity: identity.tokenIdentifier,
         createdAt: now,
         updatedAt: now,
       });
-      yield* writer.table("event_dates").insert({
-        organizationId,
-        eventId,
-        startsAt: firstDate.startsAt,
-        endsAt: firstDate.endsAt,
-        venueName,
-        status: "scheduled",
-        sortOrder: 0,
-        createdAt: now,
-        updatedAt: now,
-      });
+      yield* Effect.forEach(normalizedDates, (date, dateIndex) =>
+        Effect.gen(function* () {
+          const eventDateId = yield* writer.table("event_dates").insert({
+            organizationId,
+            eventId,
+            startsAt: date.startsAt,
+            endsAt: date.endsAt,
+            venueName: date.venueName,
+            status: "scheduled",
+            sortOrder: dateIndex,
+            createdAt: now,
+            updatedAt: now,
+          });
+          yield* Effect.forEach(date.sessions, (session, sessionIndex) =>
+            writer.table("sessions").insert({
+              organizationId,
+              eventId,
+              eventDateId,
+              title: session.title,
+              startsAt: session.startsAt,
+              endsAt: session.endsAt,
+              roomName: session.roomName,
+              sortOrder: sessionIndex,
+              createdAt: now,
+              updatedAt: now,
+            }),
+          );
+        }),
+      );
       yield* writer.table("audit_entries").insert({
         organizationId,
         actorIdentity: identity.tokenIdentifier,

@@ -718,6 +718,12 @@ textarea:focus {
   margin-bottom: 26px;
 }
 
+.form-heading p:not(.eyebrow) {
+  margin: 8px 0 0;
+  color: #858a81;
+  font-size: 11px;
+}
+
 .form-heading .eyebrow {
   margin-bottom: 8px;
 }
@@ -759,6 +765,200 @@ textarea:focus {
 
 .form-grid .wide-field {
   grid-column: 1 / -1;
+}
+
+.builder-section-heading {
+  margin: 28px 0 18px;
+  padding-top: 24px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  border-top: 1px solid #e1e3dc;
+}
+
+.builder-section-heading > span:first-child {
+  padding-top: 3px;
+  color: #92978e;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.builder-section-heading h3 {
+  margin: 0;
+  color: #30352e;
+  font-size: 14px;
+}
+
+.builder-section-heading p {
+  margin: 5px 0 0;
+  color: #858a81;
+  font-size: 10px;
+}
+
+.schedule-heading {
+  margin-top: 32px;
+}
+
+.builder-date-list {
+  display: grid;
+  gap: 14px;
+}
+
+.builder-date-card {
+  padding: 20px;
+  background: #f4f6f0;
+  border: 1px solid #dfe3d9;
+  border-radius: 14px;
+}
+
+.builder-card-heading,
+.builder-sessions-heading,
+.builder-session-list li,
+.session-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.builder-card-heading > strong {
+  color: #353a32;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.danger-button {
+  color: #9b5c52;
+}
+
+.builder-date-fields {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.builder-date-fields label,
+.builder-session-editor label {
+  display: grid;
+  gap: 7px;
+}
+
+.builder-date-fields label > span,
+.builder-session-editor label > span {
+  color: #656b62;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.builder-sessions-heading {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #dce0d6;
+}
+
+.builder-sessions-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.builder-sessions-heading strong {
+  color: #3c4139;
+  font-size: 11px;
+}
+
+.builder-sessions-heading span {
+  color: #8b9087;
+  font-size: 9px;
+}
+
+.builder-session-list {
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  list-style: none;
+}
+
+.builder-session-list li {
+  padding: 12px 0;
+  border-top: 1px solid #dde1d8;
+}
+
+.builder-session-list li > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.builder-session-list li > div:last-child {
+  display: flex;
+  gap: 10px;
+}
+
+.builder-session-list strong {
+  color: #393e36;
+  font-size: 11px;
+}
+
+.builder-session-list span {
+  color: #858b81;
+  font-size: 9px;
+}
+
+.builder-session-editor {
+  margin-top: 14px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #d9ddd3;
+  border-radius: 10px;
+}
+
+.session-editor-heading,
+.session-title-field,
+.session-editor-actions {
+  grid-column: 1 / -1;
+}
+
+.session-editor-heading strong {
+  color: #373c34;
+  font-size: 12px;
+}
+
+.builder-session-editor label small {
+  color: #989d94;
+  font-size: 8px;
+  font-weight: 400;
+}
+
+.session-editor-actions {
+  justify-content: flex-end;
+}
+
+.add-date-button {
+  margin-top: 14px;
+}
+
+.signup-heading {
+  padding: 20px;
+  background: #f2f3ed;
+  border: 1px dashed #ced2c7;
+  border-radius: 12px;
+}
+
+.coming-soon-badge {
+  padding: 5px 8px !important;
+  color: #70776b !important;
+  background: #e3e7dd;
+  border-radius: 999px;
+  font-family: inherit !important;
+  font-size: 8px !important;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .form-actions {
@@ -1483,6 +1683,17 @@ textarea:focus {
   .session-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .builder-date-fields,
+  .builder-session-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .session-editor-heading,
+  .session-title-field,
+  .session-editor-actions {
+    grid-column: auto;
+  }
 }
 
 @media (max-width: 600px) {
@@ -1570,6 +1781,20 @@ textarea:focus {
   .date-heading,
   .form-actions,
   .approval-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .builder-section-heading {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .coming-soon-badge {
+    grid-column: 2;
+    width: fit-content;
+  }
+
+  .builder-session-list li {
     align-items: flex-start;
     flex-direction: column;
   }

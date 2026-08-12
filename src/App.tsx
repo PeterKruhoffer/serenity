@@ -2,11 +2,49 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Match, Show, Switch, createSignal, type Component } from "solid-js";
+import { createStore, reconcile } from "solid-js/store";
 import { A } from "@solidjs/router";
 import { useWorkOSAuth } from "./auth";
 import { accountNameFor, greetingNameFor } from "./display-name";
 
 type OrganizationRole = "administrator" | "super_user" | "event_manager";
+
+type DraftSession = {
+  id: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  roomName: string;
+};
+
+type DraftDate = {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  venueName: string;
+  sessions: DraftSession[];
+  sessionDraft: DraftSession | null;
+  editingSessionId: string | null;
+};
+
+let draftItemId = 0;
+const nextDraftItemId = () => `draft-${++draftItemId}`;
+const emptySession = (startsAt = "", endsAt = ""): DraftSession => ({
+  id: nextDraftItemId(),
+  title: "",
+  startsAt,
+  endsAt,
+  roomName: "",
+});
+const emptyDate = (): DraftDate => ({
+  id: nextDraftItemId(),
+  startsAt: "",
+  endsAt: "",
+  venueName: "",
+  sessions: [],
+  sessionDraft: null,
+  editingSessionId: null,
+});
 
 const roleLabel = (role: OrganizationRole) =>
   ({
@@ -65,9 +103,12 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
   const [eventTitle, setEventTitle] = createSignal("");
   const [eventDescription, setEventDescription] = createSignal("");
   const [eventTeamId, setEventTeamId] = createSignal<Id<"teams"> | "">("");
-  const [eventStartsAt, setEventStartsAt] = createSignal("");
-  const [eventEndsAt, setEventEndsAt] = createSignal("");
-  const [eventVenue, setEventVenue] = createSignal("");
+  const [draftDateStore, setDraftDateStore] = createStore<DraftDate[]>([emptyDate()]);
+  const draftDates = () => draftDateStore;
+  const setDraftDates = (update: DraftDate[] | ((dates: DraftDate[]) => DraftDate[])) => {
+    const nextDates = typeof update === "function" ? update([...draftDateStore]) : update;
+    setDraftDateStore(reconcile(nextDates, { key: "id" }));
+  };
   const [newDateStartsAt, setNewDateStartsAt] = createSignal("");
   const [newDateEndsAt, setNewDateEndsAt] = createSignal("");
   const [newDateVenue, setNewDateVenue] = createSignal("");
@@ -90,6 +131,53 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
   const withdrawRegistration = useMutation(api.registrations.withdraw);
   const [participantName, setParticipantName] = createSignal("");
   const [participantEmail, setParticipantEmail] = createSignal("");
+
+  const updateDraftDate = (dateId: string, update: (date: DraftDate) => DraftDate) => {
+    const index = draftDateStore.findIndex((date) => date.id === dateId);
+    if (index >= 0) setDraftDateStore(index, update(draftDateStore[index]!));
+  };
+
+  const resetEventBuilder = () => {
+    setEventTitle("");
+    setEventDescription("");
+    setEventTeamId("");
+    setDraftDates([emptyDate()]);
+  };
+
+  const saveDraftSession = (dateId: string) => {
+    setFormError(null);
+    const date = draftDates().find((candidate) => candidate.id === dateId);
+    const session = date?.sessionDraft;
+    if (!date || !session) return;
+    const startsAt = new Date(session.startsAt).getTime();
+    const endsAt = new Date(session.endsAt).getTime();
+    const dateStartsAt = new Date(date.startsAt).getTime();
+    const dateEndsAt = new Date(date.endsAt).getTime();
+    if (session.title.trim().length < 2) {
+      setFormError("Session title must be at least 2 characters.");
+      return;
+    }
+    if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt) || endsAt <= startsAt) {
+      setFormError("The session end time must be after its start time.");
+      return;
+    }
+    if (
+      Number.isFinite(dateStartsAt) &&
+      Number.isFinite(dateEndsAt) &&
+      (startsAt < dateStartsAt || endsAt > dateEndsAt)
+    ) {
+      setFormError("A session must fit within its event date.");
+      return;
+    }
+    updateDraftDate(dateId, (current) => ({
+      ...current,
+      sessions: current.editingSessionId
+        ? current.sessions.map((saved) => (saved.id === current.editingSessionId ? session : saved))
+        : [...current.sessions, session],
+      sessionDraft: null,
+      editingSessionId: null,
+    }));
+  };
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const formatDate = (timestamp: number) =>
@@ -140,17 +228,19 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
         title: eventTitle(),
         description: eventDescription(),
         timezone,
-        firstDate: {
-          startsAt: new Date(eventStartsAt()).getTime(),
-          endsAt: new Date(eventEndsAt()).getTime(),
-          venueName: eventVenue(),
-        },
+        dates: draftDates().map((date) => ({
+          startsAt: new Date(date.startsAt).getTime(),
+          endsAt: new Date(date.endsAt).getTime(),
+          venueName: date.venueName,
+          sessions: date.sessions.map((session) => ({
+            title: session.title,
+            startsAt: new Date(session.startsAt).getTime(),
+            endsAt: new Date(session.endsAt).getTime(),
+            roomName: session.roomName,
+          })),
+        })),
       });
-      setEventTitle("");
-      setEventDescription("");
-      setEventStartsAt("");
-      setEventEndsAt("");
-      setEventVenue("");
+      resetEventBuilder();
       setShowEventForm(false);
       setSelectedEventId(result.eventId);
     } catch (error) {
@@ -415,9 +505,17 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
                         <div class="form-heading">
                           <div>
                             <p class="eyebrow">New draft</p>
-                            <h2>Compose a recurring event</h2>
+                            <h2>Create an event</h2>
+                            <p>Build the event and its schedule before creating the draft.</p>
                           </div>
                           <span>{timezone}</span>
+                        </div>
+                        <div class="builder-section-heading">
+                          <span>01</span>
+                          <div>
+                            <h3>Event details</h3>
+                            <p>Give participants a clear introduction to the event.</p>
+                          </div>
                         </div>
                         <div class="form-grid">
                           <label class="wide-field">
@@ -453,33 +551,281 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
                               rows="3"
                             />
                           </label>
-                          <label>
-                            <span>First date starts</span>
-                            <input
-                              type="datetime-local"
-                              value={eventStartsAt()}
-                              onInput={(event) => setEventStartsAt(event.currentTarget.value)}
-                              required
-                            />
-                          </label>
-                          <label>
-                            <span>First date ends</span>
-                            <input
-                              type="datetime-local"
-                              value={eventEndsAt()}
-                              onInput={(event) => setEventEndsAt(event.currentTarget.value)}
-                              required
-                            />
-                          </label>
-                          <label>
-                            <span>Venue</span>
-                            <input
-                              placeholder="Harbor House"
-                              value={eventVenue()}
-                              onInput={(event) => setEventVenue(event.currentTarget.value)}
-                              required
-                            />
-                          </label>
+                        </div>
+
+                        <div class="builder-section-heading schedule-heading">
+                          <span>02</span>
+                          <div>
+                            <h3>Schedule</h3>
+                            <p>Add each event date, then place sessions within that date.</p>
+                          </div>
+                        </div>
+                        <div class="builder-date-list">
+                          <For each={draftDates()}>
+                            {(date, dateIndex) => (
+                              <section class="builder-date-card">
+                                <div class="builder-card-heading">
+                                  <strong>Date {dateIndex() + 1}</strong>
+                                  <Show when={draftDates().length > 1}>
+                                    <button
+                                      class="text-button danger-button"
+                                      type="button"
+                                      onClick={() =>
+                                        setDraftDates((dates) =>
+                                          dates.filter((candidate) => candidate.id !== date.id),
+                                        )
+                                      }
+                                    >
+                                      Remove date
+                                    </button>
+                                  </Show>
+                                </div>
+                                <div class="builder-date-fields">
+                                  <label>
+                                    <span>Starts</span>
+                                    <input
+                                      type="datetime-local"
+                                      value={date.startsAt}
+                                      onInput={(event) =>
+                                        updateDraftDate(date.id, (current) => ({
+                                          ...current,
+                                          startsAt: event.currentTarget.value,
+                                        }))
+                                      }
+                                      required
+                                    />
+                                  </label>
+                                  <label>
+                                    <span>Ends</span>
+                                    <input
+                                      type="datetime-local"
+                                      value={date.endsAt}
+                                      onInput={(event) =>
+                                        updateDraftDate(date.id, (current) => ({
+                                          ...current,
+                                          endsAt: event.currentTarget.value,
+                                        }))
+                                      }
+                                      required
+                                    />
+                                  </label>
+                                  <label>
+                                    <span>Venue</span>
+                                    <input
+                                      placeholder="Harbor House"
+                                      value={date.venueName}
+                                      onInput={(event) =>
+                                        updateDraftDate(date.id, (current) => ({
+                                          ...current,
+                                          venueName: event.currentTarget.value,
+                                        }))
+                                      }
+                                      required
+                                    />
+                                  </label>
+                                </div>
+
+                                <div class="builder-sessions-heading">
+                                  <div>
+                                    <strong>Sessions</strong>
+                                    <span>{date.sessions.length} added</span>
+                                  </div>
+                                  <Show when={!date.sessionDraft}>
+                                    <button
+                                      class="secondary-button compact-button"
+                                      type="button"
+                                      onClick={() =>
+                                        updateDraftDate(date.id, (current) => ({
+                                          ...current,
+                                          sessionDraft: emptySession(
+                                            current.startsAt,
+                                            current.endsAt,
+                                          ),
+                                          editingSessionId: null,
+                                        }))
+                                      }
+                                    >
+                                      ＋ Add session
+                                    </button>
+                                  </Show>
+                                </div>
+
+                                <Show when={date.sessions.length > 0}>
+                                  <ul class="builder-session-list">
+                                    <For each={date.sessions}>
+                                      {(session) => (
+                                        <li>
+                                          <div>
+                                            <strong>{session.title}</strong>
+                                            <span>
+                                              {session.startsAt.replace("T", " ")}–
+                                              {session.endsAt.split("T")[1]} ·{" "}
+                                              {session.roomName || "No room"}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <button
+                                              class="text-button"
+                                              type="button"
+                                              onClick={() =>
+                                                updateDraftDate(date.id, (current) => ({
+                                                  ...current,
+                                                  sessionDraft: { ...session },
+                                                  editingSessionId: session.id,
+                                                }))
+                                              }
+                                            >
+                                              Edit
+                                            </button>
+                                            <button
+                                              class="text-button danger-button"
+                                              type="button"
+                                              onClick={() =>
+                                                updateDraftDate(date.id, (current) => ({
+                                                  ...current,
+                                                  sessions: current.sessions.filter(
+                                                    (candidate) => candidate.id !== session.id,
+                                                  ),
+                                                }))
+                                              }
+                                            >
+                                              Remove
+                                            </button>
+                                          </div>
+                                        </li>
+                                      )}
+                                    </For>
+                                  </ul>
+                                </Show>
+
+                                <Show when={date.sessionDraft}>
+                                  {(sessionDraft) => (
+                                    <div class="builder-session-editor">
+                                      <div class="session-editor-heading">
+                                        <strong>
+                                          {date.editingSessionId ? "Edit session" : "New session"}
+                                        </strong>
+                                      </div>
+                                      <label class="session-title-field">
+                                        <span>Session title</span>
+                                        <input
+                                          placeholder="Opening keynote"
+                                          value={sessionDraft().title}
+                                          onInput={(event) =>
+                                            updateDraftDate(date.id, (current) => ({
+                                              ...current,
+                                              sessionDraft: current.sessionDraft
+                                                ? {
+                                                    ...current.sessionDraft,
+                                                    title: event.currentTarget.value,
+                                                  }
+                                                : null,
+                                            }))
+                                          }
+                                        />
+                                      </label>
+                                      <label>
+                                        <span>Starts</span>
+                                        <input
+                                          type="datetime-local"
+                                          value={sessionDraft().startsAt}
+                                          onInput={(event) =>
+                                            updateDraftDate(date.id, (current) => ({
+                                              ...current,
+                                              sessionDraft: current.sessionDraft
+                                                ? {
+                                                    ...current.sessionDraft,
+                                                    startsAt: event.currentTarget.value,
+                                                  }
+                                                : null,
+                                            }))
+                                          }
+                                        />
+                                      </label>
+                                      <label>
+                                        <span>Ends</span>
+                                        <input
+                                          type="datetime-local"
+                                          value={sessionDraft().endsAt}
+                                          onInput={(event) =>
+                                            updateDraftDate(date.id, (current) => ({
+                                              ...current,
+                                              sessionDraft: current.sessionDraft
+                                                ? {
+                                                    ...current.sessionDraft,
+                                                    endsAt: event.currentTarget.value,
+                                                  }
+                                                : null,
+                                            }))
+                                          }
+                                        />
+                                      </label>
+                                      <label>
+                                        <span>
+                                          Room <small>Optional</small>
+                                        </span>
+                                        <input
+                                          placeholder="Auditorium"
+                                          value={sessionDraft().roomName}
+                                          onInput={(event) =>
+                                            updateDraftDate(date.id, (current) => ({
+                                              ...current,
+                                              sessionDraft: current.sessionDraft
+                                                ? {
+                                                    ...current.sessionDraft,
+                                                    roomName: event.currentTarget.value,
+                                                  }
+                                                : null,
+                                            }))
+                                          }
+                                        />
+                                      </label>
+                                      <div class="session-editor-actions">
+                                        <button
+                                          class="text-button"
+                                          type="button"
+                                          onClick={() =>
+                                            updateDraftDate(date.id, (current) => ({
+                                              ...current,
+                                              sessionDraft: null,
+                                              editingSessionId: null,
+                                            }))
+                                          }
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          class="primary-button compact-button"
+                                          type="button"
+                                          onClick={() => saveDraftSession(date.id)}
+                                        >
+                                          {date.editingSessionId ? "Save session" : "Add session"}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </Show>
+                              </section>
+                            )}
+                          </For>
+                        </div>
+                        <button
+                          class="secondary-button add-date-button"
+                          type="button"
+                          onClick={() => setDraftDates((dates) => [...dates, emptyDate()])}
+                        >
+                          ＋ Add another date
+                        </button>
+
+                        <div class="builder-section-heading signup-heading">
+                          <span>03</span>
+                          <div>
+                            <h3>Sign-up form</h3>
+                            <p>
+                              Registration questions will be configured here in a future update.
+                            </p>
+                          </div>
+                          <span class="coming-soon-badge">Coming later</span>
                         </div>
                         <Show when={formError()}>
                           <p class="auth-error" role="alert">
@@ -494,6 +840,16 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
                           >
                             {createEvent.isLoading() ? "Creating draft…" : "Create draft"}
                             <span aria-hidden="true">→</span>
+                          </button>
+                          <button
+                            class="text-button"
+                            type="button"
+                            onClick={() => {
+                              resetEventBuilder();
+                              setShowEventForm(false);
+                            }}
+                          >
+                            Cancel
                           </button>
                           <small>The draft is visible only inside Serenity.</small>
                         </div>

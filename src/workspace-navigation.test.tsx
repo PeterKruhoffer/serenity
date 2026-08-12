@@ -48,7 +48,7 @@ beforeEach(() => {
               id: "organization-id",
               name: "Serenity Test",
               role: "administrator",
-              teams: [],
+              teams: [{ id: "team-id", name: "Events team" }],
             },
           ],
         });
@@ -72,6 +72,38 @@ afterEach(() => {
 });
 
 describe("signed-in workspace navigation", () => {
+  it("keeps focus in schedule fields while typing", () => {
+    window.history.replaceState({}, "", "/events");
+    const host = document.createElement("div");
+    document.body.append(host);
+    disposers.push(
+      render(
+        () => (
+          <Router>
+            <SerenityRoutes />
+          </Router>
+        ),
+        host,
+      ),
+    );
+
+    const newEventButton = Array.from(host.querySelectorAll("button")).find((button) =>
+      button.textContent?.includes("New event"),
+    );
+    newEventButton?.click();
+    const venue = host.querySelector<HTMLInputElement>('input[placeholder="Harbor House"]');
+    expect(venue).toBeTruthy();
+
+    venue?.focus();
+    for (const value of ["T", "Th", "Tha", "That"]) {
+      if (!venue) break;
+      venue.value = value;
+      venue.dispatchEvent(new InputEvent("input", { bubbles: true, data: value.at(-1) }));
+      expect(host.querySelector('input[placeholder="Harbor House"]')).toBe(venue);
+      expect(document.activeElement).toBe(venue);
+    }
+  });
+
   it("renders each page when its sidebar link is clicked", async () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");
