@@ -18,7 +18,7 @@ Serenity is an event management platform for professionals who use it throughout
 
 Editing creates a draft revision isolated from the published event. An event manager submits the complete revision; an administrator or super user approves or rejects it. Creation and submission never auto-approve; an authorized author may explicitly approve their own submitted revision. Approval atomically replaces the published snapshot. Cancellations use the same workflow, destructive actions are recoverable, and consequential activity is audited.
 
-Every API operation requires scoped, revocable server-to-server credentials. Reads expose approved snapshots only. Registration operations may sign up, withdraw, or decline a date but cannot edit events or bypass approval. Credentials are organization-isolated; mutations are idempotent and audited. Nothing is public.
+Organizer and event-management API operations require scoped, revocable credentials. Public sign-up reads expose approved snapshots only, and public registration validates answers against the published form. Registration operations cannot edit events or bypass approval. Authenticated credentials remain organization-isolated; mutations are idempotent and audited.
 
 ## Glossary
 

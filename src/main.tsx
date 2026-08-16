@@ -13,13 +13,16 @@ if (!root) {
 
 render(() => {
   const convex = setupConvex(import.meta.env.VITE_CONVEX_URL);
-  const AuthenticatedRoot = (props: RouteSectionProps) => (
-    <WorkOSAuthProvider client={convex}>{props.children}</WorkOSAuthProvider>
-  );
+  const RouteRoot = (props: RouteSectionProps) =>
+    window.location.pathname.startsWith("/embed/") ? (
+      props.children
+    ) : (
+      <WorkOSAuthProvider client={convex}>{props.children}</WorkOSAuthProvider>
+    );
 
   return (
     <ConvexProvider client={convex}>
-      <Router root={AuthenticatedRoot}>
+      <Router root={RouteRoot}>
         <SerenityRoutes />
       </Router>
     </ConvexProvider>

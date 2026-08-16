@@ -142,6 +142,10 @@ const getPublished = FunctionImpl.make(databaseSchema, publication, "getPublishe
         };
       }),
     );
+    const signupFields = yield* reader
+      .table("revision_signup_fields")
+      .index("by_revisionId_and_sortOrder", (q) => q.eq("revisionId", revision._id))
+      .take(50);
     return {
       eventId,
       revisionId: revision._id,
@@ -150,6 +154,13 @@ const getPublished = FunctionImpl.make(databaseSchema, publication, "getPublishe
       description: revision.description,
       timezone: revision.timezone,
       dates: publishedDates,
+      signupFields: signupFields.map((field) => ({
+        id: field._id,
+        type: field.type,
+        label: field.label,
+        required: field.required,
+        options: field.options,
+      })),
     };
   }).pipe(Effect.catchTag("DocumentDecodeError", (error) => Effect.die(error))),
 );
@@ -176,6 +187,10 @@ const submit = FunctionImpl.make(databaseSchema, publication, "submit", ({ event
       .table("event_dates")
       .index("by_eventId_and_sortOrder", (q) => q.eq("eventId", eventId))
       .take(100);
+    const signupFields = yield* reader
+      .table("signup_form_fields")
+      .index("by_eventId_and_sortOrder", (q) => q.eq("eventId", eventId))
+      .take(50);
     if (dates.length === 0) {
       return yield* Effect.fail(
         new InvalidInput({ message: "Add at least one date before submitting." }),
@@ -207,6 +222,18 @@ const submit = FunctionImpl.make(databaseSchema, publication, "submit", ({ event
       submittedByIdentity: identity.tokenIdentifier,
       submittedAt: now,
     });
+    for (const field of signupFields) {
+      yield* writer.table("revision_signup_fields").insert({
+        organizationId: event.organizationId,
+        revisionId,
+        sourceSignupFieldId: field._id,
+        type: field.type,
+        label: field.label,
+        required: field.required,
+        options: field.options,
+        sortOrder: field.sortOrder,
+      });
+    }
     for (const date of dates) {
       const revisionDateId = yield* writer.table("revision_dates").insert({
         organizationId: event.organizationId,

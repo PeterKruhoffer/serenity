@@ -10,10 +10,14 @@ import events from "./tables/events";
 import organization_memberships from "./tables/organization_memberships";
 import organizations from "./tables/organizations";
 import participants from "./tables/participants";
+import registration_answers from "./tables/registration_answers";
 import registrations from "./tables/registrations";
 import revision_dates from "./tables/revision_dates";
 import revision_sessions from "./tables/revision_sessions";
+import revision_signup_fields from "./tables/revision_signup_fields";
 import sessions from "./tables/sessions";
+import signup_form_fields from "./tables/signup_form_fields";
+import signup_form_templates from "./tables/signup_form_templates";
 import team_memberships from "./tables/team_memberships";
 import teams from "./tables/teams";
 
@@ -28,10 +32,14 @@ export default $defineSchema({
   organization_memberships: organization_memberships.tableDefinition,
   organizations: organizations.tableDefinition,
   participants: participants.tableDefinition,
+  registration_answers: registration_answers.tableDefinition,
   registrations: registrations.tableDefinition,
   revision_dates: revision_dates.tableDefinition,
   revision_sessions: revision_sessions.tableDefinition,
+  revision_signup_fields: revision_signup_fields.tableDefinition,
   sessions: sessions.tableDefinition,
+  signup_form_fields: signup_form_fields.tableDefinition,
+  signup_form_templates: signup_form_templates.tableDefinition,
   team_memberships: team_memberships.tableDefinition,
   teams: teams.tableDefinition,
 });

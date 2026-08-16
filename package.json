@@ -16,6 +16,7 @@
     "@confect/core": "^9.3.0",
     "@confect/js": "^9.3.0",
     "@confect/server": "^9.3.0",
+    "@convex-dev/rate-limiter": "^0.3.2",
     "@convex-dev/workos-authkit": "^0.2.7",
     "@solidjs/router": "^1.0.0",
     "@workos-inc/authkit-js": "^0.20.2",

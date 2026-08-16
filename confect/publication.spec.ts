@@ -29,6 +29,14 @@ const PublishedDate = Schema.Struct({
   sessions: Schema.Array(PublishedSession),
 });
 
+const PublishedSignupField = Schema.Struct({
+  id: Id("revision_signup_fields"),
+  type: Schema.Literal("text", "textarea", "yes_no", "checkboxes"),
+  label: Schema.String,
+  required: Schema.Boolean,
+  options: Schema.Array(Schema.String),
+});
+
 const PublishedEvent = Schema.Struct({
   eventId: Id("events"),
   revisionId: Id("event_revisions"),
@@ -37,6 +45,7 @@ const PublishedEvent = Schema.Struct({
   description: Schema.String,
   timezone: Schema.String,
   dates: Schema.Array(PublishedDate),
+  signupFields: Schema.Array(PublishedSignupField),
 });
 
 export default GroupSpec.make()

@@ -27,6 +27,19 @@ const PublicDate = Schema.Struct({
   sessions: Schema.Array(PublicSession),
 });
 
+const PublicSignupField = Schema.Struct({
+  id: Id("revision_signup_fields"),
+  type: Schema.Literal("text", "textarea", "yes_no", "checkboxes"),
+  label: Schema.String,
+  required: Schema.Boolean,
+  options: Schema.Array(Schema.String),
+});
+
+const SignupAnswer = Schema.Struct({
+  fieldId: Id("revision_signup_fields"),
+  value: Schema.Union(Schema.String, Schema.Boolean, Schema.Array(Schema.String)),
+});
+
 const PublicEvent = Schema.Struct({
   id: Id("events"),
   organizationName: Schema.String,
@@ -40,6 +53,7 @@ const PublicEvent = Schema.Struct({
   waitingListEnabled: Schema.Boolean,
   registrationState: Schema.Literal("open", "waitlist", "full"),
   dates: Schema.Array(PublicDate),
+  signupFields: Schema.Array(PublicSignupField),
 });
 
 const MyRegistration = Schema.Struct({
@@ -85,6 +99,7 @@ export default GroupSpec.make()
           displayName: Schema.String,
           email: Schema.optional(Schema.String),
           locale: Schema.optional(Schema.String),
+          answers: Schema.optional(Schema.Array(SignupAnswer)),
         }),
       returns: () =>
         Schema.Struct({ registrationId: Id("registrations"), status: RegistrationStatus }),

@@ -228,6 +228,9 @@ importers:
       '@confect/server':
         specifier: ^9.3.0
         version: 9.3.0(b1284d83c46ec3915130953c8812bac8)
+      '@convex-dev/rate-limiter':
+        specifier: ^0.3.2
+        version: 0.3.2(convex@1.43.0(react@19.2.8))(react@19.2.8)
       '@convex-dev/workos-authkit':
         specifier: ^0.2.7
         version: 0.2.7(@standard-schema/spec@1.1.0)(@workos-inc/authkit-react@0.16.2(react@19.2.8))(@workos-inc/node@10.9.0)(convex@1.43.0(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
@@ -422,6 +425,15 @@ packages:
     peerDependencies:
       convex: ^1.36.1
       react: ^18.3.1 || ^19.0.0
+
+  '@convex-dev/rate-limiter@0.3.2':
+    resolution: {integrity: sha512-+oBPsBfFbzdxiF/9XaaTQmVnvDlvEfg/c69/v8LxTbw4VLuiflIKlfnPQL8OS0azXQQ11hcPWHmU8ytFmHKDXA==}
+    peerDependencies:
+      convex: ^1.24.8
+      react: ^18.2.0 || ^19.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   '@convex-dev/workflow@0.4.4':
     resolution: {integrity: sha512-ZQfVspAAxG4zZJEep2qaRtupw8OewwMezq6KNKaXKjo/gA+YffS9bXz13x+L/TSt9/Lb6gioae6Y9PDrqh7xQg==}
@@ -2429,6 +2441,12 @@ snapshots:
   '@convex-dev/batch-worker@0.2.0(convex@1.43.0(react@19.2.8))(react@19.2.8)':
     dependencies:
       convex: 1.43.0(react@19.2.8)
+      react: 19.2.8
+
+  '@convex-dev/rate-limiter@0.3.2(convex@1.43.0(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      convex: 1.43.0(react@19.2.8)
+    optionalDependencies:
       react: 19.2.8
 
   '@convex-dev/workflow@0.4.4(@convex-dev/workpool@0.4.9(convex-helpers@0.1.122(@standard-schema/spec@1.1.0)(convex@1.43.0(react@19.2.8))(react@19.2.8)(typescript@6.0.3))(convex@1.43.0(react@19.2.8))(react@19.2.8))(convex-helpers@0.1.122(@standard-schema/spec@1.1.0)(convex@1.43.0(react@19.2.8))(react@19.2.8)(typescript@6.0.3))(convex@1.43.0(react@19.2.8))':

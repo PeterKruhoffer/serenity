@@ -82,6 +82,49 @@ const normalizeText = (value: string, label: string, minimum: number, maximum: n
   return Effect.succeed(normalized);
 };
 
+type SignupFieldInput = {
+  readonly type: "text" | "textarea" | "yes_no" | "checkboxes";
+  readonly label: string;
+  readonly required: boolean;
+  readonly options: ReadonlyArray<string>;
+};
+
+const validateSignupFields = (fields: ReadonlyArray<SignupFieldInput>) =>
+  Effect.gen(function* () {
+    if (fields.length > 50) {
+      return yield* Effect.fail(
+        new InvalidInput({ message: "A sign-up form can contain at most 50 fields." }),
+      );
+    }
+    return yield* Effect.forEach(fields, (field) =>
+      Effect.gen(function* () {
+        const label = yield* normalizeText(field.label, "Question", 2, 160);
+        if (field.type !== "checkboxes" && field.options.length > 0) {
+          return yield* Effect.fail(
+            new InvalidInput({ message: "Only checkbox fields can define options." }),
+          );
+        }
+        if (
+          field.type === "checkboxes" &&
+          (field.options.length < 1 || field.options.length > 20)
+        ) {
+          return yield* Effect.fail(
+            new InvalidInput({ message: "Checkbox fields need between 1 and 20 options." }),
+          );
+        }
+        const options = yield* Effect.forEach(field.options, (option) =>
+          normalizeText(option, "Checkbox option", 1, 120),
+        );
+        if (new Set(options.map((option) => option.toLocaleLowerCase())).size !== options.length) {
+          return yield* Effect.fail(
+            new InvalidInput({ message: "Checkbox options must be unique." }),
+          );
+        }
+        return { type: field.type, label, required: field.required, options: [...options] };
+      }),
+    );
+  });
+
 const validateDate = (startsAt: number, endsAt: number) => {
   if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt) || endsAt <= startsAt) {
     return Effect.fail(new InvalidInput({ message: "The end time must be after the start time." }));
@@ -186,6 +229,10 @@ const get = FunctionImpl.make(databaseSchema, events, "get", ({ eventId }) =>
         } as const;
       }),
     );
+    const signupFields = yield* reader
+      .table("signup_form_fields")
+      .index("by_eventId_and_sortOrder", (q) => q.eq("eventId", eventId))
+      .take(50);
 
     return {
       event: {
@@ -201,15 +248,162 @@ const get = FunctionImpl.make(databaseSchema, events, "get", ({ eventId }) =>
         updatedAt: event.updatedAt,
       },
       dates: datesWithSessions,
+      signupFields: signupFields.map((field) => ({
+        type: field.type,
+        label: field.label,
+        required: field.required,
+        options: field.options,
+      })),
     };
   }).pipe(Effect.catchTag("DocumentDecodeError", (error) => Effect.die(error))),
+);
+
+const listSignupTemplates = FunctionImpl.make(
+  databaseSchema,
+  events,
+  "listSignupTemplates",
+  ({ organizationId }) =>
+    Effect.gen(function* () {
+      const identity = yield* getIdentity;
+      const reader = yield* DatabaseReader;
+      const membership = yield* membershipFor(organizationId, identity.tokenIdentifier);
+      const templates = yield* reader
+        .table("signup_form_templates")
+        .index("by_organizationId_and_updatedAt", (q) => q.eq("organizationId", organizationId))
+        .take(100);
+      const assignments =
+        membership.role === "event_manager"
+          ? yield* reader
+              .table("team_memberships")
+              .index("by_organizationId_and_identityToken", (q) =>
+                q
+                  .eq("organizationId", organizationId)
+                  .eq("identityToken", identity.tokenIdentifier),
+              )
+              .take(100)
+          : [];
+      const assignedTeamIds = new Set(assignments.map((assignment) => assignment.teamId));
+      const visibleTemplates = templates.filter(
+        (template) =>
+          template.scope === "organization" ||
+          membership.role !== "event_manager" ||
+          (template.teamId !== undefined && assignedTeamIds.has(template.teamId)),
+      );
+      return yield* Effect.forEach(visibleTemplates, (template) =>
+        Effect.gen(function* () {
+          const fields = yield* reader
+            .table("signup_form_fields")
+            .index("by_templateId_and_sortOrder", (q) => q.eq("templateId", template._id))
+            .take(50);
+          return {
+            id: template._id,
+            ...(template.teamId === undefined ? {} : { teamId: template.teamId }),
+            name: template.name,
+            scope: template.scope,
+            fields: fields.map((field) => ({
+              type: field.type,
+              label: field.label,
+              required: field.required,
+              options: field.options,
+            })),
+          };
+        }),
+      );
+    }).pipe(Effect.catchTag("DocumentDecodeError", (error) => Effect.die(error))),
+);
+
+const saveSignupTemplate = FunctionImpl.make(
+  databaseSchema,
+  events,
+  "saveSignupTemplate",
+  ({ organizationId, teamId, name: rawName, scope, fields }) =>
+    Effect.gen(function* () {
+      const identity = yield* getIdentity;
+      const reader = yield* DatabaseReader;
+      const writer = yield* DatabaseWriter;
+      const membership = yield* membershipFor(organizationId, identity.tokenIdentifier);
+      const name = yield* normalizeText(rawName, "Template name", 2, 80);
+      const normalizedFields = yield* validateSignupFields(fields);
+      if (normalizedFields.length === 0) {
+        return yield* Effect.fail(
+          new InvalidInput({ message: "Add at least one field before saving a template." }),
+        );
+      }
+      if (scope === "organization" && membership.role === "event_manager") {
+        return yield* Effect.fail(
+          new Forbidden({
+            message: "Only administrators and super users can share organization templates.",
+          }),
+        );
+      }
+      if (scope === "team") {
+        if (teamId === undefined) {
+          return yield* Effect.fail(
+            new InvalidInput({ message: "Choose a team for this template." }),
+          );
+        }
+        const allowed = yield* canAccessTeam(
+          membership.role,
+          organizationId,
+          teamId,
+          identity.tokenIdentifier,
+        );
+        const team = yield* reader
+          .table("teams")
+          .get(teamId)
+          .pipe(
+            Effect.mapError(() => new Forbidden({ message: "The selected team is unavailable." })),
+          );
+        if (!allowed || team.organizationId !== organizationId || team.status !== "active") {
+          return yield* Effect.fail(
+            new Forbidden({ message: "The selected team is unavailable." }),
+          );
+        }
+      }
+      const now = Date.now();
+      const templateId = yield* writer.table("signup_form_templates").insert({
+        organizationId,
+        ...(scope === "team" && teamId !== undefined ? { teamId } : {}),
+        name,
+        scope,
+        fieldCount: normalizedFields.length,
+        createdByIdentity: identity.tokenIdentifier,
+        createdAt: now,
+        updatedAt: now,
+      });
+      yield* Effect.forEach(normalizedFields, (field, sortOrder) =>
+        writer.table("signup_form_fields").insert({
+          organizationId,
+          templateId,
+          ...field,
+          sortOrder,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      );
+      yield* writer.table("audit_entries").insert({
+        organizationId,
+        actorIdentity: identity.tokenIdentifier,
+        action: "signup_template.created",
+        entityType: "signup_form_template",
+        entityId: templateId,
+        summary: `Created sign-up template ${name}`,
+        occurredAt: now,
+      });
+      return { templateId };
+    }).pipe(
+      Effect.catchTags({
+        DocumentDecodeError: (error) => Effect.die(error),
+        DocumentEncodeError: (error) => Effect.die(error),
+      }),
+    ),
 );
 
 const create = FunctionImpl.make(
   databaseSchema,
   events,
   "create",
-  ({ organizationId, teamId, title: rawTitle, description, timezone, dates }) =>
+  ({ organizationId, teamId, title: rawTitle, description, timezone, dates, signupFields }) =>
     Effect.gen(function* () {
       const identity = yield* getIdentity;
       const reader = yield* DatabaseReader;
@@ -273,6 +467,7 @@ const create = FunctionImpl.make(
           return { ...date, venueName, sessions };
         }),
       );
+      const normalizedSignupFields = yield* validateSignupFields(signupFields ?? []);
 
       const slug = toSlug(title);
       const existingEvent = yield* reader
@@ -371,6 +566,16 @@ const create = FunctionImpl.make(
               updatedAt: now,
             }),
           );
+        }),
+      );
+      yield* Effect.forEach(normalizedSignupFields, (field, sortOrder) =>
+        writer.table("signup_form_fields").insert({
+          organizationId,
+          eventId,
+          ...field,
+          sortOrder,
+          createdAt: now,
+          updatedAt: now,
         }),
       );
       yield* writer.table("audit_entries").insert({
@@ -505,6 +710,8 @@ const addSession = FunctionImpl.make(
 export default GroupImpl.make(databaseSchema, events).pipe(
   Layer.provide(list),
   Layer.provide(get),
+  Layer.provide(listSignupTemplates),
+  Layer.provide(saveSignupTemplate),
   Layer.provide(create),
   Layer.provide(addDate),
   Layer.provide(addSession),

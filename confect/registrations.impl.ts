@@ -87,6 +87,25 @@ const list = FunctionImpl.make(databaseSchema, registrations, "list", ({ eventId
             q.eq("registrationId", registration._id),
           )
           .take(100);
+        const storedAnswers = yield* reader
+          .table("registration_answers")
+          .index("by_registrationId", (q) => q.eq("registrationId", registration._id))
+          .take(50);
+        const answers = yield* Effect.forEach(storedAnswers, (answer) =>
+          Effect.gen(function* () {
+            const field = yield* reader
+              .table("revision_signup_fields")
+              .get(answer.revisionSignupFieldId)
+              .pipe(Effect.orDie);
+            const value =
+              answer.valueType === "text"
+                ? (answer.textValue ?? "")
+                : answer.valueType === "boolean"
+                  ? (answer.booleanValue ?? false)
+                  : (answer.selectionValues ?? []);
+            return { fieldId: field._id, label: field.label, value };
+          }),
+        );
         return {
           id: registration._id,
           participantId: participant._id,
@@ -99,6 +118,7 @@ const list = FunctionImpl.make(databaseSchema, registrations, "list", ({ eventId
           declinedDateIds: declines
             .filter((decline) => decline.status === "declined")
             .map((decline) => decline.eventDateId),
+          answers,
         };
       }),
     );

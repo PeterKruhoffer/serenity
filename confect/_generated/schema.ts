@@ -10,10 +10,14 @@ import events from "./tables/events";
 import organization_memberships from "./tables/organization_memberships";
 import organizations from "./tables/organizations";
 import participants from "./tables/participants";
+import registration_answers from "./tables/registration_answers";
 import registrations from "./tables/registrations";
 import revision_dates from "./tables/revision_dates";
 import revision_sessions from "./tables/revision_sessions";
+import revision_signup_fields from "./tables/revision_signup_fields";
 import sessions from "./tables/sessions";
+import signup_form_fields from "./tables/signup_form_fields";
+import signup_form_templates from "./tables/signup_form_templates";
 import team_memberships from "./tables/team_memberships";
 import teams from "./tables/teams";
 
@@ -28,10 +32,14 @@ const databaseSchema: $DatabaseSchema.DatabaseSchema<
   typeof organization_memberships |
   typeof organizations |
   typeof participants |
+  typeof registration_answers |
   typeof registrations |
   typeof revision_dates |
   typeof revision_sessions |
+  typeof revision_signup_fields |
   typeof sessions |
+  typeof signup_form_fields |
+  typeof signup_form_templates |
   typeof team_memberships |
   typeof teams
 > = $DatabaseSchema.make({
@@ -45,10 +53,14 @@ const databaseSchema: $DatabaseSchema.DatabaseSchema<
   organization_memberships,
   organizations,
   participants,
+  registration_answers,
   registrations,
   revision_dates,
   revision_sessions,
+  revision_signup_fields,
   sessions,
+  signup_form_fields,
+  signup_form_templates,
   team_memberships,
   teams,
 });

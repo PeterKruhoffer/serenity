@@ -11,10 +11,14 @@ export type EventsDoc = Document.Document<typeof schemaDefinition, "events">;
 export type OrganizationMembershipsDoc = Document.Document<typeof schemaDefinition, "organization_memberships">;
 export type OrganizationsDoc = Document.Document<typeof schemaDefinition, "organizations">;
 export type ParticipantsDoc = Document.Document<typeof schemaDefinition, "participants">;
+export type RegistrationAnswersDoc = Document.Document<typeof schemaDefinition, "registration_answers">;
 export type RegistrationsDoc = Document.Document<typeof schemaDefinition, "registrations">;
 export type RevisionDatesDoc = Document.Document<typeof schemaDefinition, "revision_dates">;
 export type RevisionSessionsDoc = Document.Document<typeof schemaDefinition, "revision_sessions">;
+export type RevisionSignupFieldsDoc = Document.Document<typeof schemaDefinition, "revision_signup_fields">;
 export type SessionsDoc = Document.Document<typeof schemaDefinition, "sessions">;
+export type SignupFormFieldsDoc = Document.Document<typeof schemaDefinition, "signup_form_fields">;
+export type SignupFormTemplatesDoc = Document.Document<typeof schemaDefinition, "signup_form_templates">;
 export type TeamMembershipsDoc = Document.Document<typeof schemaDefinition, "team_memberships">;
 export type TeamsDoc = Document.Document<typeof schemaDefinition, "teams">;
 
@@ -29,10 +33,14 @@ export interface Docs {
   organization_memberships: OrganizationMembershipsDoc;
   organizations: OrganizationsDoc;
   participants: ParticipantsDoc;
+  registration_answers: RegistrationAnswersDoc;
   registrations: RegistrationsDoc;
   revision_dates: RevisionDatesDoc;
   revision_sessions: RevisionSessionsDoc;
+  revision_signup_fields: RevisionSignupFieldsDoc;
   sessions: SessionsDoc;
+  signup_form_fields: SignupFormFieldsDoc;
+  signup_form_templates: SignupFormTemplatesDoc;
   team_memberships: TeamMembershipsDoc;
   teams: TeamsDoc;
 }

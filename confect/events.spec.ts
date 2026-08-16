@@ -35,9 +35,17 @@ const DateSummary = Schema.Struct({
   sessions: Schema.Array(SessionSummary),
 });
 
+const SignupField = Schema.Struct({
+  type: Schema.Literal("text", "textarea", "yes_no", "checkboxes"),
+  label: Schema.String,
+  required: Schema.Boolean,
+  options: Schema.Array(Schema.String),
+});
+
 const EventDetail = Schema.Struct({
   event: EventSummary,
   dates: Schema.Array(DateSummary),
+  signupFields: Schema.Array(SignupField),
 });
 
 const SessionInput = Schema.Struct({
@@ -52,6 +60,14 @@ const DateInput = Schema.Struct({
   endsAt: Schema.Number,
   venueName: Schema.String,
   sessions: Schema.Array(SessionInput),
+});
+
+const SignupTemplate = Schema.Struct({
+  id: Id("signup_form_templates"),
+  teamId: Schema.optional(Id("teams")),
+  name: Schema.String,
+  scope: Schema.Literal("organization", "team"),
+  fields: Schema.Array(SignupField),
 });
 
 export default GroupSpec.make()
@@ -82,8 +98,32 @@ export default GroupSpec.make()
           description: Schema.String,
           timezone: Schema.String,
           dates: Schema.Array(DateInput),
+          signupFields: Schema.optional(Schema.Array(SignupField)),
         }),
       returns: () => Schema.Struct({ eventId: Id("events") }),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicQuery({
+      name: "listSignupTemplates",
+      args: () => Schema.Struct({ organizationId: Id("organizations") }),
+      returns: () => Schema.Array(SignupTemplate),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicMutation({
+      name: "saveSignupTemplate",
+      args: () =>
+        Schema.Struct({
+          organizationId: Id("organizations"),
+          teamId: Schema.optional(Id("teams")),
+          name: Schema.String,
+          scope: Schema.Literal("organization", "team"),
+          fields: Schema.Array(SignupField),
+        }),
+      returns: () => Schema.Struct({ templateId: Id("signup_form_templates") }),
       error: () => WorkspaceError,
     }),
   )

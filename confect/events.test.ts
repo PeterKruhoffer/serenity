@@ -108,4 +108,82 @@ describe("recurring event composition", () => {
       outsider.query(api.events.get, { eventId: created.eventId }),
     ).rejects.toMatchObject({ data: { _tag: "Forbidden" } });
   });
+
+  it("saves reusable sign-up templates and copies ordered fields into an event", async () => {
+    const { manager, workspace } = await setup();
+    const fields = [
+      {
+        type: "textarea" as const,
+        label: "What do you hope to learn?",
+        required: true,
+        options: [],
+      },
+      {
+        type: "checkboxes" as const,
+        label: "Dietary requirements",
+        required: false,
+        options: ["Vegetarian", "Vegan", "Gluten-free"],
+      },
+    ];
+
+    const saved = await manager.mutation(api.events.saveSignupTemplate, {
+      organizationId: workspace.organizationId,
+      teamId: workspace.teamId,
+      name: "Workshop questions",
+      scope: "team",
+      fields,
+    });
+    const templates = await manager.query(api.events.listSignupTemplates, {
+      organizationId: workspace.organizationId,
+    });
+    expect(templates).toEqual([
+      {
+        id: saved.templateId,
+        teamId: workspace.teamId,
+        name: "Workshop questions",
+        scope: "team",
+        fields,
+      },
+    ]);
+
+    const created = await manager.mutation(api.events.create, {
+      organizationId: workspace.organizationId,
+      teamId: workspace.teamId,
+      title: "Custom Registration Workshop",
+      description: "",
+      timezone: "UTC",
+      dates: [
+        {
+          startsAt: dayOneStart,
+          endsAt: dayOneEnd,
+          venueName: "Main Hall",
+          sessions: [],
+        },
+      ],
+      signupFields: templates[0]!.fields,
+    });
+    const detail = await manager.query(api.events.get, { eventId: created.eventId });
+    expect(detail.signupFields).toEqual(fields);
+  });
+
+  it("rejects invalid checkbox definitions", async () => {
+    const { manager, workspace } = await setup();
+
+    await expect(
+      manager.mutation(api.events.saveSignupTemplate, {
+        organizationId: workspace.organizationId,
+        teamId: workspace.teamId,
+        name: "Broken template",
+        scope: "team",
+        fields: [
+          {
+            type: "checkboxes",
+            label: "Choose one",
+            required: true,
+            options: [],
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ data: { _tag: "InvalidInput" } });
+  });
 });

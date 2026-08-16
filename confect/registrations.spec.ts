@@ -11,6 +11,12 @@ const RegistrationStatus = Schema.Literal(
   "withdrawn",
 );
 
+const RegistrationAnswer = Schema.Struct({
+  fieldId: Id("revision_signup_fields"),
+  label: Schema.String,
+  value: Schema.Union(Schema.String, Schema.Boolean, Schema.Array(Schema.String)),
+});
+
 const RegistrationSummary = Schema.Struct({
   id: Id("registrations"),
   participantId: Id("participants"),
@@ -21,6 +27,7 @@ const RegistrationSummary = Schema.Struct({
   paymentStatus: Schema.Literal("not_required", "unpaid", "pending", "paid", "refunded"),
   registeredAt: Schema.Number,
   declinedDateIds: Schema.Array(Id("event_dates")),
+  answers: Schema.Array(RegistrationAnswer),
 });
 
 export default GroupSpec.make()

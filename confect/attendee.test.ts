@@ -2,6 +2,7 @@
 
 import { convexTest } from "convex-test";
 import { anyApi } from "convex/server";
+import rateLimiterTest from "@convex-dev/rate-limiter/test";
 import { describe, expect, it } from "vite-plus/test";
 import { api } from "../convex/_generated/api";
 import schema from "../convex/schema";
@@ -13,8 +14,16 @@ const endsAt = Date.UTC(2026, 10, 14, 20, 0);
 const firstAttendee = "a".repeat(64);
 const secondAttendee = "b".repeat(64);
 
-const publishedEvent = async () => {
+type SignupField = {
+  type: "text" | "textarea" | "yes_no" | "checkboxes";
+  label: string;
+  required: boolean;
+  options: string[];
+};
+
+const publishedEvent = async (signupFields: SignupField[] = []) => {
   const t = convexTest(schema, modules);
+  rateLimiterTest.register(t);
   const manager = t.withIdentity({ tokenIdentifier: "issuer|manager", name: "Morgan" });
   const reviewer = t.withIdentity({ tokenIdentifier: "issuer|reviewer", name: "Riley" });
   const workspace = await manager.mutation(api.workspace.createOrganization, {
@@ -38,6 +47,7 @@ const publishedEvent = async () => {
     description: "A relaxed evening around one shared table.",
     timezone: "Europe/Copenhagen",
     dates: [{ startsAt, endsAt, venueName: "The Glasshouse", sessions: [] }],
+    signupFields,
   });
   await manager.mutation(api.registrations.configure, {
     eventId: event.eventId,
@@ -50,7 +60,7 @@ const publishedEvent = async () => {
     revisionId: submitted.revisionId,
     note: "Ready for guests",
   });
-  return { t, event };
+  return { t, manager, event };
 };
 
 describe("attendee API", () => {
@@ -116,6 +126,19 @@ describe("attendee API", () => {
     );
   });
 
+  it("rate limits repeated public registration attempts", async () => {
+    const { t, event } = await publishedEvent();
+    const request = () =>
+      t.mutation(attendee.register, {
+        attendeeKey: firstAttendee,
+        eventId: event.eventId,
+        displayName: "Alex Guest",
+      });
+
+    for (let attempt = 0; attempt < 5; attempt += 1) await request();
+    await expect(request()).rejects.toThrow();
+  });
+
   it("uses a verified identity instead of the guest key for signed-in attendees", async () => {
     const { t, event } = await publishedEvent();
     const signedIn = t.withIdentity({
@@ -133,5 +156,78 @@ describe("attendee API", () => {
     ).resolves.toEqual([
       expect.objectContaining({ id: registration.registrationId, status: "accepted" }),
     ]);
+  });
+
+  it("publishes an immutable form and validates and stores registration answers", async () => {
+    const { t, manager, event } = await publishedEvent([
+      { type: "text", label: "Job title", required: true, options: [] },
+      {
+        type: "checkboxes",
+        label: "Dietary requirements",
+        required: false,
+        options: ["Vegetarian", "Vegan"],
+      },
+      { type: "yes_no", label: "First visit?", required: true, options: [] },
+    ]);
+    const publicEvent = await t.query(attendee.getEvent, { eventId: event.eventId });
+    expect(publicEvent?.signupFields).toMatchObject([
+      { label: "Job title", type: "text", required: true },
+      { label: "Dietary requirements", options: ["Vegetarian", "Vegan"] },
+      { label: "First visit?", type: "yes_no", required: true },
+    ]);
+    const [jobTitle, dietary, firstVisit] = publicEvent!.signupFields;
+
+    await expect(
+      t.mutation(attendee.register, {
+        attendeeKey: firstAttendee,
+        eventId: event.eventId,
+        displayName: "Alex Guest",
+        answers: [],
+      }),
+    ).rejects.toThrow("Job title is required");
+    await expect(
+      t.mutation(attendee.register, {
+        attendeeKey: firstAttendee,
+        eventId: event.eventId,
+        displayName: "Alex Guest",
+        answers: [
+          { fieldId: jobTitle!.id, value: "Designer" },
+          { fieldId: dietary!.id, value: ["Not an option"] },
+          { fieldId: firstVisit!.id, value: true },
+        ],
+      }),
+    ).rejects.toThrow("contains an invalid choice");
+
+    const registration = await t.mutation(attendee.register, {
+      attendeeKey: firstAttendee,
+      eventId: event.eventId,
+      displayName: "Alex Guest",
+      answers: [
+        { fieldId: jobTitle!.id, value: "Designer" },
+        { fieldId: dietary!.id, value: ["Vegetarian"] },
+        { fieldId: firstVisit!.id, value: false },
+      ],
+    });
+    const managed = await manager.query(api.registrations.list, { eventId: event.eventId });
+    expect(managed).toContainEqual(
+      expect.objectContaining({
+        id: registration.registrationId,
+        answers: [
+          expect.objectContaining({ label: "Job title", value: "Designer" }),
+          expect.objectContaining({ label: "Dietary requirements", value: ["Vegetarian"] }),
+          expect.objectContaining({ label: "First visit?", value: false }),
+        ],
+      }),
+    );
+
+    await t.run(async (ctx) => {
+      const draftField = await ctx.db
+        .query("signup_form_fields")
+        .withIndex("by_eventId_and_sortOrder", (q) => q.eq("eventId", event.eventId))
+        .first();
+      if (draftField) await ctx.db.patch(draftField._id, { label: "Draft-only label" });
+    });
+    const stillPublished = await t.query(attendee.getEvent, { eventId: event.eventId });
+    expect(stillPublished?.signupFields[0]?.label).toBe("Job title");
   });
 });

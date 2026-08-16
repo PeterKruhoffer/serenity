@@ -27,6 +27,16 @@ type DraftDate = {
   editingSessionId: string | null;
 };
 
+type SignupFieldType = "text" | "textarea" | "yes_no" | "checkboxes";
+
+type DraftSignupField = {
+  id: string;
+  type: SignupFieldType;
+  label: string;
+  required: boolean;
+  options: string[];
+};
+
 let draftItemId = 0;
 const nextDraftItemId = () => `draft-${++draftItemId}`;
 const emptySession = (startsAt = "", endsAt = ""): DraftSession => ({
@@ -44,6 +54,13 @@ const emptyDate = (): DraftDate => ({
   sessions: [],
   sessionDraft: null,
   editingSessionId: null,
+});
+const emptySignupField = (type: SignupFieldType): DraftSignupField => ({
+  id: nextDraftItemId(),
+  type,
+  label: "",
+  required: false,
+  options: type === "checkboxes" ? [""] : [],
 });
 
 const roleLabel = (role: OrganizationRole) =>
@@ -66,6 +83,22 @@ const errorMessage = (error: unknown) => {
   return error instanceof Error ? error.message : "Something went wrong. Please try again.";
 };
 
+const convexSiteUrl = () =>
+  import.meta.env.VITE_CONVEX_SITE_URL ||
+  import.meta.env.VITE_CONVEX_URL.replace(".convex.cloud", ".convex.site");
+const signupEmbedUrl = (eventId: Id<"events">) =>
+  `${window.location.origin}/embed/events/${eventId}/signup`;
+const signupApiUrl = (eventId: Id<"events">) =>
+  `${convexSiteUrl()}/api/v1/events/${eventId}/signup-form`;
+const registrationAnswerText = (value: string | boolean | ReadonlyArray<string>) =>
+  typeof value === "string"
+    ? value
+    : typeof value === "boolean"
+      ? value
+        ? "Yes"
+        : "No"
+      : value.join(", ");
+
 export type WorkspacePage = "events" | "approvals" | "participants" | "settings";
 
 const Workspace: Component<{ page: WorkspacePage }> = (props) => {
@@ -78,6 +111,11 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
     () => ({ organizationId: activeOrganization()?.id ?? ("" as Id<"organizations">) }),
     () => ({ enabled: Boolean(activeOrganization()) }),
   );
+  const signupTemplates = useQuery(
+    api.events.listSignupTemplates,
+    () => ({ organizationId: activeOrganization()?.id ?? ("" as Id<"organizations">) }),
+    () => ({ enabled: Boolean(activeOrganization()) }),
+  );
   const pendingRevisions = useQuery(
     api.publication.listPending,
     () => ({ organizationId: activeOrganization()?.id ?? ("" as Id<"organizations">) }),
@@ -86,6 +124,7 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
   const createOrganization = useMutation(api.workspace.createOrganization);
   const createTeam = useMutation(api.workspace.createTeam);
   const createEvent = useMutation(api.events.create);
+  const saveSignupTemplate = useMutation(api.events.saveSignupTemplate);
   const addEventDate = useMutation(api.events.addDate);
   const addSession = useMutation(api.events.addSession);
   const submitRevision = useMutation(api.publication.submit);
@@ -104,10 +143,19 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
   const [eventDescription, setEventDescription] = createSignal("");
   const [eventTeamId, setEventTeamId] = createSignal<Id<"teams"> | "">("");
   const [draftDateStore, setDraftDateStore] = createStore<DraftDate[]>([emptyDate()]);
+  const [signupFieldStore, setSignupFieldStore] = createStore<DraftSignupField[]>([]);
+  const [templateName, setTemplateName] = createSignal("");
+  const [templateScope, setTemplateScope] = createSignal<"organization" | "team">("team");
   const draftDates = () => draftDateStore;
   const setDraftDates = (update: DraftDate[] | ((dates: DraftDate[]) => DraftDate[])) => {
     const nextDates = typeof update === "function" ? update([...draftDateStore]) : update;
     setDraftDateStore(reconcile(nextDates, { key: "id" }));
+  };
+  const setSignupFields = (
+    update: DraftSignupField[] | ((fields: DraftSignupField[]) => DraftSignupField[]),
+  ) => {
+    const nextFields = typeof update === "function" ? update([...signupFieldStore]) : update;
+    setSignupFieldStore(reconcile(nextFields, { key: "id" }));
   };
   const [newDateStartsAt, setNewDateStartsAt] = createSignal("");
   const [newDateEndsAt, setNewDateEndsAt] = createSignal("");
@@ -137,11 +185,70 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
     if (index >= 0) setDraftDateStore(index, update(draftDateStore[index]!));
   };
 
+  const updateSignupField = (
+    fieldId: string,
+    update: (field: DraftSignupField) => DraftSignupField,
+  ) => {
+    const index = signupFieldStore.findIndex((field) => field.id === fieldId);
+    if (index >= 0) setSignupFieldStore(index, update(signupFieldStore[index]!));
+  };
+
+  const signupFieldsPayload = () =>
+    signupFieldStore.map(({ type, label, required, options }) => ({
+      type,
+      label,
+      required,
+      options,
+    }));
+  const selectedBuilderTeamId = () => eventTeamId() || activeOrganization()?.teams[0]?.id;
+  const availableSignupTemplates = () =>
+    signupTemplates
+      .data()
+      ?.filter(
+        (template) =>
+          template.scope === "organization" || template.teamId === selectedBuilderTeamId(),
+      ) ?? [];
+
   const resetEventBuilder = () => {
     setEventTitle("");
     setEventDescription("");
     setEventTeamId("");
     setDraftDates([emptyDate()]);
+    setSignupFields([]);
+    setTemplateName("");
+  };
+
+  const applySignupTemplate = (templateId: string) => {
+    const template = signupTemplates.data()?.find((candidate) => candidate.id === templateId);
+    if (!template) return;
+    setSignupFields(
+      template.fields.map((field) => ({
+        id: nextDraftItemId(),
+        type: field.type,
+        label: field.label,
+        required: field.required,
+        options: [...field.options],
+      })),
+    );
+  };
+
+  const handleSignupTemplateSave = async () => {
+    const organization = activeOrganization();
+    const teamId = selectedBuilderTeamId();
+    if (!organization || signupFieldStore.length === 0) return;
+    setFormError(null);
+    try {
+      await saveSignupTemplate.mutate({
+        organizationId: organization.id,
+        ...(templateScope() === "team" && teamId ? { teamId } : {}),
+        name: templateName(),
+        scope: templateScope(),
+        fields: signupFieldsPayload(),
+      });
+      setTemplateName("");
+    } catch (error) {
+      setFormError(errorMessage(error));
+    }
   };
 
   const saveDraftSession = (dateId: string) => {
@@ -239,6 +346,7 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
             roomName: session.roomName,
           })),
         })),
+        signupFields: signupFieldsPayload(),
       });
       resetEventBuilder();
       setShowEventForm(false);
@@ -822,10 +930,304 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
                           <div>
                             <h3>Sign-up form</h3>
                             <p>
-                              Registration questions will be configured here in a future update.
+                              Ask only what this event needs. Reorder fields or start from a
+                              template.
                             </p>
                           </div>
-                          <span class="coming-soon-badge">Coming later</span>
+                        </div>
+                        <div class="signup-builder">
+                          <Show when={availableSignupTemplates().length > 0}>
+                            <label class="template-picker">
+                              <span>Start from a saved template</span>
+                              <select
+                                value=""
+                                onChange={(event) => {
+                                  applySignupTemplate(event.currentTarget.value);
+                                  event.currentTarget.value = "";
+                                }}
+                              >
+                                <option value="">Choose a template…</option>
+                                <For each={availableSignupTemplates()}>
+                                  {(template) => (
+                                    <option value={template.id}>
+                                      {template.name} ·{" "}
+                                      {template.scope === "team" ? "Team" : "Organization"}
+                                    </option>
+                                  )}
+                                </For>
+                              </select>
+                            </label>
+                          </Show>
+
+                          <Show
+                            when={signupFieldStore.length > 0}
+                            fallback={
+                              <div class="signup-empty-state">
+                                <strong>No custom questions yet</strong>
+                                <span>
+                                  Add a field below, or leave the form empty for a simple sign-up.
+                                </span>
+                              </div>
+                            }
+                          >
+                            <div class="signup-field-list">
+                              <For each={signupFieldStore}>
+                                {(field, fieldIndex) => (
+                                  <section class="signup-field-card">
+                                    <div class="signup-field-heading">
+                                      <span>{fieldIndex() + 1}</span>
+                                      <strong>
+                                        {
+                                          {
+                                            text: "Short answer",
+                                            textarea: "Long answer",
+                                            yes_no: "Yes or no",
+                                            checkboxes: "Checkboxes",
+                                          }[field.type]
+                                        }
+                                      </strong>
+                                      <div class="signup-field-actions">
+                                        <button
+                                          class="text-button"
+                                          type="button"
+                                          aria-label={`Move ${field.label || "field"} up`}
+                                          disabled={fieldIndex() === 0}
+                                          onClick={() =>
+                                            setSignupFields((fields) => {
+                                              const index = fields.findIndex(
+                                                (candidate) => candidate.id === field.id,
+                                              );
+                                              if (index <= 0) return fields;
+                                              const reordered = [...fields];
+                                              [reordered[index - 1], reordered[index]] = [
+                                                reordered[index]!,
+                                                reordered[index - 1]!,
+                                              ];
+                                              return reordered;
+                                            })
+                                          }
+                                        >
+                                          ↑
+                                        </button>
+                                        <button
+                                          class="text-button"
+                                          type="button"
+                                          aria-label={`Move ${field.label || "field"} down`}
+                                          disabled={fieldIndex() === signupFieldStore.length - 1}
+                                          onClick={() =>
+                                            setSignupFields((fields) => {
+                                              const index = fields.findIndex(
+                                                (candidate) => candidate.id === field.id,
+                                              );
+                                              if (index < 0 || index === fields.length - 1)
+                                                return fields;
+                                              const reordered = [...fields];
+                                              [reordered[index], reordered[index + 1]] = [
+                                                reordered[index + 1]!,
+                                                reordered[index]!,
+                                              ];
+                                              return reordered;
+                                            })
+                                          }
+                                        >
+                                          ↓
+                                        </button>
+                                        <button
+                                          class="text-button danger-button"
+                                          type="button"
+                                          onClick={() =>
+                                            setSignupFields((fields) =>
+                                              fields.filter(
+                                                (candidate) => candidate.id !== field.id,
+                                              ),
+                                            )
+                                          }
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div class="signup-field-editor">
+                                      <label class="signup-question-field">
+                                        <span>Question</span>
+                                        <input
+                                          placeholder="What would you like us to know?"
+                                          value={field.label}
+                                          onInput={(event) =>
+                                            updateSignupField(field.id, (current) => ({
+                                              ...current,
+                                              label: event.currentTarget.value,
+                                            }))
+                                          }
+                                          required
+                                        />
+                                      </label>
+                                      <label>
+                                        <span>Answer type</span>
+                                        <select
+                                          value={field.type}
+                                          onChange={(event) =>
+                                            updateSignupField(field.id, (current) => {
+                                              const type = event.currentTarget
+                                                .value as SignupFieldType;
+                                              return {
+                                                ...current,
+                                                type,
+                                                options:
+                                                  type === "checkboxes"
+                                                    ? current.options.length > 0
+                                                      ? current.options
+                                                      : [""]
+                                                    : [],
+                                              };
+                                            })
+                                          }
+                                        >
+                                          <option value="text">Short answer</option>
+                                          <option value="textarea">Long answer</option>
+                                          <option value="yes_no">Yes or no</option>
+                                          <option value="checkboxes">Checkboxes</option>
+                                        </select>
+                                      </label>
+                                      <label class="required-toggle">
+                                        <input
+                                          type="checkbox"
+                                          checked={field.required}
+                                          onChange={(event) =>
+                                            updateSignupField(field.id, (current) => ({
+                                              ...current,
+                                              required: event.currentTarget.checked,
+                                            }))
+                                          }
+                                        />
+                                        <span>Required</span>
+                                      </label>
+                                    </div>
+                                    <Show when={field.type === "checkboxes"}>
+                                      <div class="signup-options">
+                                        <span>Choices</span>
+                                        <For each={field.options}>
+                                          {(option, optionIndex) => (
+                                            <div>
+                                              <input
+                                                aria-label={`Choice ${optionIndex() + 1}`}
+                                                placeholder={`Choice ${optionIndex() + 1}`}
+                                                value={option}
+                                                onInput={(event) =>
+                                                  updateSignupField(field.id, (current) => ({
+                                                    ...current,
+                                                    options: current.options.map(
+                                                      (currentOption, index) =>
+                                                        index === optionIndex()
+                                                          ? event.currentTarget.value
+                                                          : currentOption,
+                                                    ),
+                                                  }))
+                                                }
+                                                required
+                                              />
+                                              <Show when={field.options.length > 1}>
+                                                <button
+                                                  class="text-button danger-button"
+                                                  type="button"
+                                                  aria-label={`Remove choice ${optionIndex() + 1}`}
+                                                  onClick={() =>
+                                                    updateSignupField(field.id, (current) => ({
+                                                      ...current,
+                                                      options: current.options.filter(
+                                                        (_, index) => index !== optionIndex(),
+                                                      ),
+                                                    }))
+                                                  }
+                                                >
+                                                  Remove
+                                                </button>
+                                              </Show>
+                                            </div>
+                                          )}
+                                        </For>
+                                        <button
+                                          class="text-button"
+                                          type="button"
+                                          onClick={() =>
+                                            updateSignupField(field.id, (current) => ({
+                                              ...current,
+                                              options: [...current.options, ""],
+                                            }))
+                                          }
+                                        >
+                                          ＋ Add choice
+                                        </button>
+                                      </div>
+                                    </Show>
+                                  </section>
+                                )}
+                              </For>
+                            </div>
+                          </Show>
+
+                          <div class="signup-field-palette" aria-label="Add a sign-up field">
+                            <span>Add field</span>
+                            <For
+                              each={
+                                [
+                                  ["text", "＋ Short answer"],
+                                  ["textarea", "＋ Long answer"],
+                                  ["yes_no", "＋ Yes or no"],
+                                  ["checkboxes", "＋ Checkboxes"],
+                                ] as const
+                              }
+                            >
+                              {([type, label]) => (
+                                <button
+                                  class="secondary-button compact-button"
+                                  type="button"
+                                  onClick={() =>
+                                    setSignupFields((fields) => [...fields, emptySignupField(type)])
+                                  }
+                                >
+                                  {label}
+                                </button>
+                              )}
+                            </For>
+                          </div>
+
+                          <Show when={signupFieldStore.length > 0}>
+                            <div class="template-save-panel">
+                              <label>
+                                <span>Template name</span>
+                                <input
+                                  placeholder="Standard attendee questions"
+                                  value={templateName()}
+                                  onInput={(event) => setTemplateName(event.currentTarget.value)}
+                                />
+                              </label>
+                              <label>
+                                <span>Share with</span>
+                                <select
+                                  value={templateScope()}
+                                  onChange={(event) =>
+                                    setTemplateScope(
+                                      event.currentTarget.value as "organization" | "team",
+                                    )
+                                  }
+                                >
+                                  <option value="team">Owning team</option>
+                                  <Show when={organization().role !== "event_manager"}>
+                                    <option value="organization">Organization</option>
+                                  </Show>
+                                </select>
+                              </label>
+                              <button
+                                class="secondary-button compact-button"
+                                type="button"
+                                disabled={!templateName().trim() || saveSignupTemplate.isLoading()}
+                                onClick={handleSignupTemplateSave}
+                              >
+                                {saveSignupTemplate.isLoading() ? "Saving…" : "Save as template"}
+                              </button>
+                            </div>
+                          </Show>
                         </div>
                         <Show when={formError()}>
                           <p class="auth-error" role="alert">
@@ -1018,6 +1420,45 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
                             </button>
                           </div>
                         </div>
+
+                        <Show when={detail().event.status === "published"}>
+                          <section
+                            class="signup-integration"
+                            aria-labelledby="signup-integration-title"
+                          >
+                            <div>
+                              <span>Public sign-up</span>
+                              <h3 id="signup-integration-title">
+                                Embed or build your own experience
+                              </h3>
+                              <p>
+                                The published form version is available through either interface.
+                              </p>
+                            </div>
+                            <dl>
+                              <div>
+                                <dt>Iframe</dt>
+                                <dd>
+                                  <code>{signupEmbedUrl(detail().event.id)}</code>
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>JSON API</dt>
+                                <dd>
+                                  <code>{signupApiUrl(detail().event.id)}</code>
+                                </dd>
+                              </div>
+                            </dl>
+                            <a
+                              class="secondary-button compact-button inverse-button"
+                              href={signupEmbedUrl(detail().event.id)}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Open sign-up form ↗
+                            </a>
+                          </section>
+                        </Show>
 
                         <Show when={detail().event.status === "draft"}>
                           <form class="date-form" onSubmit={handleDateCreate}>
@@ -1368,6 +1809,18 @@ const Workspace: Component<{ page: WorkspacePage }> = (props) => {
                                           {registration.participantEmail ||
                                             registration.externalParticipantId}
                                         </p>
+                                        <Show when={registration.answers.length > 0}>
+                                          <dl class="registration-answers">
+                                            <For each={registration.answers}>
+                                              {(answer) => (
+                                                <div>
+                                                  <dt>{answer.label}</dt>
+                                                  <dd>{registrationAnswerText(answer.value)}</dd>
+                                                </div>
+                                              )}
+                                            </For>
+                                          </dl>
+                                        </Show>
                                       </div>
                                       <span class={`registration-status is-${registration.status}`}>
                                         {registration.status}

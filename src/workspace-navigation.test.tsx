@@ -53,6 +53,7 @@ beforeEach(() => {
           ],
         });
       case "events:list":
+      case "events:listSignupTemplates":
       case "publication:listPending":
       case "registrations:list":
         return queryResult([]);
@@ -72,6 +73,49 @@ afterEach(() => {
 });
 
 describe("signed-in workspace navigation", () => {
+  it("builds and reorders custom sign-up fields", () => {
+    window.history.replaceState({}, "", "/events");
+    const host = document.createElement("div");
+    document.body.append(host);
+    disposers.push(
+      render(
+        () => (
+          <Router>
+            <SerenityRoutes />
+          </Router>
+        ),
+        host,
+      ),
+    );
+
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent?.includes("New event"))
+      ?.click();
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent?.trim() === "＋ Short answer")
+      ?.click();
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent?.trim() === "＋ Checkboxes")
+      ?.click();
+
+    const questions = host.querySelectorAll<HTMLInputElement>(
+      'input[placeholder="What would you like us to know?"]',
+    );
+    expect(questions).toHaveLength(2);
+    questions[0]!.value = "Job title";
+    questions[0]!.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    questions[1]!.value = "Dietary requirements";
+    questions[1]!.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    expect(host.querySelector('input[placeholder="Choice 1"]')).toBeTruthy();
+
+    host.querySelector<HTMLButtonElement>('[aria-label="Move Dietary requirements up"]')?.click();
+    const reorderedQuestions = host.querySelectorAll<HTMLInputElement>(
+      'input[placeholder="What would you like us to know?"]',
+    );
+    expect(reorderedQuestions[0]?.value).toBe("Dietary requirements");
+    expect(reorderedQuestions[1]?.value).toBe("Job title");
+  });
+
   it("keeps focus in schedule fields while typing", () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");
