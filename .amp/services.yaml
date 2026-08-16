@@ -1,0 +1,6 @@
+services:
+  web:
+    command: bash .agents/orb-dev
+    portal:
+      title: Serenity
+      description: WorkOS authentication is configured automatically for this orb.
