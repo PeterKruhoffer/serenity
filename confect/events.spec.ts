@@ -129,6 +129,29 @@ export default GroupSpec.make()
   )
   .addFunction(
     FunctionSpec.publicMutation({
+      name: "updateSignupTemplate",
+      args: () =>
+        Schema.Struct({
+          templateId: Id("signup_form_templates"),
+          teamId: Schema.optional(Id("teams")),
+          name: Schema.String,
+          scope: Schema.Literal("organization", "team"),
+          fields: Schema.Array(SignupField),
+        }),
+      returns: () => Schema.Struct({ templateId: Id("signup_form_templates") }),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicMutation({
+      name: "deleteSignupTemplate",
+      args: () => Schema.Struct({ templateId: Id("signup_form_templates") }),
+      returns: () => Schema.Struct({ templateId: Id("signup_form_templates") }),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicMutation({
       name: "addDate",
       args: () =>
         Schema.Struct({

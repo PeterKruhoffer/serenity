@@ -53,10 +53,25 @@ beforeEach(() => {
           ],
         });
       case "events:list":
-      case "events:listSignupTemplates":
       case "publication:listPending":
       case "registrations:list":
         return queryResult([]);
+      case "events:listSignupTemplates":
+        return queryResult([
+          {
+            id: "template-id",
+            name: "Standard attendee questions",
+            scope: "organization",
+            fields: [
+              {
+                type: "text",
+                label: "Job title",
+                required: true,
+                options: [],
+              },
+            ],
+          },
+        ]);
       case "events:get":
         return queryResult(undefined);
       default:
@@ -148,6 +163,61 @@ describe("signed-in workspace navigation", () => {
     }
   });
 
+  it("renders sign-up form management on the templates route", () => {
+    window.history.replaceState({}, "", "/templates");
+    const host = document.createElement("div");
+    document.body.append(host);
+    disposers.push(
+      render(
+        () => (
+          <Router>
+            <SerenityRoutes />
+          </Router>
+        ),
+        host,
+      ),
+    );
+
+    expect(host.querySelector("h1")?.textContent).toBe("Templates");
+    expect(host.textContent).toContain("Standard attendee questions");
+    expect(host.textContent).toContain("Organization");
+    expect(
+      Array.from(host.querySelectorAll("button")).some((button) => button.textContent === "Edit"),
+    ).toBe(true);
+    expect(
+      Array.from(host.querySelectorAll("button")).some((button) => button.textContent === "Delete"),
+    ).toBe(true);
+
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent === "Edit")
+      ?.click();
+    expect(
+      host.querySelector<HTMLInputElement>('input[placeholder="Standard attendee questions"]')
+        ?.value,
+    ).toBe("Standard attendee questions");
+    expect(
+      host.querySelector<HTMLInputElement>('input[placeholder="What would you like us to know?"]')
+        ?.value,
+    ).toBe("Job title");
+    expect(host.textContent).toContain("Save changes");
+
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent?.trim() === "Close ＋")
+      ?.click();
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent?.trim() === "New template ＋")
+      ?.click();
+    expect(host.textContent).toContain("Build a sign-up form");
+    expect(host.textContent).toContain("Entire organization");
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent?.trim() === "＋ Short answer")
+      ?.click();
+    expect(
+      host.querySelectorAll('input[placeholder="What would you like us to know?"]'),
+    ).toHaveLength(1);
+    expect(host.textContent).toContain("Create template");
+  });
+
   it("renders each page when its sidebar link is clicked", async () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");
@@ -166,6 +236,7 @@ describe("signed-in workspace navigation", () => {
     expect(host.querySelector("h1")?.textContent).toContain("Ada");
 
     for (const [linkName, pathname, heading] of [
+      ["Templates", "/templates", "Templates"],
       ["Approvals", "/approvals", "Approvals"],
       ["Participants", "/participants", "Participants"],
       ["Settings", "/settings", "Settings"],

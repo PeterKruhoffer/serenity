@@ -399,6 +399,178 @@ const saveSignupTemplate = FunctionImpl.make(
     ),
 );
 
+const updateSignupTemplate = FunctionImpl.make(
+  databaseSchema,
+  events,
+  "updateSignupTemplate",
+  ({ templateId, teamId, name: rawName, scope, fields }) =>
+    Effect.gen(function* () {
+      const identity = yield* getIdentity;
+      const reader = yield* DatabaseReader;
+      const writer = yield* DatabaseWriter;
+      const template = yield* reader
+        .table("signup_form_templates")
+        .get(templateId)
+        .pipe(Effect.mapError(() => new Forbidden({ message: "You cannot edit this template." })));
+      const membership = yield* membershipFor(template.organizationId, identity.tokenIdentifier);
+      if (template.scope === "organization" && membership.role === "event_manager") {
+        return yield* Effect.fail(new Forbidden({ message: "You cannot edit this template." }));
+      }
+      if (template.teamId !== undefined) {
+        const canEditCurrentTeam = yield* canAccessTeam(
+          membership.role,
+          template.organizationId,
+          template.teamId,
+          identity.tokenIdentifier,
+        );
+        if (!canEditCurrentTeam) {
+          return yield* Effect.fail(new Forbidden({ message: "You cannot edit this template." }));
+        }
+      }
+      if (scope === "organization" && membership.role === "event_manager") {
+        return yield* Effect.fail(
+          new Forbidden({
+            message: "Only administrators and super users can share organization templates.",
+          }),
+        );
+      }
+      if (scope === "team") {
+        if (teamId === undefined) {
+          return yield* Effect.fail(
+            new InvalidInput({ message: "Choose a team for this template." }),
+          );
+        }
+        const allowed = yield* canAccessTeam(
+          membership.role,
+          template.organizationId,
+          teamId,
+          identity.tokenIdentifier,
+        );
+        const team = yield* reader
+          .table("teams")
+          .get(teamId)
+          .pipe(
+            Effect.mapError(() => new Forbidden({ message: "The selected team is unavailable." })),
+          );
+        if (
+          !allowed ||
+          team.organizationId !== template.organizationId ||
+          team.status !== "active"
+        ) {
+          return yield* Effect.fail(
+            new Forbidden({ message: "The selected team is unavailable." }),
+          );
+        }
+      }
+      const name = yield* normalizeText(rawName, "Template name", 2, 80);
+      const normalizedFields = yield* validateSignupFields(fields);
+      if (normalizedFields.length === 0) {
+        return yield* Effect.fail(
+          new InvalidInput({ message: "Add at least one field before saving a template." }),
+        );
+      }
+      const previousFields = yield* reader
+        .table("signup_form_fields")
+        .index("by_templateId_and_sortOrder", (q) => q.eq("templateId", templateId))
+        .take(100);
+      yield* Effect.forEach(previousFields, (field) =>
+        writer.table("signup_form_fields").delete(field._id),
+      );
+      const now = Date.now();
+      yield* writer.table("signup_form_templates").replace(templateId, {
+        organizationId: template.organizationId,
+        ...(scope === "team" && teamId !== undefined ? { teamId } : {}),
+        name,
+        scope,
+        fieldCount: normalizedFields.length,
+        createdByIdentity: template.createdByIdentity,
+        createdAt: template.createdAt,
+        updatedAt: now,
+      });
+      yield* Effect.forEach(normalizedFields, (field, sortOrder) =>
+        writer.table("signup_form_fields").insert({
+          organizationId: template.organizationId,
+          templateId,
+          ...field,
+          sortOrder,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      );
+      yield* writer.table("audit_entries").insert({
+        organizationId: template.organizationId,
+        actorIdentity: identity.tokenIdentifier,
+        action: "signup_template.updated",
+        entityType: "signup_form_template",
+        entityId: templateId,
+        summary: `Updated sign-up template ${name}`,
+        occurredAt: now,
+      });
+      return { templateId };
+    }).pipe(
+      Effect.catchTags({
+        DocumentDecodeError: (error) => Effect.die(error),
+        DocumentEncodeError: (error) => Effect.die(error),
+      }),
+    ),
+);
+
+const deleteSignupTemplate = FunctionImpl.make(
+  databaseSchema,
+  events,
+  "deleteSignupTemplate",
+  ({ templateId }) =>
+    Effect.gen(function* () {
+      const identity = yield* getIdentity;
+      const reader = yield* DatabaseReader;
+      const writer = yield* DatabaseWriter;
+      const template = yield* reader
+        .table("signup_form_templates")
+        .get(templateId)
+        .pipe(
+          Effect.mapError(() => new Forbidden({ message: "You cannot delete this template." })),
+        );
+      const membership = yield* membershipFor(template.organizationId, identity.tokenIdentifier);
+      if (template.scope === "organization" && membership.role === "event_manager") {
+        return yield* Effect.fail(new Forbidden({ message: "You cannot delete this template." }));
+      }
+      if (template.teamId !== undefined) {
+        const allowed = yield* canAccessTeam(
+          membership.role,
+          template.organizationId,
+          template.teamId,
+          identity.tokenIdentifier,
+        );
+        if (!allowed) {
+          return yield* Effect.fail(new Forbidden({ message: "You cannot delete this template." }));
+        }
+      }
+      const fields = yield* reader
+        .table("signup_form_fields")
+        .index("by_templateId_and_sortOrder", (q) => q.eq("templateId", templateId))
+        .take(100);
+      yield* Effect.forEach(fields, (field) =>
+        writer.table("signup_form_fields").delete(field._id),
+      );
+      yield* writer.table("signup_form_templates").delete(templateId);
+      yield* writer.table("audit_entries").insert({
+        organizationId: template.organizationId,
+        actorIdentity: identity.tokenIdentifier,
+        action: "signup_template.deleted",
+        entityType: "signup_form_template",
+        entityId: templateId,
+        summary: `Deleted sign-up template ${template.name}`,
+        occurredAt: Date.now(),
+      });
+      return { templateId };
+    }).pipe(
+      Effect.catchTags({
+        DocumentDecodeError: (error) => Effect.die(error),
+        DocumentEncodeError: (error) => Effect.die(error),
+      }),
+    ),
+);
+
 const create = FunctionImpl.make(
   databaseSchema,
   events,
@@ -712,6 +884,8 @@ export default GroupImpl.make(databaseSchema, events).pipe(
   Layer.provide(get),
   Layer.provide(listSignupTemplates),
   Layer.provide(saveSignupTemplate),
+  Layer.provide(updateSignupTemplate),
+  Layer.provide(deleteSignupTemplate),
   Layer.provide(create),
   Layer.provide(addDate),
   Layer.provide(addSession),

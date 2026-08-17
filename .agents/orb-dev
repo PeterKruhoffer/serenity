@@ -6,26 +6,48 @@ set -euo pipefail
 : "${WORKOS_API_KEY:?Add WORKOS_API_KEY as an Amp project secret}"
 
 node --input-type=module <<'EOF'
-const callbackUri = `${new URL(process.env.PUBLIC_URL).origin}/callback`;
-const response = await fetch("https://api.workos.com/user_management/redirect_uris", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${process.env.WORKOS_API_KEY}`,
-    "Content-Type": "application/json",
+const origin = new URL(process.env.PUBLIC_URL).origin;
+const registrations = [
+  {
+    label: "callback",
+    endpoint: "redirect_uris",
+    value: `${origin}/callback`,
+    body: { uri: `${origin}/callback` },
   },
-  body: JSON.stringify({ uri: callbackUri }),
-});
+  {
+    label: "CORS origin",
+    endpoint: "cors_origins",
+    value: origin,
+    body: { origin },
+  },
+];
 
-if (!response.ok) {
-  const body = await response.text();
-  const alreadyRegistered = response.status === 422 && body.includes("already exists");
+for (const registration of registrations) {
+  const response = await fetch(
+    `https://api.workos.com/user_management/${registration.endpoint}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.WORKOS_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(registration.body),
+    },
+  );
 
-  if (!alreadyRegistered) {
-    throw new Error(`WorkOS rejected the orb callback (${response.status}): ${body}`);
+  if (!response.ok) {
+    const body = await response.text();
+    const alreadyRegistered = response.status === 422 && body.includes("already exists");
+
+    if (!alreadyRegistered) {
+      throw new Error(
+        `WorkOS rejected the orb ${registration.label} (${response.status}): ${body}`,
+      );
+    }
   }
-}
 
-console.log(`WorkOS callback ready: ${callbackUri}`);
+  console.log(`WorkOS ${registration.label} ready: ${registration.value}`);
+}
 EOF
 
 # Vite only exposes VITE_* variables, but it does not need the WorkOS server credential at all.

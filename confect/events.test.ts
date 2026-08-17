@@ -109,8 +109,12 @@ describe("recurring event composition", () => {
     ).rejects.toMatchObject({ data: { _tag: "Forbidden" } });
   });
 
-  it("saves reusable sign-up templates and copies ordered fields into an event", async () => {
+  it("shares organization sign-up templates with events owned by any team", async () => {
     const { manager, workspace } = await setup();
+    const secondTeam = await manager.mutation(api.workspace.createTeam, {
+      organizationId: workspace.organizationId,
+      name: "Community",
+    });
     const fields = [
       {
         type: "textarea" as const,
@@ -128,9 +132,8 @@ describe("recurring event composition", () => {
 
     const saved = await manager.mutation(api.events.saveSignupTemplate, {
       organizationId: workspace.organizationId,
-      teamId: workspace.teamId,
       name: "Workshop questions",
-      scope: "team",
+      scope: "organization",
       fields,
     });
     const templates = await manager.query(api.events.listSignupTemplates, {
@@ -139,16 +142,15 @@ describe("recurring event composition", () => {
     expect(templates).toEqual([
       {
         id: saved.templateId,
-        teamId: workspace.teamId,
         name: "Workshop questions",
-        scope: "team",
+        scope: "organization",
         fields,
       },
     ]);
 
     const created = await manager.mutation(api.events.create, {
       organizationId: workspace.organizationId,
-      teamId: workspace.teamId,
+      teamId: secondTeam.teamId,
       title: "Custom Registration Workshop",
       description: "",
       timezone: "UTC",
@@ -164,6 +166,134 @@ describe("recurring event composition", () => {
     });
     const detail = await manager.query(api.events.get, { eventId: created.eventId });
     expect(detail.signupFields).toEqual(fields);
+  });
+
+  it("updates and deletes templates without changing forms copied into events", async () => {
+    const { manager, workspace } = await setup();
+    const originalFields = [
+      {
+        type: "text" as const,
+        label: "Job title",
+        required: true,
+        options: [],
+      },
+    ];
+    const saved = await manager.mutation(api.events.saveSignupTemplate, {
+      organizationId: workspace.organizationId,
+      name: "Standard questions",
+      scope: "organization",
+      fields: originalFields,
+    });
+    const created = await manager.mutation(api.events.create, {
+      organizationId: workspace.organizationId,
+      teamId: workspace.teamId,
+      title: "Existing Event",
+      description: "",
+      timezone: "UTC",
+      dates: [
+        {
+          startsAt: dayOneStart,
+          endsAt: dayOneEnd,
+          venueName: "Main Hall",
+          sessions: [],
+        },
+      ],
+      signupFields: originalFields,
+    });
+
+    await manager.mutation(api.events.updateSignupTemplate, {
+      templateId: saved.templateId,
+      teamId: workspace.teamId,
+      name: "Academy questions",
+      scope: "team",
+      fields: [
+        {
+          type: "yes_no",
+          label: "Do you need accommodation?",
+          required: false,
+          options: [],
+        },
+      ],
+    });
+    expect(
+      await manager.query(api.events.listSignupTemplates, {
+        organizationId: workspace.organizationId,
+      }),
+    ).toMatchObject([
+      {
+        id: saved.templateId,
+        teamId: workspace.teamId,
+        name: "Academy questions",
+        scope: "team",
+        fields: [{ label: "Do you need accommodation?" }],
+      },
+    ]);
+    expect(
+      (await manager.query(api.events.get, { eventId: created.eventId })).signupFields,
+    ).toEqual(originalFields);
+
+    await manager.mutation(api.events.deleteSignupTemplate, { templateId: saved.templateId });
+    expect(
+      await manager.query(api.events.listSignupTemplates, {
+        organizationId: workspace.organizationId,
+      }),
+    ).toEqual([]);
+    expect(
+      (await manager.query(api.events.get, { eventId: created.eventId })).signupFields,
+    ).toEqual(originalFields);
+  });
+
+  it("lets event managers use but not manage organization templates", async () => {
+    const { t, manager, workspace } = await setup();
+    const fields = [
+      {
+        type: "text" as const,
+        label: "Job title",
+        required: true,
+        options: [],
+      },
+    ];
+    const saved = await manager.mutation(api.events.saveSignupTemplate, {
+      organizationId: workspace.organizationId,
+      name: "Organization questions",
+      scope: "organization",
+      fields,
+    });
+    const eventManagerToken = "issuer|event-manager";
+    await t.run(async (ctx) => {
+      await ctx.db.insert("organization_memberships", {
+        organizationId: workspace.organizationId,
+        identityToken: eventManagerToken,
+        displayName: "Event Manager",
+        role: "event_manager",
+        status: "active",
+        joinedAt: Date.now(),
+      });
+      await ctx.db.insert("team_memberships", {
+        organizationId: workspace.organizationId,
+        teamId: workspace.teamId,
+        identityToken: eventManagerToken,
+        assignedAt: Date.now(),
+      });
+    });
+    const eventManager = t.withIdentity({ tokenIdentifier: eventManagerToken });
+
+    expect(
+      await eventManager.query(api.events.listSignupTemplates, {
+        organizationId: workspace.organizationId,
+      }),
+    ).toMatchObject([{ id: saved.templateId, scope: "organization" }]);
+    await expect(
+      eventManager.mutation(api.events.updateSignupTemplate, {
+        templateId: saved.templateId,
+        name: "Changed questions",
+        scope: "organization",
+        fields,
+      }),
+    ).rejects.toMatchObject({ data: { _tag: "Forbidden" } });
+    await expect(
+      eventManager.mutation(api.events.deleteSignupTemplate, { templateId: saved.templateId }),
+    ).rejects.toMatchObject({ data: { _tag: "Forbidden" } });
   });
 
   it("rejects invalid checkbox definitions", async () => {
