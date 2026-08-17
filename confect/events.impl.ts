@@ -4,71 +4,18 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import databaseSchema from "./_generated/schema";
-import { Auth, DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { canAccessTeam, membershipFor, requireEventAccess, requireIdentity } from "./access";
 import events from "./events.spec";
-import { Conflict, Forbidden, InvalidInput, Unauthenticated } from "./workspace.spec";
+import { Conflict, Forbidden, InvalidInput } from "./workspace.spec";
 
-const getIdentity = Effect.gen(function* () {
-  const auth = yield* Auth;
-  return yield* auth.getUserIdentity.pipe(
-    Effect.mapError(() => new Unauthenticated({ message: "Sign in to manage events." })),
-  );
-});
-
-const membershipFor = (organizationId: GenericId<"organizations">, identityToken: string) =>
-  Effect.gen(function* () {
-    const reader = yield* DatabaseReader;
-    const membership = yield* reader
-      .table("organization_memberships")
-      .get("by_organizationId_and_identityToken", organizationId, identityToken)
-      .pipe(
-        Effect.mapError(() => new Forbidden({ message: "You cannot access this organization." })),
-      );
-    if (membership.status !== "active") {
-      return yield* Effect.fail(
-        new Forbidden({ message: "Your organization access is suspended." }),
-      );
-    }
-    return membership;
-  });
-
-const canAccessTeam = (
-  role: "administrator" | "super_user" | "event_manager",
-  organizationId: GenericId<"organizations">,
-  teamId: GenericId<"teams">,
-  identityToken: string,
-) =>
-  Effect.gen(function* () {
-    if (role !== "event_manager") return true;
-    const reader = yield* DatabaseReader;
-    const assignment = yield* reader
-      .table("team_memberships")
-      .index("by_teamId_and_identityToken", (q) =>
-        q.eq("teamId", teamId).eq("identityToken", identityToken),
-      )
-      .first();
-    return Option.isSome(assignment) && assignment.value.organizationId === organizationId;
-  });
+const getIdentity = requireIdentity("Sign in to manage events.");
 
 const requireEvent = (eventId: GenericId<"events">, identityToken: string) =>
-  Effect.gen(function* () {
-    const reader = yield* DatabaseReader;
-    const event = yield* reader
-      .table("events")
-      .get(eventId)
-      .pipe(Effect.mapError(() => new Forbidden({ message: "You cannot access this event." })));
-    const membership = yield* membershipFor(event.organizationId, identityToken);
-    const allowed = yield* canAccessTeam(
-      membership.role,
-      event.organizationId,
-      event.teamId,
-      identityToken,
-    );
-    if (!allowed) {
-      return yield* Effect.fail(new Forbidden({ message: "You cannot access this event." }));
-    }
-    return event;
-  });
+  requireEventAccess(eventId, identityToken).pipe(Effect.map(({ event }) => event));
+
+const MAX_DATES_PER_EVENT = 100;
+const MAX_SESSIONS_PER_DATE = 100;
 
 const normalizeText = (value: string, label: string, minimum: number, maximum: number) => {
   const normalized = value.trim().replace(/\s+/g, " ");
@@ -609,13 +556,22 @@ const create = FunctionImpl.make(
           new InvalidInput({ message: "Description cannot exceed 5,000 characters." }),
         );
       }
-      if (dates.length === 0) {
+      if (dates.length === 0 || dates.length > MAX_DATES_PER_EVENT) {
         return yield* Effect.fail(
-          new InvalidInput({ message: "Add at least one date to the event." }),
+          new InvalidInput({
+            message: `An event must contain between 1 and ${MAX_DATES_PER_EVENT} dates.`,
+          }),
         );
       }
       const normalizedDates = yield* Effect.forEach(dates, (date) =>
         Effect.gen(function* () {
+          if (date.sessions.length > MAX_SESSIONS_PER_DATE) {
+            return yield* Effect.fail(
+              new InvalidInput({
+                message: `A date can contain at most ${MAX_SESSIONS_PER_DATE} sessions.`,
+              }),
+            );
+          }
           yield* validateDate(date.startsAt, date.endsAt);
           const venueName = yield* normalizeText(date.venueName, "Venue", 2, 120);
           const sessions = yield* Effect.forEach(date.sessions, (session) =>
@@ -776,6 +732,11 @@ const addDate = FunctionImpl.make(databaseSchema, events, "addDate", ({ eventId,
     if (event.status !== "draft") {
       return yield* Effect.fail(new Conflict({ message: "Only draft events can be edited." }));
     }
+    if (event.occurrenceCount >= MAX_DATES_PER_EVENT) {
+      return yield* Effect.fail(
+        new InvalidInput({ message: `An event can contain at most ${MAX_DATES_PER_EVENT} dates.` }),
+      );
+    }
     yield* validateDate(date.startsAt, date.endsAt);
     const venueName = yield* normalizeText(date.venueName, "Venue", 2, 120);
     const now = Date.now();
@@ -829,6 +790,17 @@ const addSession = FunctionImpl.make(
       const event = yield* requireEvent(date.eventId, identity.tokenIdentifier);
       if (event.status !== "draft") {
         return yield* Effect.fail(new Conflict({ message: "Only draft events can be edited." }));
+      }
+      const sessionsForDate = yield* reader
+        .table("sessions")
+        .index("by_eventDateId_and_sortOrder", (q) => q.eq("eventDateId", eventDateId))
+        .take(MAX_SESSIONS_PER_DATE);
+      if (sessionsForDate.length >= MAX_SESSIONS_PER_DATE) {
+        return yield* Effect.fail(
+          new InvalidInput({
+            message: `A date can contain at most ${MAX_SESSIONS_PER_DATE} sessions.`,
+          }),
+        );
       }
       yield* validateDate(startsAt, endsAt);
       if (startsAt < date.startsAt || endsAt > date.endsAt) {

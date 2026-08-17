@@ -4,44 +4,17 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import databaseSchema from "./_generated/schema";
-import { Auth, DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { requireEventAccess as requireEventAccessPolicy, requireIdentity } from "./access";
 import registrations from "./registrations.spec";
-import { Conflict, Forbidden, InvalidInput, Unauthenticated } from "./workspace.spec";
+import { Conflict, Forbidden, InvalidInput } from "./workspace.spec";
 
-const getIdentity = Effect.gen(function* () {
-  const auth = yield* Auth;
-  return yield* auth.getUserIdentity.pipe(
-    Effect.mapError(() => new Unauthenticated({ message: "Sign in to manage registrations." })),
-  );
-});
+const getIdentity = requireIdentity("Sign in to manage registrations.");
 
-const requireEventAccess = (eventId: GenericId<"events">, identityToken: string) =>
-  Effect.gen(function* () {
-    const reader = yield* DatabaseReader;
-    const event = yield* reader
-      .table("events")
-      .get(eventId)
-      .pipe(Effect.mapError(() => new Forbidden({ message: "You cannot access this event." })));
-    const membership = yield* reader
-      .table("organization_memberships")
-      .get("by_organizationId_and_identityToken", event.organizationId, identityToken)
-      .pipe(Effect.mapError(() => new Forbidden({ message: "You cannot access this event." })));
-    if (membership.status !== "active") {
-      return yield* Effect.fail(new Forbidden({ message: "Your access is suspended." }));
-    }
-    if (membership.role === "event_manager") {
-      const assignment = yield* reader
-        .table("team_memberships")
-        .index("by_teamId_and_identityToken", (q) =>
-          q.eq("teamId", event.teamId).eq("identityToken", identityToken),
-        )
-        .first();
-      if (Option.isNone(assignment)) {
-        return yield* Effect.fail(new Forbidden({ message: "You cannot access this event." }));
-      }
-    }
-    return event;
-  });
+const requireEventAccess = (
+  eventId: Parameters<typeof requireEventAccessPolicy>[0],
+  identityToken: string,
+) => requireEventAccessPolicy(eventId, identityToken).pipe(Effect.map(({ event }) => event));
 
 const requireRegistration = (registrationId: GenericId<"registrations">, identityToken: string) =>
   Effect.gen(function* () {

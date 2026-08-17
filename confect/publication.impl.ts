@@ -1,55 +1,13 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
-import type { GenericId } from "convex/values";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import databaseSchema from "./_generated/schema";
-import { Auth, DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { membershipFor, requireEventAccess, requireIdentity } from "./access";
 import publication from "./publication.spec";
-import { Conflict, Forbidden, InvalidInput, Unauthenticated } from "./workspace.spec";
+import { Conflict, Forbidden, InvalidInput } from "./workspace.spec";
 
-const getIdentity = Effect.gen(function* () {
-  const auth = yield* Auth;
-  return yield* auth.getUserIdentity.pipe(
-    Effect.mapError(() => new Unauthenticated({ message: "Sign in to manage publication." })),
-  );
-});
-
-const membershipFor = (organizationId: GenericId<"organizations">, identityToken: string) =>
-  Effect.gen(function* () {
-    const reader = yield* DatabaseReader;
-    const membership = yield* reader
-      .table("organization_memberships")
-      .get("by_organizationId_and_identityToken", organizationId, identityToken)
-      .pipe(
-        Effect.mapError(() => new Forbidden({ message: "You cannot access this organization." })),
-      );
-    if (membership.status !== "active") {
-      return yield* Effect.fail(new Forbidden({ message: "Your access is suspended." }));
-    }
-    return membership;
-  });
-
-const requireEventAccess = (eventId: GenericId<"events">, identityToken: string) =>
-  Effect.gen(function* () {
-    const reader = yield* DatabaseReader;
-    const event = yield* reader
-      .table("events")
-      .get(eventId)
-      .pipe(Effect.mapError(() => new Forbidden({ message: "You cannot access this event." })));
-    const membership = yield* membershipFor(event.organizationId, identityToken);
-    if (membership.role === "event_manager") {
-      const assignment = yield* reader
-        .table("team_memberships")
-        .index("by_teamId_and_identityToken", (q) =>
-          q.eq("teamId", event.teamId).eq("identityToken", identityToken),
-        )
-        .first();
-      if (assignment._tag === "None") {
-        return yield* Effect.fail(new Forbidden({ message: "You cannot access this event." }));
-      }
-    }
-    return { event, membership };
-  });
+const getIdentity = requireIdentity("Sign in to manage publication.");
 
 const reviewNote = (note: string) => {
   const normalized = note.trim();

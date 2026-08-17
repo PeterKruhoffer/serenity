@@ -3,16 +3,12 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import databaseSchema from "./_generated/schema";
-import { Auth, DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { requireIdentity } from "./access";
 import workspace from "./workspace.spec";
-import { Conflict, Forbidden, InvalidInput, Unauthenticated } from "./workspace.spec";
+import { Conflict, Forbidden, InvalidInput } from "./workspace.spec";
 
-const getIdentity = Effect.gen(function* () {
-  const auth = yield* Auth;
-  return yield* auth.getUserIdentity.pipe(
-    Effect.mapError(() => new Unauthenticated({ message: "Sign in to open a workspace." })),
-  );
-});
+const getIdentity = requireIdentity("Sign in to open a workspace.");
 
 const normalizeName = (value: string, label: string) => {
   const normalized = value.trim().replace(/\s+/g, " ");

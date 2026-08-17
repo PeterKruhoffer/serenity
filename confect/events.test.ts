@@ -85,6 +85,26 @@ describe("recurring event composition", () => {
     expect(auditActions).toContain("event.created");
   });
 
+  it("rejects event shapes that cannot be read back completely", async () => {
+    const { manager, workspace } = await setup();
+
+    await expect(
+      manager.mutation(api.events.create, {
+        organizationId: workspace.organizationId,
+        teamId: workspace.teamId,
+        title: "Oversized Program",
+        description: "",
+        timezone: "UTC",
+        dates: Array.from({ length: 101 }, (_, index) => ({
+          startsAt: dayOneStart + index * 86_400_000,
+          endsAt: dayOneEnd + index * 86_400_000,
+          venueName: "Main Hall",
+          sessions: [],
+        })),
+      }),
+    ).rejects.toMatchObject({ data: { _tag: "InvalidInput" } });
+  });
+
   it("keeps event details private from unrelated identities", async () => {
     const { t, manager, workspace } = await setup();
     const created = await manager.mutation(api.events.create, {

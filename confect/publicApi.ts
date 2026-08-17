@@ -16,9 +16,13 @@ const jsonResponse = (body: unknown, status = 200) =>
   });
 
 const errorResponse = (error: unknown) => {
-  const message =
+  const dataMessage =
     error && typeof error === "object" && "data" in error
-      ? String((error.data as { message?: unknown }).message ?? "The request was rejected.")
+      ? (error.data as { message?: unknown }).message
+      : undefined;
+  const message =
+    typeof dataMessage === "string"
+      ? dataMessage
       : error instanceof Error
         ? error.message
         : "The request was rejected.";

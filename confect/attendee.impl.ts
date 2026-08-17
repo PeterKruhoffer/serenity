@@ -15,6 +15,11 @@ const signupRateLimiter = new RateLimiter(components.rateLimiter, {
   publicRegistrationByEvent: { kind: "fixed window", rate: 100, period: MINUTE },
 });
 
+const MAX_DATES_PER_EVENT = 100;
+const MAX_SESSIONS_PER_DATE = 100;
+const MAX_ATTENDEE_ORGANIZATIONS = 100;
+const MAX_REGISTRATIONS_PER_ORGANIZATION = 100;
+
 type ReadCtx =
   | Pick<GenericQueryCtx<DataModel>, "auth" | "db">
   | Pick<GenericMutationCtx<DataModel>, "auth" | "db">;
@@ -176,13 +181,13 @@ const readPublicEvent = async (ctx: ReadCtx, event: Doc<"events">): Promise<Publ
   const revisionDates = await ctx.db
     .query("revision_dates")
     .withIndex("by_revisionId_and_sortOrder", (q) => q.eq("revisionId", revision._id))
-    .collect();
+    .take(MAX_DATES_PER_EVENT);
   const dates = await Promise.all(
     revisionDates.map(async (date) => {
       const sessions = await ctx.db
         .query("revision_sessions")
         .withIndex("by_revisionDateId_and_sortOrder", (q) => q.eq("revisionDateId", date._id))
-        .collect();
+        .take(MAX_SESSIONS_PER_DATE);
       return {
         id: date._id,
         startsAt: date.startsAt,
@@ -235,21 +240,19 @@ const attempt = <A>(operation: () => Promise<A>) =>
     catch: (error) => new InvalidInput({ message: messageFrom(error) }),
   });
 
-const listEvents = FunctionImpl.make(databaseSchema, attendee, "listEvents", () =>
+const listEvents = FunctionImpl.make(databaseSchema, attendee, "listEvents", ({ paginationOpts }) =>
   Effect.gen(function* () {
     const ctx = yield* QueryCtx;
     return yield* attempt(async () => {
-      const events = await ctx.db.query("events").take(200);
-      const visible = await Promise.all(events.map((event) => readPublicEvent(ctx, event)));
-      return visible
-        .filter((event): event is PublicEvent => event !== null)
-        .sort((left, right) => {
-          const leftStart =
-            left.dates.find((date) => date.status === "scheduled")?.startsAt ?? Infinity;
-          const rightStart =
-            right.dates.find((date) => date.status === "scheduled")?.startsAt ?? Infinity;
-          return leftStart - rightStart || left.title.localeCompare(right.title);
-        });
+      const result = await ctx.db
+        .query("events")
+        .withIndex("by_status", (q) => q.eq("status", "published"))
+        .paginate(paginationOpts);
+      const visible = await Promise.all(result.page.map((event) => readPublicEvent(ctx, event)));
+      return {
+        ...result,
+        page: visible.filter((event): event is PublicEvent => event !== null),
+      };
     });
   }),
 );
@@ -272,7 +275,7 @@ const listMine = FunctionImpl.make(databaseSchema, attendee, "listMine", ({ atte
       const participants = await ctx.db
         .query("participants")
         .withIndex("by_externalId", (q) => q.eq("externalId", externalId))
-        .collect();
+        .take(MAX_ATTENDEE_ORGANIZATIONS);
       const registrations = (
         await Promise.all(
           participants.map((participant) =>
@@ -281,7 +284,8 @@ const listMine = FunctionImpl.make(databaseSchema, attendee, "listMine", ({ atte
               .withIndex("by_participantId_and_updatedAt", (q) =>
                 q.eq("participantId", participant._id),
               )
-              .collect(),
+              .order("desc")
+              .take(MAX_REGISTRATIONS_PER_ORGANIZATION),
           ),
         )
       ).flat();

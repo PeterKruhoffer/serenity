@@ -66,14 +66,21 @@ const publishedEvent = async (signupFields: SignupField[] = []) => {
 describe("attendee API", () => {
   it("exposes approved snapshots without organizer membership", async () => {
     const { t, event } = await publishedEvent();
-    await expect(t.query(attendee.listEvents, {})).resolves.toEqual([
-      expect.objectContaining({
-        id: event.eventId,
-        title: "Autumn Supper",
-        organizationName: "Open Table",
-        registrationState: "open",
+    await expect(
+      t.query(attendee.listEvents, {
+        paginationOpts: { numItems: 10, cursor: null },
       }),
-    ]);
+    ).resolves.toMatchObject({
+      isDone: true,
+      page: [
+        expect.objectContaining({
+          id: event.eventId,
+          title: "Autumn Supper",
+          organizationName: "Open Table",
+          registrationState: "open",
+        }),
+      ],
+    });
     await expect(t.query(attendee.getEvent, { eventId: event.eventId })).resolves.toMatchObject({
       title: "Autumn Supper",
       dates: [{ venueName: "The Glasshouse" }],

@@ -25,6 +25,7 @@ export default Table.make(() =>
     updatedAt: Schema.Number,
   }),
 )
+  .index("by_status", ["status"])
   .index("by_organizationId_and_status", ["organizationId", "status"])
   .index("by_teamId_and_status", ["teamId", "status"])
   .index("by_organizationId_and_slug", ["organizationId", "slug"]);

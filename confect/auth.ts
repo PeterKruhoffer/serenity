@@ -1,10 +1,6 @@
-/// <reference types="node" />
+import { env } from "../convex/_generated/server";
 
-const clientId = process.env.WORKOS_CLIENT_ID;
-
-if (!clientId) {
-  throw new Error("WORKOS_CLIENT_ID is not configured for this Convex deployment");
-}
+const clientId = env.WORKOS_CLIENT_ID;
 
 export default {
   providers: [
@@ -20,6 +16,7 @@ export default {
       issuer: `https://api.workos.com/user_management/${clientId}`,
       algorithm: "RS256" as const,
       jwks: `https://api.workos.com/sso/jwks/${clientId}`,
+      applicationID: clientId,
     },
   ],
 };

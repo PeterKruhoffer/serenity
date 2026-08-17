@@ -66,10 +66,9 @@ const MyRegistration = Schema.Struct({
 
 export default GroupSpec.make()
   .addFunction(
-    FunctionSpec.publicQuery({
+    FunctionSpec.publicPaginatedQuery({
       name: "listEvents",
-      args: () => Schema.Struct({}),
-      returns: () => Schema.Array(PublicEvent),
+      item: () => PublicEvent,
       error: () => WorkspaceError,
     }),
   )
