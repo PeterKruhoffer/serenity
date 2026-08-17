@@ -1,6 +1,6 @@
 import { render } from "solid-js/web";
 import { ConvexProvider, setupConvex } from "convex-solidjs";
-import { Router, type RouteSectionProps } from "@solidjs/router";
+import { Router, useLocation, type RouteSectionProps } from "@solidjs/router";
 import { WorkOSAuthProvider } from "./auth";
 import { SerenityRoutes } from "./routes";
 import "./style.css";
@@ -13,12 +13,14 @@ if (!root) {
 
 render(() => {
   const convex = setupConvex(import.meta.env.VITE_CONVEX_URL);
-  const RouteRoot = (props: RouteSectionProps) =>
-    window.location.pathname.startsWith("/embed/") ? (
+  const RouteRoot = (props: RouteSectionProps) => {
+    const location = useLocation();
+    return location.pathname.startsWith("/embed/") ? (
       props.children
     ) : (
       <WorkOSAuthProvider client={convex}>{props.children}</WorkOSAuthProvider>
     );
+  };
 
   return (
     <ConvexProvider client={convex}>

@@ -88,7 +88,7 @@ afterEach(() => {
 });
 
 describe("signed-in workspace navigation", () => {
-  it("builds and reorders custom sign-up fields", () => {
+  it("builds and reorders custom sign-up fields", async () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");
     document.body.append(host);
@@ -103,6 +103,7 @@ describe("signed-in workspace navigation", () => {
       ),
     );
 
+    await vi.waitFor(() => expect(host.textContent).toContain("New event"));
     Array.from(host.querySelectorAll("button"))
       .find((button) => button.textContent?.includes("New event"))
       ?.click();
@@ -131,7 +132,7 @@ describe("signed-in workspace navigation", () => {
     expect(reorderedQuestions[1]?.value).toBe("Job title");
   });
 
-  it("keeps focus in schedule fields while typing", () => {
+  it("keeps focus in schedule fields while typing", async () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");
     document.body.append(host);
@@ -146,6 +147,7 @@ describe("signed-in workspace navigation", () => {
       ),
     );
 
+    await vi.waitFor(() => expect(host.textContent).toContain("New event"));
     const newEventButton = Array.from(host.querySelectorAll("button")).find((button) =>
       button.textContent?.includes("New event"),
     );
@@ -163,7 +165,7 @@ describe("signed-in workspace navigation", () => {
     }
   });
 
-  it("renders sign-up form management on the templates route", () => {
+  it("renders sign-up form management on the templates route", async () => {
     window.history.replaceState({}, "", "/templates");
     const host = document.createElement("div");
     document.body.append(host);
@@ -178,7 +180,7 @@ describe("signed-in workspace navigation", () => {
       ),
     );
 
-    expect(host.querySelector("h1")?.textContent).toBe("Templates");
+    await vi.waitFor(() => expect(host.querySelector("h1")?.textContent).toBe("Templates"));
     expect(host.textContent).toContain("Standard attendee questions");
     expect(host.textContent).toContain("Organization");
     expect(
@@ -233,7 +235,7 @@ describe("signed-in workspace navigation", () => {
       ),
     );
 
-    expect(host.querySelector("h1")?.textContent).toContain("Ada");
+    await vi.waitFor(() => expect(host.querySelector("h1")?.textContent).toContain("Ada"));
 
     for (const [linkName, pathname, heading] of [
       ["Templates", "/templates", "Templates"],
