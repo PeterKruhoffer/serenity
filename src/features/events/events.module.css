@@ -1,0 +1,720 @@
+.metricGrid {
+  margin-top: 54px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid #dfe1d8;
+}
+
+.metricGrid article {
+  min-width: 0;
+  padding: 24px 28px;
+  display: grid;
+  gap: 8px;
+}
+
+.metricGrid article + article {
+  border-left: 1px solid #dfe1d8;
+}
+
+.metricGrid span,
+.metricGrid small {
+  color: #858a81;
+  font-size: 11px;
+}
+
+.metricGrid strong {
+  color: #282d26;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 38px;
+  font-weight: 400;
+}
+
+.eventForm {
+  margin-top: 34px;
+  padding: clamp(22px, 4vw, 36px);
+  background: #fafbf7;
+  border: 1px solid #d8dbd1;
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgb(41 50 37 / 7%);
+}
+
+.eventDetailHeading,
+.eventMeta,
+.eventCardTopline,
+.eventCardStats {
+  display: flex;
+  align-items: center;
+}
+
+.eventDetailHeading {
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eventDetailHeading h2 {
+  margin: 0;
+  color: #252924;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
+.dateForm label {
+  display: grid;
+  gap: 7px;
+}
+
+.dateForm label > span {
+  color: #656b62;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.builderSectionHeading {
+  margin: 28px 0 18px;
+  padding-top: 24px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  border-top: 1px solid #e1e3dc;
+}
+
+.builderSectionHeading > span:first-child {
+  padding-top: 3px;
+  color: #92978e;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.builderSectionHeading h3 {
+  margin: 0;
+  color: #30352e;
+  font-size: 14px;
+}
+
+.builderSectionHeading p {
+  margin: 5px 0 0;
+  color: #858a81;
+  font-size: 10px;
+}
+
+.scheduleHeading {
+  margin-top: 32px;
+}
+
+.builderDateList {
+  display: grid;
+  gap: 14px;
+}
+
+.builderDateCard {
+  padding: 20px;
+  background: #f4f6f0;
+  border: 1px solid #dfe3d9;
+  border-radius: 14px;
+}
+
+.builderCardHeading,
+.builderSessionsHeading,
+.builderSessionList li,
+.sessionEditorActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.builderCardHeading > strong {
+  color: #353a32;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.builderDateFields {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.builderDateFields label,
+.builderSessionEditor label {
+  display: grid;
+  gap: 7px;
+}
+
+.builderDateFields label > span,
+.builderSessionEditor label > span {
+  color: #656b62;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.builderSessionsHeading {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #dce0d6;
+}
+
+.builderSessionsHeading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.builderSessionsHeading strong {
+  color: #3c4139;
+  font-size: 11px;
+}
+
+.builderSessionsHeading span {
+  color: #8b9087;
+  font-size: 9px;
+}
+
+.builderSessionList {
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  list-style: none;
+}
+
+.builderSessionList li {
+  padding: 12px 0;
+  border-top: 1px solid #dde1d8;
+}
+
+.builderSessionList li > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.builderSessionList li > div:last-child {
+  display: flex;
+  gap: 10px;
+}
+
+.builderSessionList strong {
+  color: #393e36;
+  font-size: 11px;
+}
+
+.builderSessionList span {
+  color: #858b81;
+  font-size: 9px;
+}
+
+.builderSessionEditor {
+  margin-top: 14px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #d9ddd3;
+  border-radius: 10px;
+}
+
+.sessionEditorHeading,
+.sessionTitleField,
+.sessionEditorActions {
+  grid-column: 1 / -1;
+}
+
+.sessionEditorHeading strong {
+  color: #373c34;
+  font-size: 12px;
+}
+
+.builderSessionEditor label small {
+  color: #989d94;
+  font-size: 8px;
+  font-weight: 400;
+}
+
+.sessionEditorActions {
+  justify-content: flex-end;
+}
+
+.addDateButton {
+  margin-top: 14px;
+}
+
+.signupHeading {
+  margin-bottom: 12px;
+  padding: 20px;
+  background: #f2f3ed;
+  border: 1px dashed #ced2c7;
+  border-radius: 12px;
+}
+
+.templatePicker {
+  display: grid;
+  gap: 7px;
+}
+
+.templatePicker > span {
+  color: #656b62;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.eventsSection {
+  padding-top: 52px;
+}
+
+.emptyEvents {
+  margin-top: 22px;
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: #8a9086;
+  border: 1px dashed #cdd1c8;
+  border-radius: 14px;
+}
+
+.emptyEvents > span {
+  font-size: 28px;
+}
+
+.emptyEvents h3 {
+  margin: 0 0 5px;
+  color: #3b4038;
+  font-size: 14px;
+}
+
+.emptyEvents p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.eventGrid {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.eventCard {
+  min-width: 0;
+  padding: 22px;
+  color: inherit;
+  background: rgb(255 255 255 / 56%);
+  border: 1px solid #dfe1d8;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.eventCard:hover,
+.eventCard.isSelected {
+  border-color: #9eaa96;
+  box-shadow: 0 12px 30px rgb(41 50 37 / 7%);
+  transform: translateY(-1px);
+}
+
+.eventCardTopline,
+.eventCardStats,
+.eventMeta {
+  gap: 10px;
+}
+
+.eventCardTopline {
+  justify-content: space-between;
+  color: #8b9087;
+  font-size: 10px;
+}
+
+.eventCard h3 {
+  margin: 22px 0 8px;
+  color: #282d26;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 23px;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+}
+
+.eventCard > p {
+  min-height: 38px;
+  margin: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  color: #7d8279;
+  font-size: 12px;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.eventCardStats {
+  margin-top: 22px;
+  padding-top: 15px;
+  color: #8b9087;
+  border-top: 1px solid #e2e4dd;
+  font-size: 10px;
+}
+
+.eventCardStats span:last-child {
+  margin-left: auto;
+  font-size: 14px;
+}
+
+.eventDetail {
+  margin-top: 52px;
+  padding: clamp(22px, 4vw, 36px);
+  background: #2c3328;
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgb(26 31 24 / 16%);
+}
+
+.eventDetailHeading {
+  align-items: flex-start;
+}
+
+.eventDetailHeading h2 {
+  margin-top: 14px;
+  color: #f3f5ee;
+  font-size: 38px;
+}
+
+.eventDetailHeading p {
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: #b7beb1;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.eventDetailHeading :global(.text-button) {
+  color: #c4cabe;
+}
+
+.eventDetailActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inverseButton {
+  color: #e7ecdf;
+  border-color: #697263;
+}
+
+.inverseButton:hover {
+  background: rgb(255 255 255 / 7%);
+}
+
+.eventMeta {
+  color: #aeb6a7;
+  font-size: 10px;
+}
+
+.dateForm {
+  margin-top: 30px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 1.25fr repeat(3, minmax(130px, 1fr)) auto;
+  align-items: end;
+  gap: 12px;
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 13px;
+}
+
+.dateForm > div {
+  align-self: center;
+  display: grid;
+  gap: 5px;
+}
+
+.dateForm strong {
+  color: #eff2ea;
+  font-size: 12px;
+}
+
+.dateForm > div > span,
+.dateForm label > span {
+  color: #a6ad9f;
+  font-size: 9px;
+}
+
+.dateForm input,
+.sessionForm input {
+  min-height: 40px;
+  background: #f8f9f5;
+  font-size: 11px;
+}
+
+.dateList {
+  margin-top: 24px;
+  display: grid;
+  gap: 10px;
+}
+
+.dateCard {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 16px;
+  background: #f5f6f1;
+  border-radius: 13px;
+}
+
+.dateIndex {
+  color: #9aa092;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.dateHeading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.dateHeading h3 {
+  margin: 0 0 5px;
+  color: #30352e;
+  font-size: 13px;
+}
+
+.dateHeading p,
+.emptySessions {
+  margin: 0;
+  color: #8a8f86;
+  font-size: 10px;
+}
+
+.emptySessions {
+  margin-top: 16px;
+}
+
+.sessionForm {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1.2fr repeat(3, 1fr) auto;
+  gap: 8px;
+}
+
+.sessionList {
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  list-style: none;
+}
+
+.sessionList li {
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #dde0d7;
+}
+
+.sessionList span,
+.sessionList small {
+  color: #8a8f86;
+  font-size: 10px;
+}
+
+.sessionList strong {
+  color: #393e36;
+  font-size: 11px;
+}
+
+.signupIntegration {
+  margin: 22px 0;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(260px, 1.2fr) auto;
+  align-items: center;
+  gap: 20px;
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 12px;
+}
+
+.signupIntegration > div > span,
+.signupIntegration dt {
+  color: #aeb6a7;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.signupIntegration h3 {
+  margin: 5px 0;
+  color: #edf1e8;
+  font-size: 13px;
+}
+
+.signupIntegration p {
+  margin: 0;
+  color: #9fa79a;
+  font-size: 9px;
+}
+
+.signupIntegration dl {
+  margin: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.signupIntegration dl > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.signupIntegration dd {
+  margin: 0;
+}
+
+.signupIntegration code {
+  display: block;
+  overflow: hidden;
+  color: #d9e2d4;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.signupIntegration a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 1000px) {
+  .dateForm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1000px) {
+  .dateForm > div {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1000px) {
+  .sessionForm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1000px) {
+  .builderDateFields,
+  .builderSessionEditor {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1000px) {
+  .sessionEditorHeading,
+  .sessionTitleField,
+  .sessionEditorActions {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .metricGrid article {
+    padding-inline: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .metricGrid article + article {
+    border-top: 1px solid #dfe1d8;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .eventGrid,
+  .dateForm,
+  .sessionForm {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .dateForm > div {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .eventDetailHeading,
+  .dateHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 600px) {
+  .builderSectionHeading {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .builderSessionList li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 600px) {
+  .eventDetailActions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .signupIntegration {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .eventDetailHeading h2 {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 600px) {
+  .dateCard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .sessionList li {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .sessionList small {
+    grid-column: 2;
+  }
+}

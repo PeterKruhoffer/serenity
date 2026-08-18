@@ -1,0 +1,197 @@
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.appHeader,
+.appFooter {
+  width: min(1320px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.appHeader {
+  min-height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid #dfe1d8;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: #171a16;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.wordmarkMark {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: #eff7dd;
+  background: #293225;
+  border-radius: 9px;
+  font-family: Georgia, serif;
+  font-size: 15px;
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  background: #6e8c56;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgb(110 140 86 / 12%);
+}
+
+.accountSummary {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.headerAvatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #eff7dd;
+  background: #596d4d;
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: 12px;
+}
+
+.accountCopy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.accountCopy strong,
+.accountCopy small {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountCopy strong {
+  color: #30352e;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.accountCopy small {
+  color: #8b9087;
+  font-size: 9px;
+}
+
+.accountSummary :global(.text-button) {
+  margin-left: 5px;
+  padding-left: 14px;
+  border-left: 1px solid #dfe1d8;
+}
+
+.appMain {
+  width: min(1320px, calc(100% - 48px));
+  margin: 0 auto;
+  display: grid;
+  align-items: center;
+  padding: 80px 0;
+}
+
+.welcome {
+  max-width: 690px;
+}
+
+.authActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.authNote {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.authNote {
+  color: #858a81;
+}
+
+.setupNote {
+  width: fit-content;
+  padding: 12px 14px;
+  color: #6b5a35;
+  background: #eee7d6;
+  border: 1px solid #ded2b7;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.setupNote code {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+.appFooter {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  color: #8b8f86;
+  border-top: 1px solid #dfe1d8;
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .appHeader,
+  .appMain,
+  .appFooter {
+    width: min(100% - 32px, 1120px);
+  }
+}
+
+@media (max-width: 600px) {
+  .appHeader {
+    min-height: 72px;
+  }
+}
+
+@media (max-width: 600px) {
+  .appMain {
+    padding: 64px 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .accountCopy {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .accountSummary :global(.text-button) {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .appFooter {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+  }
+}

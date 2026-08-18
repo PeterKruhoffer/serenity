@@ -1,0 +1,114 @@
+.templateEditorForm {
+  margin-top: 28px;
+  padding: 28px;
+  background: rgb(255 255 255 / 62%);
+  border: 1px solid #dfe2d8;
+  border-radius: 16px;
+}
+
+.templateDetailsGrid {
+  margin-top: 24px;
+}
+
+.templateFieldBuilder {
+  margin-top: 22px;
+}
+
+.templatesSection {
+  padding-top: 46px;
+}
+
+.templateGrid {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.templateCard {
+  min-width: 0;
+  padding: 22px;
+  background: rgb(255 255 255 / 58%);
+  border: 1px solid #dfe2d8;
+  border-radius: 14px;
+}
+
+.templateCardHeading,
+.templateCardActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.templateCardHeading {
+  justify-content: space-between;
+}
+
+.templateCardHeading > span {
+  padding: 5px 9px;
+  color: #676d63;
+  background: #e8eae3;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.templateCardHeading > .organizationScope {
+  color: #42573b;
+  background: #e0eadb;
+}
+
+.templateCard h3 {
+  margin: 20px 0 5px;
+  color: #292d27;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.templateCard > p,
+.templateCard small {
+  color: #848980;
+  font-size: 10px;
+}
+
+.templateQuestionPreview {
+  margin: 18px 0 10px;
+  padding: 15px 15px 15px 34px;
+  display: grid;
+  gap: 8px;
+  color: #50564d;
+  background: #f2f4ee;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.templateLibraryEmpty {
+  margin-top: 22px;
+  padding: 38px;
+  color: #777d73;
+  text-align: center;
+  background: rgb(255 255 255 / 44%);
+  border: 1px dashed #cdd2c7;
+  border-radius: 14px;
+}
+
+.templateLibraryEmpty strong {
+  color: #3d433a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.templateLibraryEmpty p {
+  margin: 8px 0 0;
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .templateGrid {
+    grid-template-columns: 1fr;
+  }
+}

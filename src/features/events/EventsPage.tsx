@@ -1,3 +1,4 @@
+import styles from "./events.module.css";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useWorkspace } from "../workspace/WorkspaceLayout";
@@ -148,7 +149,7 @@ const EventsPage = () => {
           </Page.Description>
         </EventBuilder>
 
-        <div class="metric-grid" aria-label="Workspace overview">
+        <div class={styles.metricGrid} aria-label="Workspace overview">
           <article>
             <span>Active events</span>
             <strong>{events.data()?.length ?? 0}</strong>
@@ -174,20 +175,20 @@ const EventsPage = () => {
       </Page.Root>
 
       <Show when={editor.selectedEventId}>
-        <section class="event-detail" aria-label="Event editor">
+        <section class={styles.eventDetail} aria-label="Event editor">
           <Show when={eventDetail.data()} fallback={<p>Opening event…</p>}>
             {(detail) => (
               <>
-                <div class="event-detail-heading">
+                <div class={styles.eventDetailHeading}>
                   <div>
-                    <div class="event-meta">
+                    <div class={styles.eventMeta}>
                       <StatusBadge status={detail().event.status} />
                       <span>{detail().event.teamName}</span>
                     </div>
                     <h2>{detail().event.title}</h2>
                     <p>{detail().event.description || "No description yet."}</p>
                   </div>
-                  <div class="event-detail-actions">
+                  <div class={styles.eventDetailActions}>
                     <Show when={detail().event.status === "draft"}>
                       <button
                         class="primary-button compact-button"
@@ -200,7 +201,7 @@ const EventsPage = () => {
                     </Show>
                     <Show when={detail().event.status === "published"}>
                       <button
-                        class="secondary-button compact-button inverse-button"
+                        class={`secondary-button compact-button ${styles.inverseButton}`}
                         type="button"
                         disabled={startDraft.isLoading()}
                         onClick={() => void handleStartDraft(detail().event.id)}
@@ -221,7 +222,10 @@ const EventsPage = () => {
                 </div>
 
                 <Show when={detail().event.status === "published"}>
-                  <section class="signup-integration" aria-labelledby="signup-integration-title">
+                  <section
+                    class={styles.signupIntegration}
+                    aria-labelledby="signup-integration-title"
+                  >
                     <div>
                       <span>Public sign-up</span>
                       <h3 id="signup-integration-title">Embed or build your own experience</h3>
@@ -242,7 +246,7 @@ const EventsPage = () => {
                       </div>
                     </dl>
                     <a
-                      class="secondary-button compact-button inverse-button"
+                      class={`secondary-button compact-button ${styles.inverseButton}`}
                       href={signupEmbedUrl(detail().event.id)}
                       target="_blank"
                       rel="noreferrer"
@@ -253,7 +257,7 @@ const EventsPage = () => {
                 </Show>
 
                 <Show when={detail().event.status === "draft"}>
-                  <form class="date-form" onSubmit={handleDateCreate}>
+                  <form class={styles.dateForm} onSubmit={handleDateCreate}>
                     <div>
                       <strong>Add another date</strong>
                       <span>Build the recurring program one occurrence at a time.</span>
@@ -292,7 +296,7 @@ const EventsPage = () => {
                       />
                     </label>
                     <button
-                      class="secondary-button compact-button inverse-button"
+                      class={`secondary-button compact-button ${styles.inverseButton}`}
                       type="submit"
                       disabled={addEventDate.isLoading()}
                     >
@@ -305,15 +309,15 @@ const EventsPage = () => {
                   <FormError>{editor.error}</FormError>
                 </Show>
 
-                <div class="date-list">
+                <div class={styles.dateList}>
                   <For each={detail().dates}>
                     {(date, index) => (
-                      <article class="date-card">
-                        <div class="date-index" aria-hidden="true">
+                      <article class={styles.dateCard}>
+                        <div class={styles.dateIndex} aria-hidden="true">
                           {String(index() + 1).padStart(2, "0")}
                         </div>
-                        <div class="date-content">
-                          <div class="date-heading">
+                        <div class={styles.dateContent}>
+                          <div class={styles.dateHeading}>
                             <div>
                               <h3>{formatDate(date.startsAt)}</h3>
                               <p>
@@ -336,7 +340,7 @@ const EventsPage = () => {
                           </div>
 
                           <Show when={editor.selectedDateId === date.id}>
-                            <form class="session-form" onSubmit={handleSessionCreate}>
+                            <form class={styles.sessionForm} onSubmit={handleSessionCreate}>
                               <input
                                 aria-label="Session title"
                                 placeholder="Session title"
@@ -384,9 +388,11 @@ const EventsPage = () => {
 
                           <Show
                             when={date.sessions.length > 0}
-                            fallback={<p class="empty-sessions">No sessions scheduled yet.</p>}
+                            fallback={
+                              <p class={styles.emptySessions}>No sessions scheduled yet.</p>
+                            }
                           >
-                            <ul class="session-list">
+                            <ul class={styles.sessionList}>
                               <For each={date.sessions}>
                                 {(session) => (
                                   <li>
@@ -414,7 +420,7 @@ const EventsPage = () => {
         </section>
       </Show>
 
-      <section class="events-section" aria-labelledby="event-list-title">
+      <section class={styles.eventsSection} aria-labelledby="event-list-title">
         <SectionHeader.Root>
           <SectionHeader.Heading>
             <SectionHeader.Eyebrow>Program</SectionHeader.Eyebrow>
@@ -425,7 +431,7 @@ const EventsPage = () => {
         <Show
           when={(events.data()?.length ?? 0) > 0}
           fallback={
-            <EmptyState.Root class="empty-events">
+            <EmptyState.Root class={styles.emptyEvents}>
               <EmptyState.Icon>◇</EmptyState.Icon>
               <EmptyState.Content>
                 <EmptyState.Title as="h3">Your event list is ready.</EmptyState.Title>
@@ -436,24 +442,24 @@ const EventsPage = () => {
             </EmptyState.Root>
           }
         >
-          <div class="event-grid">
+          <div class={styles.eventGrid}>
             <For each={events.data()}>
               {(event) => (
                 <button
-                  class="event-card"
-                  classList={{ "is-selected": editor.selectedEventId === event.id }}
+                  class={styles.eventCard}
+                  classList={{ [styles.isSelected]: editor.selectedEventId === event.id }}
                   type="button"
                   onClick={() => {
                     setEditor({ error: null, selectedEventId: event.id, selectedDateId: null });
                   }}
                 >
-                  <div class="event-card-topline">
+                  <div class={styles.eventCardTopline}>
                     <StatusBadge status={event.status} />
                     <span>{event.teamName}</span>
                   </div>
                   <h3>{event.title}</h3>
                   <p>{event.description || "No description yet."}</p>
-                  <div class="event-card-stats">
+                  <div class={styles.eventCardStats}>
                     <span>{event.occurrenceCount} dates</span>
                     <span>{event.sessionCount} sessions</span>
                     <span aria-hidden="true">→</span>

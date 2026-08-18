@@ -1,3 +1,4 @@
+import styles from "./participants.module.css";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Show, createSignal } from "solid-js";
 import { api } from "../../../convex/_generated/api";
@@ -92,8 +93,8 @@ export default function ParticipantsPage() {
         </Page.Heading>
         <Page.Meta>{events.data()?.length ?? 0} events</Page.Meta>
       </Page.Header>
-      <div class="participants-layout">
-        <section class="participant-event-picker" aria-labelledby="participant-events-title">
+      <div class={styles.participantsLayout}>
+        <section class={styles.participantEventPicker} aria-labelledby="participant-events-title">
           <SectionHeader.Root>
             <SectionHeader.Heading>
               <SectionHeader.Eyebrow>Program</SectionHeader.Eyebrow>
@@ -102,12 +103,12 @@ export default function ParticipantsPage() {
               </SectionHeader.Title>
             </SectionHeader.Heading>
           </SectionHeader.Root>
-          <div class="participant-event-list">
+          <div class={styles.participantEventList}>
             <For each={events.data()}>
               {(event) => (
                 <button
-                  class="participant-event-option"
-                  classList={{ "is-selected": selectedEventId() === event.id }}
+                  class={styles.participantEventOption}
+                  classList={{ [styles.isSelected]: selectedEventId() === event.id }}
                   type="button"
                   aria-pressed={selectedEventId() === event.id}
                   onClick={() => {
@@ -129,7 +130,7 @@ export default function ParticipantsPage() {
         <Show
           when={selectedEventId()}
           fallback={
-            <EmptyState.Root class="empty-page-state participant-empty-state">
+            <EmptyState.Root class={`empty-page-state ${styles.participantEmptyState}`}>
               <EmptyState.Icon>○</EmptyState.Icon>
               <EmptyState.Content>
                 <EmptyState.Title as="h2">Select an event to begin.</EmptyState.Title>
@@ -140,8 +141,8 @@ export default function ParticipantsPage() {
         >
           <Show when={eventDetail.data()} fallback={<p>Opening participants…</p>}>
             {(detail) => (
-              <section class="registration-panel standalone-registration-panel">
-                <div class="registration-heading">
+              <section class={`${styles.registrationPanel} ${styles.standaloneRegistrationPanel}`}>
+                <div class={styles.registrationHeading}>
                   <div>
                     <span>{detail().event.teamName}</span>
                     <h3>{detail().event.title}</h3>
@@ -152,12 +153,12 @@ export default function ParticipantsPage() {
                 <Show
                   when={detail().event.status === "published"}
                   fallback={
-                    <p class="registration-note">
+                    <p class={styles.registrationNote}>
                       Registration opens when this event is published.
                     </p>
                   }
                 >
-                  <form class="registration-form" onSubmit={handleRegistrationCreate}>
+                  <form class={styles.registrationForm} onSubmit={handleRegistrationCreate}>
                     <input
                       aria-label="Participant name"
                       placeholder="Participant name"
@@ -185,15 +186,15 @@ export default function ParticipantsPage() {
                 <Show when={formError()}>
                   <FormError>{formError()}</FormError>
                 </Show>
-                <div class="registration-list">
+                <div class={styles.registrationList}>
                   <Show
                     when={(registrationList.data()?.length ?? 0) > 0}
-                    fallback={<p class="registration-note">No participants yet.</p>}
+                    fallback={<p class={styles.registrationNote}>No participants yet.</p>}
                   >
                     <For each={registrationList.data()}>
                       {(registration) => (
                         <article>
-                          <div class="participant-avatar" aria-hidden="true">
+                          <div class={styles.participantAvatar} aria-hidden="true">
                             {registration.participantName.slice(0, 1).toUpperCase()}
                           </div>
                           <div>
@@ -202,7 +203,7 @@ export default function ParticipantsPage() {
                               {registration.participantEmail || registration.externalParticipantId}
                             </p>
                             <Show when={registration.answers.length > 0}>
-                              <dl class="registration-answers">
+                              <dl class={styles.registrationAnswers}>
                                 <For each={registration.answers}>
                                   {(answer) => (
                                     <div>
@@ -214,10 +215,17 @@ export default function ParticipantsPage() {
                               </dl>
                             </Show>
                           </div>
-                          <span class={`registration-status is-${registration.status}`}>
+                          <span
+                            class={styles.registrationStatus}
+                            classList={{
+                              [styles.isAccepted]: registration.status === "accepted",
+                              [styles.isWaitlisted]: registration.status === "waitlisted",
+                              [styles.isPending]: registration.status === "pending",
+                            }}
+                          >
                             {registration.status}
                           </span>
-                          <div class="registration-actions">
+                          <div class={styles.registrationActions}>
                             <Show
                               when={
                                 registration.status === "pending" ||

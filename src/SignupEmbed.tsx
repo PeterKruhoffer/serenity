@@ -1,3 +1,4 @@
+import styles from "./SignupEmbed.module.css";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useParams } from "@solidjs/router";
@@ -17,6 +18,12 @@ import { createStore } from "solid-js/store";
 type AnswerValue = string | boolean | string[];
 
 const attendeeStorageKey = "serenity-attendee-key";
+const sectionColorClasses = [
+  styles.sectionColor0,
+  styles.sectionColor1,
+  styles.sectionColor2,
+  styles.sectionColor3,
+] as const;
 
 export const createAttendeeKey = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(32)), (value) =>
@@ -31,7 +38,7 @@ const sectionColorClass = (fields: ReadonlyArray<{ section?: string }>, fieldInd
     if (section && section !== activeSection) sectionIndex += 1;
     activeSection = section;
   }
-  return sectionIndex >= 0 ? `section-color-${sectionIndex % 4}` : "";
+  return sectionIndex >= 0 ? sectionColorClasses[sectionIndex % sectionColorClasses.length]! : "";
 };
 
 const attendeeKey = () => {
@@ -123,12 +130,15 @@ const SignupEmbed: Component = () => {
   };
 
   return (
-    <main class="signup-embed">
-      <Show when={!event.isLoading()} fallback={<p class="embed-loading">Loading sign-up form…</p>}>
+    <main class={styles.signupEmbed}>
+      <Show
+        when={!event.isLoading()}
+        fallback={<p class={styles.embedLoading}>Loading sign-up form…</p>}
+      >
         <Show
           when={event.data()}
           fallback={
-            <section class="embed-message" role="status">
+            <section class={styles.embedMessage} role="status">
               <strong>This sign-up form is unavailable.</strong>
               <span>The event may not be published or may have ended.</span>
             </section>
@@ -138,15 +148,15 @@ const SignupEmbed: Component = () => {
             <Show
               when={!complete()}
               fallback={
-                <section class="embed-message embed-success" role="status">
+                <section class={`${styles.embedMessage} ${styles.embedSuccess}`} role="status">
                   <span aria-hidden="true">✓</span>
                   <strong>You’re registered.</strong>
                   <span>We’ve saved your sign-up for {details().title}.</span>
                 </section>
               }
             >
-              <form class="embed-form" onSubmit={handleSubmit}>
-                <header class="embed-heading">
+              <form class={styles.embedForm} onSubmit={handleSubmit}>
+                <header class={styles.embedHeading}>
                   <p>{details().organizationName}</p>
                   <h1>{details().title}</h1>
                   <Show when={details().description}>
@@ -154,7 +164,7 @@ const SignupEmbed: Component = () => {
                   </Show>
                 </header>
 
-                <div class="embed-fields">
+                <div class={styles.embedFields}>
                   <label>
                     <span>
                       Name <em>Required</em>
@@ -186,15 +196,15 @@ const SignupEmbed: Component = () => {
                           }
                         >
                           <div
-                            class={`embed-section-heading ${sectionColorClass(details().signupFields, index())}`}
+                            class={`${styles.embedSectionHeading} ${sectionColorClass(details().signupFields, index())}`}
                           >
                             <span>Section</span>
                             <h2>{field.section}</h2>
                           </div>
                         </Show>
                         <fieldset
-                          class={`embed-field ${sectionColorClass(details().signupFields, index())}`}
-                          classList={{ "in-section": !!field.section }}
+                          class={`${styles.embedField} ${sectionColorClass(details().signupFields, index())}`}
+                          classList={{ [styles.inSection]: !!field.section }}
                         >
                           <legend>
                             {field.label}{" "}
@@ -223,7 +233,7 @@ const SignupEmbed: Component = () => {
                               />
                             </Match>
                             <Match when={field.type === "yes_no"}>
-                              <div class="embed-options horizontal-options">
+                              <div class={`${styles.embedOptions} ${styles.horizontalOptions}`}>
                                 <For each={[true, false]}>
                                   {(value) => (
                                     <label>
@@ -241,7 +251,7 @@ const SignupEmbed: Component = () => {
                               </div>
                             </Match>
                             <Match when={field.type === "checkboxes"}>
-                              <div class="embed-options">
+                              <div class={styles.embedOptions}>
                                 <For each={field.options}>
                                   {(option, optionIndex) => (
                                     <label>
@@ -279,12 +289,12 @@ const SignupEmbed: Component = () => {
                 </div>
 
                 <Show when={error()}>
-                  <p class="embed-error" role="alert">
+                  <p class={styles.embedError} role="alert">
                     {error()}
                   </p>
                 </Show>
                 <button
-                  class="primary-button embed-submit"
+                  class={`primary-button ${styles.embedSubmit}`}
                   type="submit"
                   disabled={register.isLoading() || details().registrationState === "full"}
                 >
@@ -296,7 +306,7 @@ const SignupEmbed: Component = () => {
                         ? "Join waitlist"
                         : "Sign up"}
                 </button>
-                <small class="embed-credit">Registration powered by Serenity</small>
+                <small class={styles.embedCredit}>Registration powered by Serenity</small>
               </form>
             </Show>
           )}

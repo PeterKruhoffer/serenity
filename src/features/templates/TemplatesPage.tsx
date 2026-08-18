@@ -1,3 +1,4 @@
+import styles from "./templates.module.css";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Show, createSignal } from "solid-js";
 import { api } from "../../../convex/_generated/api";
@@ -111,7 +112,7 @@ export default function TemplatesPage() {
       </Page.Header>
       <Show when={showForm() && organization()}>
         {(org) => (
-          <form class="template-editor-form" onSubmit={save}>
+          <form class={styles.templateEditorForm} onSubmit={save}>
             <div class="form-heading">
               <div>
                 <p class="eyebrow">{editingId() ? "Edit template" : "New template"}</p>
@@ -119,7 +120,7 @@ export default function TemplatesPage() {
                 <p>Changes affect future uses only, not events already created.</p>
               </div>
             </div>
-            <div class="form-grid template-details-grid">
+            <div class={`form-grid ${styles.templateDetailsGrid}`}>
               <label class="wide-field">
                 <span>Template name</span>
                 <input
@@ -161,7 +162,7 @@ export default function TemplatesPage() {
             </div>
             <SignupFieldBuilder
               controller={fields}
-              class="template-field-builder"
+              class={styles.templateFieldBuilder}
               emptyTitle="No questions yet"
               emptyText="Add the first field to start building this template."
               paletteAriaLabel="Add a template field"
@@ -193,7 +194,7 @@ export default function TemplatesPage() {
           </form>
         )}
       </Show>
-      <section class="templates-section" aria-labelledby="saved-templates-title">
+      <section class={styles.templatesSection} aria-labelledby="saved-templates-title">
         <SectionHeader.Root>
           <SectionHeader.Heading>
             <SectionHeader.Eyebrow>Form library</SectionHeader.Eyebrow>
@@ -207,7 +208,7 @@ export default function TemplatesPage() {
         <Show
           when={(templates.data()?.length ?? 0) > 0}
           fallback={
-            <EmptyState.Root class="template-library-empty">
+            <EmptyState.Root class={styles.templateLibraryEmpty}>
               <EmptyState.Title as="strong">No templates yet</EmptyState.Title>
               <EmptyState.Description>
                 Create a reusable form to make event setup faster and consistent.
@@ -215,7 +216,7 @@ export default function TemplatesPage() {
             </EmptyState.Root>
           }
         >
-          <div class="template-grid">
+          <div class={styles.templateGrid}>
             <For each={templates.data()}>
               {(template) => {
                 const canManage = () =>
@@ -223,12 +224,16 @@ export default function TemplatesPage() {
                 const teamName = () =>
                   organization()?.teams.find((team) => team.id === template.teamId)?.name;
                 return (
-                  <article class="template-card">
-                    <div class="template-card-heading">
-                      <span classList={{ "organization-scope": template.scope === "organization" }}>
+                  <article class={styles.templateCard}>
+                    <div class={styles.templateCardHeading}>
+                      <span
+                        classList={{
+                          [styles.organizationScope]: template.scope === "organization",
+                        }}
+                      >
                         {template.scope === "organization" ? "Organization" : teamName() || "Team"}
                       </span>
-                      <div class="template-card-actions">
+                      <div class={styles.templateCardActions}>
                         <Show when={canManage()}>
                           <button
                             class="text-button"
@@ -252,7 +257,7 @@ export default function TemplatesPage() {
                     <p>
                       {template.fields.length} question{template.fields.length === 1 ? "" : "s"}
                     </p>
-                    <ol class="template-question-preview">
+                    <ol class={styles.templateQuestionPreview}>
                       <For each={template.fields.slice(0, 3)}>
                         {(field) => <li>{field.label}</li>}
                       </For>

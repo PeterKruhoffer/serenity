@@ -1,0 +1,304 @@
+.signupBuilder,
+.signupFieldList {
+  display: grid;
+  gap: 14px;
+}
+
+.signupFieldEditor label {
+  display: grid;
+  gap: 7px;
+}
+
+.signupFieldEditor label > span,
+.signupOptions > span,
+.signupFieldPalette > span {
+  color: #656b62;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.signupEmptyState {
+  padding: 22px;
+  display: grid;
+  gap: 5px;
+  color: #858a81;
+  text-align: center;
+  background: #f6f7f2;
+  border: 1px dashed #d3d7cc;
+  border-radius: 12px;
+  font-size: 10px;
+}
+
+.signupEmptyState strong {
+  color: #43483f;
+  font-size: 12px;
+}
+
+.signupFieldCard {
+  position: relative;
+  padding: 18px;
+  background: #f4f6f0;
+  border: 1px solid #dfe3d9;
+  border-radius: 12px;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+
+.signupFieldCard.isDragging,
+.signupSectionDivider.isDragging {
+  opacity: 0.45;
+}
+
+.signupFieldCard.dropBefore,
+.signupSectionDivider.dropBefore {
+  box-shadow: 0 -3px 0 #718a67;
+}
+
+.signupFieldCard.dropAfter,
+.signupSectionDivider.dropAfter {
+  box-shadow: 0 3px 0 #718a67;
+}
+
+.signupDragHandle {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #7a8275;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: grab;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.signupDragHandle:hover,
+.signupDragHandle:focus-visible {
+  color: #40533a;
+  background: #e3e8dc;
+  outline: none;
+}
+
+.signupDragHandle:active {
+  cursor: grabbing;
+}
+
+.signupSectionDivider {
+  position: relative;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  background: #eaf0e5;
+  border: 1px solid #cfd9c8;
+  border-left: 4px solid #819875;
+  border-radius: 12px;
+  transition:
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+
+.signupSectionDivider.sectionColor0 {
+  --section-accent: #819875;
+  background: #eaf0e5;
+  border-color: #cfd9c8;
+  border-left-color: var(--section-accent);
+}
+
+.signupSectionDivider.sectionColor1 {
+  --section-accent: #718da4;
+  background: #e8eef3;
+  border-color: #c9d5df;
+  border-left-color: var(--section-accent);
+}
+
+.signupSectionDivider.sectionColor2 {
+  --section-accent: #aa8761;
+  background: #f3ece3;
+  border-color: #dfd0be;
+  border-left-color: var(--section-accent);
+}
+
+.signupSectionDivider.sectionColor3 {
+  --section-accent: #92729a;
+  background: #f0e9f1;
+  border-color: #dacdde;
+  border-left-color: var(--section-accent);
+}
+
+.signupFieldCard.sectionColor0 {
+  background: #f2f6ef;
+  border-left: 3px solid #a9bca0;
+}
+
+.signupFieldCard.sectionColor1 {
+  background: #f1f5f8;
+  border-left: 3px solid #9db1c1;
+}
+
+.signupFieldCard.sectionColor2 {
+  background: #f8f4ee;
+  border-left: 3px solid #c4a786;
+}
+
+.signupFieldCard.sectionColor3 {
+  background: #f7f2f7;
+  border-left: 3px solid #b49aba;
+}
+
+.signupSectionDivider::after {
+  position: absolute;
+  right: 10px;
+  bottom: -9px;
+  left: 10px;
+  border-bottom: 2px dashed color-mix(in srgb, var(--section-accent) 55%, transparent);
+  content: "";
+}
+
+.signupSectionDivider label {
+  display: grid;
+  gap: 6px;
+}
+
+.signupSectionDivider label > span {
+  color: #607057;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.signupSectionDivider input {
+  min-height: 38px;
+  color: #34402f;
+  background: rgb(255 255 255 / 70%);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+}
+
+.signupSectionDivider .signupDragHandle {
+  margin-bottom: 5px;
+}
+
+.addSectionButton {
+  color: #496041;
+  background: #e6ede1;
+  border-color: #cad6c3;
+}
+
+.signupFieldHeading,
+.signupFieldActions,
+.signupFieldPalette,
+.signupOptions > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.signupFieldHeading > span {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  color: #70766c;
+  background: #e3e7dd;
+  border-radius: 50%;
+  font-size: 9px;
+}
+
+.signupFieldHeading > strong {
+  color: #3c4139;
+  font-size: 11px;
+}
+
+.signupFieldActions {
+  margin-left: auto;
+}
+
+.signupFieldActions :global(.text-button):disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.signupFieldEditor {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.signupFieldEditor .requiredToggle {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.requiredToggle input {
+  width: 16px;
+  min-height: 16px;
+}
+
+.signupOptions {
+  margin-top: 14px;
+  padding-top: 14px;
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid #dce0d6;
+}
+
+.signupOptions input {
+  flex: 1;
+}
+
+.signupFieldPalette {
+  flex-wrap: wrap;
+  padding: 14px;
+  background: #f6f7f2;
+  border-radius: 12px;
+}
+
+.signupFieldPalette > span {
+  margin-right: 4px;
+}
+
+@media (max-width: 600px) {
+  .signupFieldEditor {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .signupFieldHeading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .signupSectionDivider {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 600px) {
+  .signupSectionDivider .signupFieldActions {
+    grid-column: 2;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .signupFieldActions {
+    width: 100%;
+    margin-left: 32px;
+  }
+}

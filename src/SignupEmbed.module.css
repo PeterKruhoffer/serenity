@@ -1,0 +1,242 @@
+.signupEmbed {
+  --embed-accent: #526849;
+  width: min(100% - 24px, 640px);
+  margin: 0 auto;
+  padding: 12px 0;
+}
+
+.embedForm,
+.embedMessage,
+.embedLoading {
+  padding: clamp(22px, 5vw, 38px);
+  color: #30352e;
+  background: #fafbf7;
+  border: 1px solid #d8dbd1;
+  border-radius: 16px;
+  box-shadow: 0 14px 45px rgb(41 50 37 / 9%);
+}
+
+.embedHeading {
+  padding-bottom: 22px;
+  border-bottom: 1px solid #e1e3dc;
+}
+
+.embedHeading p {
+  margin: 0 0 8px;
+  color: #788071;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.embedHeading h1 {
+  margin: 0;
+  color: #252924;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(28px, 7vw, 40px);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
+.embedHeading > span {
+  margin-top: 10px;
+  display: block;
+  color: #737970;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.embedFields {
+  margin-top: 22px;
+  display: grid;
+  gap: 18px;
+}
+
+.embedFields > label,
+.embedField {
+  display: grid;
+  gap: 8px;
+}
+
+.embedFields > label > span,
+.embedField legend {
+  color: #50564d;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 650;
+}
+
+.embedFields em {
+  margin-left: 5px;
+  color: #879080;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.embedField {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.embedField legend {
+  margin-bottom: 8px;
+}
+
+.embedSectionHeading {
+  margin-top: 8px;
+  padding: 18px 18px 14px;
+  color: #34412f;
+  background: #edf2e9;
+  border-left: 4px solid var(--embed-accent);
+  border-radius: 10px 10px 0 0;
+}
+
+.embedSectionHeading.sectionColor0,
+.embedField.sectionColor0 {
+  --section-accent: #718a67;
+  --section-background: #f1f5ee;
+}
+
+.embedSectionHeading.sectionColor1,
+.embedField.sectionColor1 {
+  --section-accent: #68869e;
+  --section-background: #eff4f7;
+}
+
+.embedSectionHeading.sectionColor2,
+.embedField.sectionColor2 {
+  --section-accent: #9e7954;
+  --section-background: #f8f3ec;
+}
+
+.embedSectionHeading.sectionColor3,
+.embedField.sectionColor3 {
+  --section-accent: #87658f;
+  --section-background: #f6f0f6;
+}
+
+.embedSectionHeading[class*="sectionColor"] {
+  background: var(--section-background);
+  border-left-color: var(--section-accent);
+}
+
+.embedSectionHeading:not(:first-of-type) {
+  margin-top: 12px;
+  border-top: 1px dashed #aebba7;
+}
+
+.embedSectionHeading span {
+  color: #788772;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.embedSectionHeading h2 {
+  margin: 3px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.embedField.inSection {
+  margin-top: -18px;
+  padding: 18px;
+  background: var(--section-background, #f5f7f2);
+  border-right: 1px solid #e0e5dc;
+  border-left: 1px solid #e0e5dc;
+}
+
+.embedField.inSection:has(+ .embedSectionHeading),
+.embedField.inSection:last-of-type {
+  padding-bottom: 20px;
+  border-bottom: 2px dashed color-mix(in srgb, var(--section-accent) 48%, transparent);
+  border-radius: 0 0 10px 10px;
+}
+
+.embedOptions {
+  display: grid;
+  gap: 8px;
+}
+
+.horizontalOptions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.embedOptions label {
+  min-height: 42px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #4b5247;
+  background: #f1f3ed;
+  border: 1px solid #dce0d6;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.embedOptions input {
+  width: 16px;
+  min-height: 16px;
+}
+
+.embedSubmit {
+  width: 100%;
+  margin-top: 22px;
+  justify-content: center;
+}
+
+.embedCredit {
+  margin-top: 12px;
+  display: block;
+  color: #9aa096;
+  font-size: 8px;
+  text-align: center;
+}
+
+.embedError {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  color: #8b453d;
+  background: #f7e9e6;
+  border-radius: 8px;
+  font-size: 10px;
+}
+
+.embedMessage,
+.embedLoading {
+  display: grid;
+  gap: 7px;
+  text-align: center;
+}
+
+.embedMessage strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.embedMessage span,
+.embedLoading {
+  color: #737970;
+  font-size: 11px;
+}
+
+.embedSuccess > span:first-child {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 7px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--embed-accent);
+  border-radius: 50%;
+  font-size: 18px;
+}

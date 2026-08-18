@@ -127,7 +127,7 @@ describe("signed-in workspace navigation", () => {
     const dragHandle = host.querySelector<HTMLButtonElement>(
       '[aria-label="Drag Dietary requirements"]',
     );
-    const firstCard = questions[0]!.closest<HTMLElement>(".signup-field-card");
+    const firstCard = questions[0]!.closest<HTMLElement>("section");
     expect(dragHandle).toBeTruthy();
     expect(firstCard).toBeTruthy();
     firstCard!.getBoundingClientRect = () => ({ top: 0, height: 100 }) as DOMRect;
@@ -162,8 +162,11 @@ describe("signed-in workspace navigation", () => {
     sectionTitle!.value = "Your preferences";
     sectionTitle!.dispatchEvent(new InputEvent("input", { bubbles: true }));
     expect(sectionTitle!.value).toBe("Your preferences");
-    expect(host.querySelector('[aria-label="Drag Your preferences"]')).toBeTruthy();
-    expect(host.querySelector(".signup-section-divider")?.classList).toContain("section-color-0");
+    const sectionDivider = host
+      .querySelector('[aria-label="Drag Your preferences"]')
+      ?.closest("div");
+    expect(sectionDivider).toBeTruthy();
+    expect(sectionDivider!.classList).toHaveLength(2);
   });
 
   it("keeps focus in schedule fields while typing", async () => {

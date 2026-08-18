@@ -1,0 +1,294 @@
+.registrationPanel {
+  margin-top: 28px;
+  padding-top: 26px;
+  border-top: 1px solid rgb(255 255 255 / 12%);
+}
+
+.participantsLayout {
+  margin-top: 38px;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.6fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.participantEventPicker {
+  min-width: 0;
+  padding: 22px;
+  background: rgb(255 255 255 / 46%);
+  border: 1px solid #dfe1d8;
+  border-radius: 15px;
+}
+
+.participantEventPicker h2 {
+  font-size: 24px;
+}
+
+.participantEventList {
+  margin-top: 18px;
+  display: grid;
+  gap: 7px;
+}
+
+.participantEventOption {
+  width: 100%;
+  min-width: 0;
+  padding: 13px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  color: #6f756b;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.participantEventOption:hover,
+.participantEventOption.isSelected {
+  color: #2d3528;
+  background: #eef0e9;
+  border-color: #d9ddd3;
+}
+
+.participantEventOption > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.participantEventOption strong,
+.participantEventOption small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.participantEventOption strong {
+  font-size: 11px;
+}
+
+.participantEventOption small {
+  color: #91968d;
+  font-size: 9px;
+}
+
+.participantEmptyState {
+  min-height: 190px;
+  margin-top: 0;
+}
+
+.standaloneRegistrationPanel {
+  min-height: 260px;
+  margin-top: 0;
+  padding: 26px;
+  background: #2c3328;
+  border: 0;
+  border-radius: 15px;
+  box-shadow: 0 18px 44px rgb(26 31 24 / 12%);
+}
+
+.standaloneRegistrationPanel .registrationHeading {
+  align-items: flex-start;
+}
+
+.standaloneRegistrationPanel .registrationHeading p {
+  margin: 7px 0 0;
+  color: #9fa79a;
+  font-size: 10px;
+}
+
+.registrationNote {
+  margin: 18px 0 0;
+  color: #aeb6a7;
+  font-size: 11px;
+}
+
+.registrationHeading,
+.registrationList article,
+.registrationActions {
+  display: flex;
+  align-items: center;
+}
+
+.registrationHeading {
+  justify-content: space-between;
+}
+
+.registrationHeading span {
+  color: #aeb6a7;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.registrationHeading h3 {
+  margin: 5px 0 0;
+  color: #f0f3eb;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.registrationHeading > strong {
+  color: #f0f3eb;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.registrationForm {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: 8px;
+}
+
+.registrationForm input {
+  min-height: 40px;
+  font-size: 11px;
+}
+
+.registrationList {
+  margin-top: 16px;
+  display: grid;
+  gap: 7px;
+}
+
+.registrationList article {
+  min-height: 58px;
+  padding: 9px 12px;
+  gap: 12px;
+  background: rgb(255 255 255 / 6%);
+  border-radius: 10px;
+}
+
+.participantAvatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #e8eee1;
+  background: #607157;
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: 12px;
+}
+
+.registrationList article > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.registrationList h4 {
+  margin: 0 0 3px;
+  color: #edf1e8;
+  font-size: 11px;
+}
+
+.registrationList p {
+  margin: 0;
+  overflow: hidden;
+  color: #9fa79a;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.registrationStatus {
+  padding: 4px 7px;
+  color: #b8c3b1;
+  background: rgb(255 255 255 / 7%);
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.registrationStatus.isAccepted {
+  color: #c8e0bf;
+  background: rgb(104 145 88 / 18%);
+}
+
+.registrationStatus.isWaitlisted,
+.registrationStatus.isPending {
+  color: #e3d4aa;
+  background: rgb(170 143 72 / 16%);
+}
+
+.registrationAnswers {
+  margin: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.registrationAnswers dd {
+  margin: 0;
+}
+
+.registrationAnswers {
+  margin-top: 8px;
+  gap: 4px;
+}
+
+.registrationAnswers > div {
+  display: grid;
+  grid-template-columns: minmax(70px, 0.6fr) minmax(100px, 1fr);
+  gap: 8px;
+  font-size: 8px;
+}
+
+.registrationAnswers dt {
+  overflow: hidden;
+  color: #899284;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.registrationAnswers dd {
+  color: #c8d0c2;
+}
+
+.registrationActions {
+  gap: 10px;
+}
+
+.registrationActions :global(.text-button) {
+  color: #cbd1c5;
+  font-size: 9px;
+}
+
+.registrationActions :global(.danger-button) {
+  color: #d9aaa4;
+}
+
+@media (max-width: 1000px) {
+  .participantsLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .registrationForm {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .registrationList article {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .registrationActions {
+    width: 100%;
+    padding-left: 46px;
+  }
+}

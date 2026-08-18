@@ -1,3 +1,4 @@
+import styles from "./signup-fields.module.css";
 import { For, Show, createSignal, type JSX } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 
@@ -19,6 +20,12 @@ type SavedSignupField = Omit<SignupFieldPayload, "options"> & {
 };
 
 let fieldId = 0;
+const sectionColorClasses = [
+  styles.sectionColor0,
+  styles.sectionColor1,
+  styles.sectionColor2,
+  styles.sectionColor3,
+] as const;
 const draftField = (field: SavedSignupField): DraftSignupField => ({
   ...field,
   id: `signup-field-${++fieldId}`,
@@ -116,7 +123,9 @@ export const createSignupFields = () => {
       for (const item of items) {
         if (item.kind === "section") sectionIndex += 1;
         if (item.id === id) {
-          return sectionIndex >= 0 ? `section-color-${sectionIndex % 4}` : "";
+          return sectionIndex >= 0
+            ? sectionColorClasses[sectionIndex % sectionColorClasses.length]!
+            : "";
         }
       }
       return "";
@@ -154,23 +163,23 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
     checkboxes: "Checkboxes",
   };
   return (
-    <div class={`signup-builder${props.class ? ` ${props.class}` : ""}`}>
+    <div class={`${styles.signupBuilder}${props.class ? ` ${props.class}` : ""}`}>
       {props.children}
       <Show
         when={props.controller.items.length > 0}
         fallback={
-          <div class="signup-empty-state">
+          <div class={styles.signupEmptyState}>
             <strong>{props.emptyTitle}</strong>
             <span>{props.emptyText}</span>
           </div>
         }
       >
-        <div class="signup-field-list" aria-label="Sign-up form fields and sections">
+        <div class={styles.signupFieldList} aria-label="Sign-up form fields and sections">
           <For each={props.controller.items}>
             {(item, index) => {
               const dragHandle = (
                 <button
-                  class="signup-drag-handle"
+                  class={styles.signupDragHandle}
                   type="button"
                   draggable={true}
                   aria-label={`Drag ${item.kind === "section" ? item.title || "section" : item.label || "field"}`}
@@ -210,12 +219,12 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
               };
               return item.kind === "section" ? (
                 <div
-                  class={`signup-section-divider ${props.controller.sectionColorClass(item.id)}`}
+                  class={`${styles.signupSectionDivider} ${props.controller.sectionColorClass(item.id)}`}
                   classList={{
-                    "is-dragging": draggedId() === item.id,
-                    "drop-before":
+                    [styles.isDragging]: draggedId() === item.id,
+                    [styles.dropBefore]:
                       dropTarget()?.id === item.id && dropTarget()?.position === "before",
-                    "drop-after":
+                    [styles.dropAfter]:
                       dropTarget()?.id === item.id && dropTarget()?.position === "after",
                   }}
                   {...dragTargetProps}
@@ -232,7 +241,7 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
                       required
                     />
                   </label>
-                  <div class="signup-field-actions">
+                  <div class={styles.signupFieldActions}>
                     <button
                       class="text-button"
                       type="button"
@@ -262,21 +271,21 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
                 </div>
               ) : (
                 <section
-                  class={`signup-field-card ${props.controller.sectionColorClass(item.id)}`}
+                  class={`${styles.signupFieldCard} ${props.controller.sectionColorClass(item.id)}`}
                   classList={{
-                    "is-dragging": draggedId() === item.id,
-                    "drop-before":
+                    [styles.isDragging]: draggedId() === item.id,
+                    [styles.dropBefore]:
                       dropTarget()?.id === item.id && dropTarget()?.position === "before",
-                    "drop-after":
+                    [styles.dropAfter]:
                       dropTarget()?.id === item.id && dropTarget()?.position === "after",
                   }}
                   {...dragTargetProps}
                 >
-                  <div class="signup-field-heading">
+                  <div class={styles.signupFieldHeading}>
                     {dragHandle}
                     <span>{props.controller.fieldNumber(item.id)}</span>
                     <strong>{labels[item.type]}</strong>
-                    <div class="signup-field-actions">
+                    <div class={styles.signupFieldActions}>
                       <button
                         class="text-button"
                         type="button"
@@ -304,8 +313,8 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
                       </button>
                     </div>
                   </div>
-                  <div class="signup-field-editor">
-                    <label class="signup-question-field">
+                  <div class={styles.signupFieldEditor}>
+                    <label class={styles.signupQuestionField}>
                       <span>Question</span>
                       <input
                         placeholder="What would you like us to know?"
@@ -345,7 +354,7 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
                         <option value="checkboxes">Checkboxes</option>
                       </select>
                     </label>
-                    <label class="required-toggle">
+                    <label class={styles.requiredToggle}>
                       <input
                         type="checkbox"
                         checked={item.required}
@@ -360,7 +369,7 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
                     </label>
                   </div>
                   <Show when={item.type === "checkboxes"}>
-                    <div class="signup-options">
+                    <div class={styles.signupOptions}>
                       <span>Choices</span>
                       <For each={item.options}>
                         {(option, optionIndex) => (
@@ -417,7 +426,7 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
           </For>
         </div>
       </Show>
-      <div class="signup-field-palette" aria-label={props.paletteAriaLabel}>
+      <div class={styles.signupFieldPalette} aria-label={props.paletteAriaLabel}>
         <span>Add field</span>
         <For each={Object.entries(labels) as [SignupFieldType, string][]}>
           {([type, label]) => (
@@ -431,7 +440,7 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
           )}
         </For>
         <button
-          class="secondary-button compact-button add-section-button"
+          class={`secondary-button compact-button ${styles.addSectionButton}`}
           type="button"
           onClick={props.controller.addSection}
         >

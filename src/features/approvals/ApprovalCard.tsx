@@ -1,3 +1,4 @@
+import styles from "./approvals.module.css";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "../../../convex/_generated/api";
 
@@ -11,7 +12,7 @@ type ApprovalCardProps = {
 };
 
 export const ApprovalCard = (props: ApprovalCardProps) => (
-  <article class="approval-card">
+  <article class={styles.approvalCard}>
     <div>
       <span>Revision {props.revision.revisionNumber}</span>
       <h3>{props.revision.title}</h3>
@@ -20,7 +21,7 @@ export const ApprovalCard = (props: ApprovalCardProps) => (
         {props.revision.sessionCount} sessions
       </p>
     </div>
-    <div class="approval-actions">
+    <div class={styles.approvalActions}>
       <button
         class="secondary-button compact-button"
         type="button"

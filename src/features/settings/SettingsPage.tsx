@@ -1,3 +1,4 @@
+import styles from "./settings.module.css";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Show, createSignal } from "solid-js";
 import { api } from "../../../convex/_generated/api";
@@ -43,7 +44,7 @@ export default function SettingsPage() {
           </Page.Description>
         </Page.Heading>
       </Page.Header>
-      <section class="teams-section" aria-labelledby="teams-title">
+      <section class={styles.teamsSection} aria-labelledby="teams-title">
         <SectionHeader.Root>
           <SectionHeader.Heading>
             <SectionHeader.Eyebrow>Your boundaries</SectionHeader.Eyebrow>
@@ -62,11 +63,11 @@ export default function SettingsPage() {
         <Show when={showTeamForm() && activeOrganization()}>
           {(organization) => (
             <form
-              class="inline-form"
+              class={styles.inlineForm}
               onSubmit={(event) => handleTeamCreate(event, organization().id)}
             >
               <label>
-                <span class="sr-only">Team name</span>
+                <span class={styles.srOnly}>Team name</span>
                 <input
                   placeholder="Team name"
                   value={newTeamName()}
@@ -88,11 +89,11 @@ export default function SettingsPage() {
         <Show when={formError()}>
           <FormError>{formError()}</FormError>
         </Show>
-        <div class="team-grid">
+        <div class={styles.teamGrid}>
           <For each={activeOrganization()?.teams}>
             {(team) => (
-              <article class="team-card">
-                <span class="team-monogram" aria-hidden="true">
+              <article class={styles.teamCard}>
+                <span class={styles.teamMonogram} aria-hidden="true">
                   {team.name.slice(0, 2).toUpperCase()}
                 </span>
                 <div>
@@ -101,7 +102,7 @@ export default function SettingsPage() {
                     {events.data()?.filter((event) => event.teamId === team.id).length ?? 0} events
                   </p>
                 </div>
-                <span class="card-arrow" aria-hidden="true">
+                <span class={styles.cardArrow} aria-hidden="true">
                   →
                 </span>
               </article>

@@ -89,16 +89,17 @@ describe("sign-up embed", () => {
     );
 
     expect(host.querySelector("h1")?.textContent).toBe("Autumn Supper");
-    expect(
-      Array.from(host.querySelectorAll(".embed-section-heading h2")).map(
-        (heading) => heading.textContent,
-      ),
-    ).toEqual(["About you", "Your visit"]);
-    expect(
-      Array.from(host.querySelectorAll(".embed-section-heading")).map((heading) =>
-        Array.from(heading.classList).find((className) => className.startsWith("section-color-")),
-      ),
-    ).toEqual(["section-color-0", "section-color-1"]);
+    const sectionHeadings = Array.from(host.querySelectorAll("form h2"));
+    expect(sectionHeadings.map((heading) => heading.textContent)).toEqual([
+      "About you",
+      "Your visit",
+    ]);
+    const sectionHeadingClasses = sectionHeadings.map(
+      (heading) => heading.parentElement!.classList,
+    );
+    expect(sectionHeadingClasses[0]).toHaveLength(2);
+    expect(sectionHeadingClasses[1]).toHaveLength(2);
+    expect(sectionHeadingClasses[0]![1]).not.toBe(sectionHeadingClasses[1]![1]);
     const textInputs = host.querySelectorAll<HTMLInputElement>(
       'input:not([type="checkbox"]):not([type="radio"])',
     );

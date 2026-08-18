@@ -1,3 +1,4 @@
+import styles from "./approvals.module.css";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Show, createSignal } from "solid-js";
 import { api } from "../../../convex/_generated/api";
@@ -71,7 +72,7 @@ export default function ApprovalsPage() {
           </EmptyState.Root>
         }
       >
-        <section class="approvals-section" aria-labelledby="approvals-title">
+        <section class={styles.approvalsSection} aria-labelledby="approvals-title">
           <SectionHeader.Root>
             <SectionHeader.Heading>
               <SectionHeader.Eyebrow>Safety boundary</SectionHeader.Eyebrow>
@@ -81,11 +82,11 @@ export default function ApprovalsPage() {
               {pendingRevisions.data()?.length ?? 0} pending
             </SectionHeader.Count>
           </SectionHeader.Root>
-          <div class="approval-list">
+          <div class={styles.approvalList}>
             <Show
               when={(pendingRevisions.data()?.length ?? 0) > 0}
               fallback={
-                <EmptyState.Root class="empty-page-state compact-empty-state">
+                <EmptyState.Root class={`empty-page-state ${styles.compactEmptyState}`}>
                   <EmptyState.Icon>✓</EmptyState.Icon>
                   <EmptyState.Content>
                     <EmptyState.Title as="h2">Everything is reviewed.</EmptyState.Title>

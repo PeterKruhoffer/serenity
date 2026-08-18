@@ -1,3 +1,4 @@
+import styles from "./events.module.css";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex-solidjs";
@@ -200,7 +201,7 @@ const EventBuilder = (props: EventBuilderProps) => {
 
       <Show when={eventForm.visible && props.organization}>
         {(organization) => (
-          <form class="event-form" onSubmit={handleEventCreate}>
+          <form class={styles.eventForm} onSubmit={handleEventCreate}>
             <div class="form-heading">
               <div>
                 <p class="eyebrow">New draft</p>
@@ -209,7 +210,7 @@ const EventBuilder = (props: EventBuilderProps) => {
               </div>
               <span>{timezone}</span>
             </div>
-            <div class="builder-section-heading">
+            <div class={styles.builderSectionHeading}>
               <span>01</span>
               <div>
                 <h3>Event details</h3>
@@ -252,18 +253,18 @@ const EventBuilder = (props: EventBuilderProps) => {
               </label>
             </div>
 
-            <div class="builder-section-heading schedule-heading">
+            <div class={`${styles.builderSectionHeading} ${styles.scheduleHeading}`}>
               <span>02</span>
               <div>
                 <h3>Schedule</h3>
                 <p>Add each event date, then place sessions within that date.</p>
               </div>
             </div>
-            <div class="builder-date-list">
+            <div class={styles.builderDateList}>
               <For each={draftDates()}>
                 {(date, dateIndex) => (
-                  <section class="builder-date-card">
-                    <div class="builder-card-heading">
+                  <section class={styles.builderDateCard}>
+                    <div class={styles.builderCardHeading}>
                       <strong>Date {dateIndex() + 1}</strong>
                       <Show when={draftDates().length > 1}>
                         <button
@@ -279,7 +280,7 @@ const EventBuilder = (props: EventBuilderProps) => {
                         </button>
                       </Show>
                     </div>
-                    <div class="builder-date-fields">
+                    <div class={styles.builderDateFields}>
                       <label>
                         <span>Starts</span>
                         <input
@@ -324,7 +325,7 @@ const EventBuilder = (props: EventBuilderProps) => {
                       </label>
                     </div>
 
-                    <div class="builder-sessions-heading">
+                    <div class={styles.builderSessionsHeading}>
                       <div>
                         <strong>Sessions</strong>
                         <span>{date.sessions.length} added</span>
@@ -347,7 +348,7 @@ const EventBuilder = (props: EventBuilderProps) => {
                     </div>
 
                     <Show when={date.sessions.length > 0}>
-                      <ul class="builder-session-list">
+                      <ul class={styles.builderSessionList}>
                         <For each={date.sessions}>
                           {(session) => (
                             <li>
@@ -395,13 +396,13 @@ const EventBuilder = (props: EventBuilderProps) => {
 
                     <Show when={date.sessionDraft}>
                       {(sessionDraft) => (
-                        <div class="builder-session-editor">
-                          <div class="session-editor-heading">
+                        <div class={styles.builderSessionEditor}>
+                          <div class={styles.sessionEditorHeading}>
                             <strong>
                               {date.editingSessionId ? "Edit session" : "New session"}
                             </strong>
                           </div>
-                          <label class="session-title-field">
+                          <label class={styles.sessionTitleField}>
                             <span>Session title</span>
                             <input
                               placeholder="Opening keynote"
@@ -475,7 +476,7 @@ const EventBuilder = (props: EventBuilderProps) => {
                               }
                             />
                           </label>
-                          <div class="session-editor-actions">
+                          <div class={styles.sessionEditorActions}>
                             <button
                               class="text-button"
                               type="button"
@@ -505,14 +506,14 @@ const EventBuilder = (props: EventBuilderProps) => {
               </For>
             </div>
             <button
-              class="secondary-button add-date-button"
+              class={`secondary-button ${styles.addDateButton}`}
               type="button"
               onClick={() => setDraftDates((dates) => [...dates, emptyDate()])}
             >
               ＋ Add another date
             </button>
 
-            <div class="builder-section-heading signup-heading">
+            <div class={`${styles.builderSectionHeading} ${styles.signupHeading}`}>
               <span>03</span>
               <div>
                 <h3>Sign-up form</h3>
@@ -526,7 +527,7 @@ const EventBuilder = (props: EventBuilderProps) => {
               paletteAriaLabel="Add a sign-up field"
             >
               <Show when={availableSignupTemplates().length > 0}>
-                <label class="template-picker">
+                <label class={styles.templatePicker}>
                   <span>Start from a saved template</span>
                   <select
                     value=""
