@@ -11,6 +11,7 @@ export default Table.make(() =>
     label: Schema.String,
     required: Schema.Boolean,
     options: Schema.Array(Schema.String),
+    section: Schema.optional(Schema.String),
     sortOrder: Schema.Number,
   }),
 ).index("by_revisionId_and_sortOrder", ["revisionId", "sortOrder"]);

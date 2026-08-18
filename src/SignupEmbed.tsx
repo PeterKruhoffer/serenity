@@ -23,6 +23,17 @@ export const createAttendeeKey = () =>
     value.toString(16).padStart(2, "0"),
   ).join("");
 
+const sectionColorClass = (fields: ReadonlyArray<{ section?: string }>, fieldIndex: number) => {
+  let activeSection: string | undefined;
+  let sectionIndex = -1;
+  for (let index = 0; index <= fieldIndex; index += 1) {
+    const section = fields[index]?.section;
+    if (section && section !== activeSection) sectionIndex += 1;
+    activeSection = section;
+  }
+  return sectionIndex >= 0 ? `section-color-${sectionIndex % 4}` : "";
+};
+
 const attendeeKey = () => {
   try {
     const stored = localStorage.getItem(attendeeStorageKey);
@@ -166,85 +177,103 @@ const SignupEmbed: Component = () => {
                   </label>
 
                   <For each={details().signupFields}>
-                    {(field) => (
-                      <fieldset class="embed-field">
-                        <legend>
-                          {field.label}{" "}
-                          <Show when={field.required}>
-                            <em>Required</em>
-                          </Show>
-                        </legend>
-                        <Switch>
-                          <Match when={field.type === "text"}>
-                            <input
-                              value={(answers[field.id] as string | undefined) ?? ""}
-                              onInput={(inputEvent) =>
-                                setAnswers(field.id, inputEvent.currentTarget.value)
-                              }
-                              required={field.required}
-                            />
-                          </Match>
-                          <Match when={field.type === "textarea"}>
-                            <textarea
-                              rows="4"
-                              value={(answers[field.id] as string | undefined) ?? ""}
-                              onInput={(inputEvent) =>
-                                setAnswers(field.id, inputEvent.currentTarget.value)
-                              }
-                              required={field.required}
-                            />
-                          </Match>
-                          <Match when={field.type === "yes_no"}>
-                            <div class="embed-options horizontal-options">
-                              <For each={[true, false]}>
-                                {(value) => (
-                                  <label>
-                                    <input
-                                      type="radio"
-                                      name={`answer-${field.id}`}
-                                      checked={answers[field.id] === value}
-                                      onChange={() => setAnswers(field.id, value)}
-                                      required={field.required}
-                                    />
-                                    <span>{value ? "Yes" : "No"}</span>
-                                  </label>
-                                )}
-                              </For>
-                            </div>
-                          </Match>
-                          <Match when={field.type === "checkboxes"}>
-                            <div class="embed-options">
-                              <For each={field.options}>
-                                {(option, optionIndex) => (
-                                  <label>
-                                    <input
-                                      type="checkbox"
-                                      checked={
-                                        Array.isArray(answers[field.id]) &&
-                                        (answers[field.id] as string[]).includes(option)
-                                      }
-                                      onChange={(inputEvent) =>
-                                        toggleChoice(
-                                          field.id,
-                                          option,
-                                          inputEvent.currentTarget.checked,
-                                        )
-                                      }
-                                      required={
-                                        field.required &&
-                                        optionIndex() === 0 &&
-                                        (!Array.isArray(answers[field.id]) ||
-                                          (answers[field.id] as string[]).length === 0)
-                                      }
-                                    />
-                                    <span>{option}</span>
-                                  </label>
-                                )}
-                              </For>
-                            </div>
-                          </Match>
-                        </Switch>
-                      </fieldset>
+                    {(field, index) => (
+                      <>
+                        <Show
+                          when={
+                            field.section &&
+                            field.section !== details().signupFields[index() - 1]?.section
+                          }
+                        >
+                          <div
+                            class={`embed-section-heading ${sectionColorClass(details().signupFields, index())}`}
+                          >
+                            <span>Section</span>
+                            <h2>{field.section}</h2>
+                          </div>
+                        </Show>
+                        <fieldset
+                          class={`embed-field ${sectionColorClass(details().signupFields, index())}`}
+                          classList={{ "in-section": !!field.section }}
+                        >
+                          <legend>
+                            {field.label}{" "}
+                            <Show when={field.required}>
+                              <em>Required</em>
+                            </Show>
+                          </legend>
+                          <Switch>
+                            <Match when={field.type === "text"}>
+                              <input
+                                value={(answers[field.id] as string | undefined) ?? ""}
+                                onInput={(inputEvent) =>
+                                  setAnswers(field.id, inputEvent.currentTarget.value)
+                                }
+                                required={field.required}
+                              />
+                            </Match>
+                            <Match when={field.type === "textarea"}>
+                              <textarea
+                                rows="4"
+                                value={(answers[field.id] as string | undefined) ?? ""}
+                                onInput={(inputEvent) =>
+                                  setAnswers(field.id, inputEvent.currentTarget.value)
+                                }
+                                required={field.required}
+                              />
+                            </Match>
+                            <Match when={field.type === "yes_no"}>
+                              <div class="embed-options horizontal-options">
+                                <For each={[true, false]}>
+                                  {(value) => (
+                                    <label>
+                                      <input
+                                        type="radio"
+                                        name={`answer-${field.id}`}
+                                        checked={answers[field.id] === value}
+                                        onChange={() => setAnswers(field.id, value)}
+                                        required={field.required}
+                                      />
+                                      <span>{value ? "Yes" : "No"}</span>
+                                    </label>
+                                  )}
+                                </For>
+                              </div>
+                            </Match>
+                            <Match when={field.type === "checkboxes"}>
+                              <div class="embed-options">
+                                <For each={field.options}>
+                                  {(option, optionIndex) => (
+                                    <label>
+                                      <input
+                                        type="checkbox"
+                                        checked={
+                                          Array.isArray(answers[field.id]) &&
+                                          (answers[field.id] as string[]).includes(option)
+                                        }
+                                        onChange={(inputEvent) =>
+                                          toggleChoice(
+                                            field.id,
+                                            option,
+                                            inputEvent.currentTarget.checked,
+                                          )
+                                        }
+                                        required={
+                                          field.required &&
+                                          optionIndex() === 0 &&
+                                          (!Array.isArray(answers[field.id]) ||
+                                            (answers[field.id] as string[]).length === 0)
+                                        }
+                                      />
+                                      <span>{option}</span>
+                                    </label>
+                                  )}
+                                </For>
+                              </div>
+                            </Match>
+                          </Switch>
+                        </fieldset>
+                      </>
                     )}
                   </For>
                 </div>

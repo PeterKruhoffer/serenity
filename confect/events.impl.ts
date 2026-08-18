@@ -34,6 +34,7 @@ type SignupFieldInput = {
   readonly label: string;
   readonly required: boolean;
   readonly options: ReadonlyArray<string>;
+  readonly section?: string;
 };
 
 const validateSignupFields = (fields: ReadonlyArray<SignupFieldInput>) =>
@@ -67,7 +68,16 @@ const validateSignupFields = (fields: ReadonlyArray<SignupFieldInput>) =>
             new InvalidInput({ message: "Checkbox options must be unique." }),
           );
         }
-        return { type: field.type, label, required: field.required, options: [...options] };
+        const section = field.section
+          ? yield* normalizeText(field.section, "Section title", 2, 80)
+          : undefined;
+        return {
+          type: field.type,
+          label,
+          required: field.required,
+          options: [...options],
+          ...(section ? { section } : {}),
+        };
       }),
     );
   });
@@ -200,6 +210,7 @@ const get = FunctionImpl.make(databaseSchema, events, "get", ({ eventId }) =>
         label: field.label,
         required: field.required,
         options: field.options,
+        ...(field.section === undefined ? {} : { section: field.section }),
       })),
     };
   }).pipe(Effect.catchTag("DocumentDecodeError", (error) => Effect.die(error))),
@@ -252,6 +263,7 @@ const listSignupTemplates = FunctionImpl.make(
               label: field.label,
               required: field.required,
               options: field.options,
+              ...(field.section === undefined ? {} : { section: field.section }),
             })),
           };
         }),

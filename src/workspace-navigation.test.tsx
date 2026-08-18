@@ -88,7 +88,7 @@ afterEach(() => {
 });
 
 describe("signed-in workspace navigation", () => {
-  it("builds and reorders custom sign-up fields", async () => {
+  it("builds sections and drag-reorders custom sign-up fields", async () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");
     document.body.append(host);
@@ -124,12 +124,46 @@ describe("signed-in workspace navigation", () => {
     questions[1]!.dispatchEvent(new InputEvent("input", { bubbles: true }));
     expect(host.querySelector('input[placeholder="Choice 1"]')).toBeTruthy();
 
-    host.querySelector<HTMLButtonElement>('[aria-label="Move Dietary requirements up"]')?.click();
+    const dragHandle = host.querySelector<HTMLButtonElement>(
+      '[aria-label="Drag Dietary requirements"]',
+    );
+    const firstCard = questions[0]!.closest<HTMLElement>(".signup-field-card");
+    expect(dragHandle).toBeTruthy();
+    expect(firstCard).toBeTruthy();
+    firstCard!.getBoundingClientRect = () => ({ top: 0, height: 100 }) as DOMRect;
+    const dataTransfer = {
+      effectAllowed: "none",
+      setData: vi.fn(),
+      getData: vi.fn(() => ""),
+    };
+    for (const [target, type, clientY] of [
+      [dragHandle, "dragstart", 0],
+      [firstCard, "dragover", 10],
+      [firstCard, "drop", 10],
+    ] as const) {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, {
+        clientY: { value: clientY },
+        dataTransfer: { value: dataTransfer },
+      });
+      target!.dispatchEvent(event);
+    }
     const reorderedQuestions = host.querySelectorAll<HTMLInputElement>(
       'input[placeholder="What would you like us to know?"]',
     );
     expect(reorderedQuestions[0]?.value).toBe("Dietary requirements");
     expect(reorderedQuestions[1]?.value).toBe("Job title");
+
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent?.trim() === "＋ Section")
+      ?.click();
+    const sectionTitle = host.querySelector<HTMLInputElement>('input[placeholder="About you"]');
+    expect(sectionTitle).toBeTruthy();
+    sectionTitle!.value = "Your preferences";
+    sectionTitle!.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    expect(sectionTitle!.value).toBe("Your preferences");
+    expect(host.querySelector('[aria-label="Drag Your preferences"]')).toBeTruthy();
+    expect(host.querySelector(".signup-section-divider")?.classList).toContain("section-color-0");
   });
 
   it("keeps focus in schedule fields while typing", async () => {

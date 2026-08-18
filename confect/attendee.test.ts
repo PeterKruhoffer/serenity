@@ -19,6 +19,7 @@ type SignupField = {
   label: string;
   required: boolean;
   options: string[];
+  section?: string;
 };
 
 const publishedEvent = async (signupFields: SignupField[] = []) => {
@@ -167,7 +168,13 @@ describe("attendee API", () => {
 
   it("publishes an immutable form and validates and stores registration answers", async () => {
     const { t, manager, event } = await publishedEvent([
-      { type: "text", label: "Job title", required: true, options: [] },
+      {
+        type: "text",
+        label: "Job title",
+        required: true,
+        options: [],
+        section: "About you",
+      },
       {
         type: "checkboxes",
         label: "Dietary requirements",
@@ -178,7 +185,7 @@ describe("attendee API", () => {
     ]);
     const publicEvent = await t.query(attendee.getEvent, { eventId: event.eventId });
     expect(publicEvent?.signupFields).toMatchObject([
-      { label: "Job title", type: "text", required: true },
+      { label: "Job title", type: "text", required: true, section: "About you" },
       { label: "Dietary requirements", options: ["Vegetarian", "Vegan"] },
       { label: "First visit?", type: "yes_no", required: true },
     ]);

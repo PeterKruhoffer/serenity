@@ -196,6 +196,7 @@ describe("recurring event composition", () => {
         label: "Job title",
         required: true,
         options: [],
+        section: "About you",
       },
     ];
     const saved = await manager.mutation(api.events.saveSignupTemplate, {

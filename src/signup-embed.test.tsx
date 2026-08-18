@@ -29,6 +29,7 @@ vi.mock("convex-solidjs", () => ({
           label: "Job title",
           required: true,
           options: [],
+          section: "About you",
         },
         {
           id: "dietary-id",
@@ -36,6 +37,7 @@ vi.mock("convex-solidjs", () => ({
           label: "Dietary requirements",
           required: false,
           options: ["Vegetarian", "Vegan"],
+          section: "Your visit",
         },
         {
           id: "first-visit-id",
@@ -43,6 +45,7 @@ vi.mock("convex-solidjs", () => ({
           label: "First visit?",
           required: true,
           options: [],
+          section: "Your visit",
         },
       ],
     }),
@@ -86,6 +89,16 @@ describe("sign-up embed", () => {
     );
 
     expect(host.querySelector("h1")?.textContent).toBe("Autumn Supper");
+    expect(
+      Array.from(host.querySelectorAll(".embed-section-heading h2")).map(
+        (heading) => heading.textContent,
+      ),
+    ).toEqual(["About you", "Your visit"]);
+    expect(
+      Array.from(host.querySelectorAll(".embed-section-heading")).map((heading) =>
+        Array.from(heading.classList).find((className) => className.startsWith("section-color-")),
+      ),
+    ).toEqual(["section-color-0", "section-color-1"]);
     const textInputs = host.querySelectorAll<HTMLInputElement>(
       'input:not([type="checkbox"]):not([type="radio"])',
     );

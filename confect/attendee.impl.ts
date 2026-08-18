@@ -42,6 +42,7 @@ type PublicEvent = {
     label: string;
     required: boolean;
     options: Array<string>;
+    section?: string;
   }>;
   dates: Array<{
     id: Id<"revision_dates">;
@@ -227,6 +228,7 @@ const readPublicEvent = async (ctx: ReadCtx, event: Doc<"events">): Promise<Publ
       label: field.label,
       required: field.required,
       options: field.options,
+      ...(field.section === undefined ? {} : { section: field.section }),
     })),
   };
 };

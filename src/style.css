@@ -991,10 +991,161 @@ textarea:focus {
 }
 
 .signup-field-card {
+  position: relative;
   padding: 18px;
   background: #f4f6f0;
   border: 1px solid #dfe3d9;
   border-radius: 12px;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+
+.signup-field-card.is-dragging,
+.signup-section-divider.is-dragging {
+  opacity: 0.45;
+}
+
+.signup-field-card.drop-before,
+.signup-section-divider.drop-before {
+  box-shadow: 0 -3px 0 #718a67;
+}
+
+.signup-field-card.drop-after,
+.signup-section-divider.drop-after {
+  box-shadow: 0 3px 0 #718a67;
+}
+
+.signup-drag-handle {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #7a8275;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: grab;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.signup-drag-handle:hover,
+.signup-drag-handle:focus-visible {
+  color: #40533a;
+  background: #e3e8dc;
+  outline: none;
+}
+
+.signup-drag-handle:active {
+  cursor: grabbing;
+}
+
+.signup-section-divider {
+  position: relative;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  background: #eaf0e5;
+  border: 1px solid #cfd9c8;
+  border-left: 4px solid #819875;
+  border-radius: 12px;
+  transition:
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+
+.signup-section-divider.section-color-0 {
+  --section-accent: #819875;
+  background: #eaf0e5;
+  border-color: #cfd9c8;
+  border-left-color: var(--section-accent);
+}
+
+.signup-section-divider.section-color-1 {
+  --section-accent: #718da4;
+  background: #e8eef3;
+  border-color: #c9d5df;
+  border-left-color: var(--section-accent);
+}
+
+.signup-section-divider.section-color-2 {
+  --section-accent: #aa8761;
+  background: #f3ece3;
+  border-color: #dfd0be;
+  border-left-color: var(--section-accent);
+}
+
+.signup-section-divider.section-color-3 {
+  --section-accent: #92729a;
+  background: #f0e9f1;
+  border-color: #dacdde;
+  border-left-color: var(--section-accent);
+}
+
+.signup-field-card.section-color-0 {
+  background: #f2f6ef;
+  border-left: 3px solid #a9bca0;
+}
+
+.signup-field-card.section-color-1 {
+  background: #f1f5f8;
+  border-left: 3px solid #9db1c1;
+}
+
+.signup-field-card.section-color-2 {
+  background: #f8f4ee;
+  border-left: 3px solid #c4a786;
+}
+
+.signup-field-card.section-color-3 {
+  background: #f7f2f7;
+  border-left: 3px solid #b49aba;
+}
+
+.signup-section-divider::after {
+  position: absolute;
+  right: 10px;
+  bottom: -9px;
+  left: 10px;
+  border-bottom: 2px dashed color-mix(in srgb, var(--section-accent) 55%, transparent);
+  content: "";
+}
+
+.signup-section-divider label {
+  display: grid;
+  gap: 6px;
+}
+
+.signup-section-divider label > span {
+  color: #607057;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.signup-section-divider input {
+  min-height: 38px;
+  color: #34402f;
+  background: rgb(255 255 255 / 70%);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+}
+
+.signup-section-divider .signup-drag-handle {
+  margin-bottom: 5px;
+}
+
+.add-section-button {
+  color: #496041;
+  background: #e6ede1;
+  border-color: #cad6c3;
 }
 
 .signup-field-heading,
@@ -1950,6 +2101,79 @@ textarea:focus {
   margin-bottom: 8px;
 }
 
+.embed-section-heading {
+  margin-top: 8px;
+  padding: 18px 18px 14px;
+  color: #34412f;
+  background: #edf2e9;
+  border-left: 4px solid var(--embed-accent);
+  border-radius: 10px 10px 0 0;
+}
+
+.embed-section-heading.section-color-0,
+.embed-field.section-color-0 {
+  --section-accent: #718a67;
+  --section-background: #f1f5ee;
+}
+
+.embed-section-heading.section-color-1,
+.embed-field.section-color-1 {
+  --section-accent: #68869e;
+  --section-background: #eff4f7;
+}
+
+.embed-section-heading.section-color-2,
+.embed-field.section-color-2 {
+  --section-accent: #9e7954;
+  --section-background: #f8f3ec;
+}
+
+.embed-section-heading.section-color-3,
+.embed-field.section-color-3 {
+  --section-accent: #87658f;
+  --section-background: #f6f0f6;
+}
+
+.embed-section-heading[class*="section-color-"] {
+  background: var(--section-background);
+  border-left-color: var(--section-accent);
+}
+
+.embed-section-heading:not(:first-of-type) {
+  margin-top: 12px;
+  border-top: 1px dashed #aebba7;
+}
+
+.embed-section-heading span {
+  color: #788772;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.embed-section-heading h2 {
+  margin: 3px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.embed-field.in-section {
+  margin-top: -18px;
+  padding: 18px;
+  background: var(--section-background, #f5f7f2);
+  border-right: 1px solid #e0e5dc;
+  border-left: 1px solid #e0e5dc;
+}
+
+.embed-field.in-section:has(+ .embed-section-heading),
+.embed-field.in-section:last-of-type {
+  padding-bottom: 20px;
+  border-bottom: 2px dashed color-mix(in srgb, var(--section-accent) 48%, transparent);
+  border-radius: 0 0 10px 10px;
+}
+
 .embed-options {
   display: grid;
   gap: 8px;
@@ -2294,6 +2518,16 @@ textarea:focus {
   .signup-field-heading {
     align-items: flex-start;
     flex-wrap: wrap;
+  }
+
+  .signup-section-divider {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .signup-section-divider .signup-field-actions {
+    grid-column: 2;
+    margin-left: 0;
   }
 
   .signup-field-actions {

@@ -118,6 +118,7 @@ const getPublished = FunctionImpl.make(databaseSchema, publication, "getPublishe
         label: field.label,
         required: field.required,
         options: field.options,
+        ...(field.section === undefined ? {} : { section: field.section }),
       })),
     };
   }).pipe(Effect.catchTag("DocumentDecodeError", (error) => Effect.die(error))),
@@ -189,6 +190,7 @@ const submit = FunctionImpl.make(databaseSchema, publication, "submit", ({ event
         label: field.label,
         required: field.required,
         options: field.options,
+        ...(field.section === undefined ? {} : { section: field.section }),
         sortOrder: field.sortOrder,
       });
     }

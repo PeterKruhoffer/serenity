@@ -40,6 +40,7 @@ const SignupField = Schema.Struct({
   label: Schema.String,
   required: Schema.Boolean,
   options: Schema.Array(Schema.String),
+  section: Schema.optional(Schema.String),
 });
 
 const EventDetail = Schema.Struct({

@@ -35,6 +35,7 @@ const PublishedSignupField = Schema.Struct({
   label: Schema.String,
   required: Schema.Boolean,
   options: Schema.Array(Schema.String),
+  section: Schema.optional(Schema.String),
 });
 
 const PublishedEvent = Schema.Struct({
