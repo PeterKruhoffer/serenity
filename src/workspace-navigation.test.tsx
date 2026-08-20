@@ -54,6 +54,18 @@ beforeEach(() => {
           ],
         });
       case "events:list":
+        return queryResult([
+          {
+            id: "event-id",
+            title: "Leadership essentials",
+            description: "A focused leadership program",
+            status: "draft",
+            teamId: "team-id",
+            teamName: "Events team",
+            occurrenceCount: 1,
+            sessionCount: 2,
+          },
+        ]);
       case "publication:listPending":
       case "registrations:list":
         return queryResult([]);
@@ -90,7 +102,18 @@ beforeEach(() => {
           },
         ]);
       case "events:get":
-        return queryResult(undefined);
+        return queryResult({
+          event: {
+            id: "event-id",
+            title: "Leadership essentials",
+            description: "A focused leadership program",
+            status: "draft",
+            teamId: "team-id",
+            teamName: "Events team",
+            timezone: "Europe/Copenhagen",
+          },
+          dates: [],
+        });
       default:
         throw new Error(`Unexpected query: ${getFunctionName(reference)}`);
     }
@@ -105,6 +128,49 @@ afterEach(() => {
 });
 
 describe("signed-in workspace navigation", () => {
+  it("opens the global command palette and routes actions without creating anything", async () => {
+    window.history.replaceState({}, "", "/events");
+    const host = document.createElement("div");
+    document.body.append(host);
+    disposers.push(
+      render(
+        () => (
+          <Router>
+            <SerenityRoutes />
+          </Router>
+        ),
+        host,
+      ),
+    );
+
+    await vi.waitFor(() => expect(host.textContent).toContain("Search"));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }));
+
+    await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeTruthy());
+    const input = document.querySelector<HTMLInputElement>('[role="combobox"]');
+    expect(input).toBeTruthy();
+    expect(document.activeElement).toBe(input);
+    expect(document.body.textContent).toContain("Create event");
+    expect(document.body.textContent).toContain("Leadership essentials");
+    expect(document.body.textContent).toContain("Events team");
+    expect(document.body.textContent).toContain("Standard attendee questions");
+
+    input!.value = "create event";
+    input!.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await vi.waitFor(() =>
+      expect(
+        Array.from(document.querySelectorAll('[role="option"]')).map((option) =>
+          option.textContent?.trim(),
+        ),
+      ).toEqual(["＋Create eventOpen the full event builder↵"]),
+    );
+    document.querySelector<HTMLElement>('[role="option"]')?.click();
+
+    await vi.waitFor(() => expect(window.location.pathname).toBe("/events/new"));
+    await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+    await vi.waitFor(() => expect(host.textContent).toContain("Create an event"));
+  });
+
   it("builds sections and drag-reorders custom sign-up fields", async () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");
@@ -124,6 +190,8 @@ describe("signed-in workspace navigation", () => {
     Array.from(host.querySelectorAll("button"))
       .find((button) => button.textContent?.includes("New event"))
       ?.click();
+    await vi.waitFor(() => expect(window.location.pathname).toBe("/events/new"));
+    await vi.waitFor(() => expect(host.textContent).toContain("Build the event"));
     Array.from(host.querySelectorAll("button"))
       .find((button) => button.textContent?.trim() === "＋ Short answer")
       ?.click();
@@ -206,6 +274,10 @@ describe("signed-in workspace navigation", () => {
       button.textContent?.includes("New event"),
     );
     newEventButton?.click();
+    await vi.waitFor(() => expect(window.location.pathname).toBe("/events/new"));
+    await vi.waitFor(() =>
+      expect(host.querySelector('input[placeholder="Harbor House"]')).toBeTruthy(),
+    );
     const venue = host.querySelector<HTMLInputElement>('input[placeholder="Harbor House"]');
     expect(venue).toBeTruthy();
 
@@ -247,6 +319,12 @@ describe("signed-in workspace navigation", () => {
     Array.from(host.querySelectorAll("button"))
       .find((button) => button.textContent === "Edit")
       ?.click();
+    await vi.waitFor(() => expect(window.location.pathname).toBe("/templates/template-id/edit"));
+    await vi.waitFor(() =>
+      expect(
+        host.querySelector<HTMLInputElement>('input[placeholder="Standard attendee questions"]'),
+      ).toBeTruthy(),
+    );
     expect(
       host.querySelector<HTMLInputElement>('input[placeholder="Standard attendee questions"]')
         ?.value,
@@ -260,9 +338,13 @@ describe("signed-in workspace navigation", () => {
     Array.from(host.querySelectorAll("button"))
       .find((button) => button.textContent?.trim() === "Close ＋")
       ?.click();
+    await vi.waitFor(() => expect(window.location.pathname).toBe("/templates"));
+    await vi.waitFor(() => expect(host.textContent).toContain("New template"));
     Array.from(host.querySelectorAll("button"))
       .find((button) => button.textContent?.trim() === "New template ＋")
       ?.click();
+    await vi.waitFor(() => expect(window.location.pathname).toBe("/templates/new"));
+    await vi.waitFor(() => expect(host.textContent).toContain("Build a sign-up form"));
     expect(host.textContent).toContain("Build a sign-up form");
     expect(host.textContent).toContain("Entire organization");
     Array.from(host.querySelectorAll("button"))

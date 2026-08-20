@@ -1,7 +1,8 @@
 import styles from "./events.module.css";
+import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { useWorkspace } from "../workspace/WorkspaceLayout";
+import { useWorkspace } from "../workspace/WorkspaceContext";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
@@ -20,7 +21,6 @@ type OrganizationRole = "administrator" | "super_user" | "event_manager";
 
 type EventEditorState = {
   error: string | null;
-  selectedEventId: Id<"events"> | null;
   selectedDateId: Id<"event_dates"> | null;
   newDate: { startsAt: string; endsAt: string; venueName: string };
   session: { title: string; startsAt: string; endsAt: string; roomName: string };
@@ -37,6 +37,9 @@ const signupEmbedUrl = (eventId: Id<"events">) =>
 const signupApiUrl = (eventId: Id<"events">) =>
   `${convexSiteUrl()}/api/v1/events/${eventId}/signup-form`;
 const EventsPage = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = useParams<{ eventId?: string }>();
   const auth = useWorkOSAuth();
   const { workspace, activeOrganization } = useWorkspace();
   const events = useQuery(
@@ -55,15 +58,15 @@ const EventsPage = () => {
   const startDraft = useMutation(api.publication.startDraft);
   const [editor, setEditor] = createStore<EventEditorState>({
     error: null,
-    selectedEventId: null,
     selectedDateId: null,
     newDate: { startsAt: "", endsAt: "", venueName: "" },
     session: { title: "", startsAt: "", endsAt: "", roomName: "" },
   });
+  const selectedEventId = () => (params.eventId as Id<"events"> | undefined) ?? null;
   const eventDetail = useQuery(
     api.events.get,
-    () => ({ eventId: editor.selectedEventId ?? ("" as Id<"events">) }),
-    () => ({ enabled: editor.selectedEventId !== null }),
+    () => ({ eventId: selectedEventId() ?? ("" as Id<"events">) }),
+    () => ({ enabled: selectedEventId() !== null }),
   );
 
   const formatDate = (timestamp: number, timezone: string) =>
@@ -82,7 +85,7 @@ const EventsPage = () => {
 
   const handleDateCreate = async (event: SubmitEvent) => {
     event.preventDefault();
-    const eventId = editor.selectedEventId;
+    const eventId = selectedEventId();
     if (!eventId) return;
     setEditor("error", null);
     try {
@@ -143,7 +146,9 @@ const EventsPage = () => {
       <Page.Root labelledBy="events-title">
         <EventBuilder
           organization={activeOrganization()!}
-          onSuccess={(eventId) => setEditor("selectedEventId", eventId)}
+          open={location.pathname === "/events/new"}
+          onOpenChange={(builderOpen) => navigate(builderOpen ? "/events/new" : "/events")}
+          onSuccess={(eventId) => navigate(`/events/${eventId}`)}
         >
           <Page.Eyebrow>Event operations</Page.Eyebrow>
           <Page.Title id="events-title">
@@ -179,9 +184,16 @@ const EventsPage = () => {
         </div>
       </Page.Root>
 
-      <Show when={editor.selectedEventId}>
+      <Show when={selectedEventId()}>
         <section class={styles.eventDetail} aria-label="Event editor">
-          <Show when={eventDetail.data()} fallback={<p>Opening event…</p>}>
+          <Show
+            when={eventDetail.data()}
+            fallback={
+              <Show when={eventDetail.error()} fallback={<p>Opening event…</p>}>
+                {(error) => <FormError>{convexErrorMessage(error())}</FormError>}
+              </Show>
+            }
+          >
             {(detail) => (
               <>
                 <div class={styles.eventDetailHeading}>
@@ -218,7 +230,8 @@ const EventsPage = () => {
                       class="text-button"
                       type="button"
                       onClick={() => {
-                        setEditor({ selectedEventId: null, selectedDateId: null });
+                        setEditor("selectedDateId", null);
+                        navigate("/events");
                       }}
                     >
                       Close editor
@@ -453,10 +466,11 @@ const EventsPage = () => {
               {(event) => (
                 <button
                   class={styles.eventCard}
-                  classList={{ [styles.isSelected]: editor.selectedEventId === event.id }}
+                  classList={{ [styles.isSelected]: selectedEventId() === event.id }}
                   type="button"
                   onClick={() => {
-                    setEditor({ error: null, selectedEventId: event.id, selectedDateId: null });
+                    setEditor({ error: null, selectedDateId: null });
+                    navigate(`/events/${event.id}`);
                   }}
                 >
                   <div class={styles.eventCardTopline}>

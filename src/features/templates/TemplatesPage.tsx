@@ -1,6 +1,7 @@
 import styles from "./templates.module.css";
+import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { useMutation, useQuery } from "convex-solidjs";
-import { For, Show, createSignal } from "solid-js";
+import { For, Show, createEffect, createSignal } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { EmptyState } from "../../components/empty-state";
@@ -9,9 +10,12 @@ import { Page } from "../../components/page";
 import { SectionHeader } from "../../components/section-header";
 import { convexErrorMessage } from "../../lib/convex-error-message";
 import { SignupFieldBuilder, createSignupFields } from "../signup-fields/SignupFieldBuilder";
-import { useWorkspace } from "../workspace/WorkspaceLayout";
+import { useWorkspace } from "../workspace/WorkspaceContext";
 
 export default function TemplatesPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = useParams<{ templateId?: string }>();
   const { activeOrganization: organization } = useWorkspace();
   const templates = useQuery(
     api.events.listSignupTemplates,
@@ -27,31 +31,51 @@ export default function TemplatesPage() {
   const [scope, setScope] = createSignal<"organization" | "team">("organization");
   const [teamId, setTeamId] = createSignal<Id<"teams"> | "">("");
   const [editingId, setEditingId] = createSignal<Id<"signup_form_templates"> | null>(null);
-  const [showForm, setShowForm] = createSignal(false);
-  const reset = () => {
+  const [loadedRoute, setLoadedRoute] = createSignal("");
+  const showForm = () => location.pathname === "/templates/new" || Boolean(params.templateId);
+  const formReady = () => location.pathname === "/templates/new" || editingId() !== null;
+  const routeTemplateMissing = () =>
+    Boolean(
+      params.templateId &&
+      !templates.isLoading() &&
+      !templates.data()?.some((template) => template.id === params.templateId),
+    );
+  const clearForm = () => {
     setName("");
     setScope(organization()?.role === "event_manager" ? "team" : "organization");
     setTeamId(organization()?.teams[0]?.id ?? "");
     fields.reset();
     setEditingId(null);
-    setShowForm(false);
+  };
+  const closeForm = () => {
+    clearForm();
+    setLoadedRoute("");
+    navigate("/templates");
   };
   const openNew = () => {
-    if (showForm()) return reset();
-    reset();
-    setShowForm(true);
+    if (showForm()) closeForm();
+    else navigate("/templates/new");
   };
-  const edit = (id: Id<"signup_form_templates">) => {
-    const template = templates.data()?.find((item) => item.id === id);
+  createEffect(() => {
+    const route = location.pathname;
+    if (loadedRoute() === route) return;
+    if (route === "/templates/new") {
+      clearForm();
+      setLoadedRoute(route);
+      return;
+    }
+    const templateId = params.templateId as Id<"signup_form_templates"> | undefined;
+    if (!templateId) return;
+    const template = templates.data()?.find((item) => item.id === templateId);
     if (!template) return;
     setFormError(null);
-    setEditingId(id);
+    setEditingId(templateId);
     setName(template.name);
     setScope(template.scope);
     setTeamId(template.teamId ?? organization()?.teams[0]?.id ?? "");
     fields.replace(template.fields);
-    setShowForm(true);
-  };
+    setLoadedRoute(route);
+  });
   const save = async (event: SubmitEvent) => {
     event.preventDefault();
     const org = organization();
@@ -69,7 +93,7 @@ export default function TemplatesPage() {
       const id = editingId();
       if (id) await updateTemplate.mutate({ templateId: id, ...payload });
       else await saveTemplate.mutate({ organizationId: org.id, ...payload });
-      reset();
+      closeForm();
     } catch (error) {
       setFormError(convexErrorMessage(error));
     }
@@ -84,7 +108,7 @@ export default function TemplatesPage() {
     setFormError(null);
     try {
       await deleteTemplate.mutate({ templateId: id });
-      if (editingId() === id) reset();
+      if (editingId() === id) closeForm();
     } catch (error) {
       setFormError(convexErrorMessage(error));
     }
@@ -110,7 +134,10 @@ export default function TemplatesPage() {
           {showForm() ? "Close" : "New template"} <span aria-hidden="true">＋</span>
         </button>
       </Page.Header>
-      <Show when={showForm() && organization()}>
+      <Show when={routeTemplateMissing()}>
+        <FormError>This template is unavailable or no longer exists.</FormError>
+      </Show>
+      <Show when={showForm() && formReady() && organization()}>
         {(org) => (
           <form class={styles.templateEditorForm} onSubmit={save}>
             <div class="form-heading">
@@ -187,7 +214,7 @@ export default function TemplatesPage() {
                     ? "Save changes"
                     : "Create template"}
               </button>
-              <button class="text-button" type="button" onClick={reset}>
+              <button class="text-button" type="button" onClick={closeForm}>
                 Cancel
               </button>
             </div>
@@ -238,7 +265,7 @@ export default function TemplatesPage() {
                           <button
                             class="text-button"
                             type="button"
-                            onClick={() => edit(template.id)}
+                            onClick={() => navigate(`/templates/${template.id}/edit`)}
                           >
                             Edit
                           </button>

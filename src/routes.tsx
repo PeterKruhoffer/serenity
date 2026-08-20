@@ -16,9 +16,15 @@ export const SerenityRoutes = () => (
   <>
     <Route path="/" component={App}>
       <Route component={WorkspaceLayout}>
-        <Route path={["/", "/events", "/callback"]} component={EventsPage} />
+        <Route
+          path={["/", "/events", "/events/new", "/events/:eventId", "/callback"]}
+          component={EventsPage}
+        />
         <Route path="/calendar" component={CalendarPage} />
-        <Route path="/templates" component={TemplatesPage} />
+        <Route
+          path={["/templates", "/templates/new", "/templates/:templateId/edit"]}
+          component={TemplatesPage}
+        />
         <Route path="/approvals" component={ApprovalsPage} />
         <Route path="/participants" component={ParticipantsPage} />
         <Route path="/settings" component={SettingsPage} />

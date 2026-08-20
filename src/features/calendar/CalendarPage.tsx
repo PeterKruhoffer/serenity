@@ -10,7 +10,7 @@ import { api } from "../../../convex/_generated/api";
 import { FormError } from "../../components/form-error";
 import { Page } from "../../components/page";
 import { convexErrorMessage } from "../../lib/convex-error-message";
-import { useWorkspace } from "../workspace/WorkspaceLayout";
+import { useWorkspace } from "../workspace/WorkspaceContext";
 import {
   calendarDate,
   calendarRange,

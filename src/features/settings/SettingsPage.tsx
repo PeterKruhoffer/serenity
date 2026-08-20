@@ -1,4 +1,5 @@
 import styles from "./settings.module.css";
+import { useSearchParams } from "@solidjs/router";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Show, createSignal } from "solid-js";
 import { api } from "../../../convex/_generated/api";
@@ -8,9 +9,10 @@ import { Page } from "../../components/page";
 import { SectionHeader } from "../../components/section-header";
 import { TimezoneTypeahead } from "../../components/timezone-typeahead";
 import { convexErrorMessage } from "../../lib/convex-error-message";
-import { useWorkspace } from "../workspace/WorkspaceLayout";
+import { useWorkspace } from "../workspace/WorkspaceContext";
 
 export default function SettingsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { activeOrganization } = useWorkspace();
   const events = useQuery(
     api.events.list,
@@ -23,7 +25,8 @@ export default function SettingsPage() {
   const [defaultTimezone, setDefaultTimezone] = createSignal(activeOrganization().defaultTimezone);
   const [formError, setFormError] = createSignal<string | null>(null);
   const [timezoneError, setTimezoneError] = createSignal<string | null>(null);
-  const [showTeamForm, setShowTeamForm] = createSignal(false);
+  const showTeamForm = () =>
+    searchParams.action === "new-team" && activeOrganization().role === "administrator";
 
   const handleTeamCreate = async (event: SubmitEvent, organizationId: Id<"organizations">) => {
     event.preventDefault();
@@ -31,7 +34,7 @@ export default function SettingsPage() {
     try {
       await createTeam.mutate({ organizationId, name: newTeamName() });
       setNewTeamName("");
-      setShowTeamForm(false);
+      setSearchParams({ action: undefined });
     } catch (error) {
       setFormError(convexErrorMessage(error));
     }
@@ -105,7 +108,7 @@ export default function SettingsPage() {
             <button
               class="secondary-button compact-button"
               type="button"
-              onClick={() => setShowTeamForm((visible) => !visible)}
+              onClick={() => setSearchParams({ action: showTeamForm() ? undefined : "new-team" })}
             >
               {showTeamForm() ? "Cancel" : "Add team"}
             </button>

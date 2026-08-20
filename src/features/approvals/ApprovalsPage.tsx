@@ -8,7 +8,7 @@ import { FormError } from "../../components/form-error";
 import { Page } from "../../components/page";
 import { SectionHeader } from "../../components/section-header";
 import { convexErrorMessage } from "../../lib/convex-error-message";
-import { useWorkspace } from "../workspace/WorkspaceLayout";
+import { useWorkspace } from "../workspace/WorkspaceContext";
 import { ApprovalCard } from "./ApprovalCard";
 
 type OrganizationRole = "administrator" | "super_user" | "event_manager";

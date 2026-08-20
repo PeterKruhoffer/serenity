@@ -237,6 +237,9 @@ importers:
       '@corvu/calendar':
         specifier: ^0.1.2
         version: 0.1.2(solid-js@1.9.14)
+      '@corvu/dialog':
+        specifier: ^0.2.4
+        version: 0.2.4(solid-js@1.9.14)
       '@corvu/popover':
         specifier: ^0.2.0
         version: 0.2.0(solid-js@1.9.14)

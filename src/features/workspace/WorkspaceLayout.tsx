@@ -1,38 +1,14 @@
 import styles from "./workspace.module.css";
 import { A, useLocation } from "@solidjs/router";
-import type { FunctionReturnType } from "convex/server";
 import { useMutation, useQuery } from "convex-solidjs";
-import {
-  Match,
-  Show,
-  Switch,
-  createContext,
-  createSignal,
-  useContext,
-  type Accessor,
-  type JSX,
-} from "solid-js";
+import { Match, Show, Switch, createSignal, type JSX } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import { FormError } from "../../components/form-error";
 import { TimezoneTypeahead } from "../../components/timezone-typeahead";
 import { convexErrorMessage } from "../../lib/convex-error-message";
 import { browserTimezone } from "../../lib/date-time";
-
-type WorkspaceData = FunctionReturnType<typeof api.workspace.list>;
-type Organization = WorkspaceData["organizations"][number];
-
-type WorkspaceContextValue = {
-  workspace: Accessor<WorkspaceData>;
-  activeOrganization: Accessor<Organization>;
-};
-
-const WorkspaceContext = createContext<WorkspaceContextValue>();
-
-export const useWorkspace = () => {
-  const context = useContext(WorkspaceContext);
-  if (!context) throw new Error("useWorkspace must be used within a WorkspaceLayout provider");
-  return context;
-};
+import CommandPalette from "../command-palette/CommandPalette";
+import { WorkspaceContext, type Organization } from "./WorkspaceContext";
 
 const roleLabel = (role: Organization["role"]) =>
   ({ administrator: "Administrator", super_user: "Super user", event_manager: "Event manager" })[
@@ -51,8 +27,10 @@ export default function WorkspaceLayout(props: { children?: JSX.Element }) {
   const activeOrganization = () => workspace().organizations[0]!;
   const isActive = (page: string) =>
     page === "events"
-      ? ["/", "/events", "/callback"].includes(location.pathname)
-      : location.pathname === `/${page}`;
+      ? location.pathname === "/" ||
+        location.pathname === "/callback" ||
+        location.pathname.startsWith("/events")
+      : location.pathname === `/${page}` || location.pathname.startsWith(`/${page}/`);
 
   const setup = async (event: SubmitEvent) => {
     event.preventDefault();
@@ -145,6 +123,7 @@ export default function WorkspaceLayout(props: { children?: JSX.Element }) {
                 <strong>{activeOrganization().name}</strong>
                 <span>{roleLabel(activeOrganization().role)}</span>
               </div>
+              <CommandPalette />
               <nav>
                 <A
                   class={styles.navItem}

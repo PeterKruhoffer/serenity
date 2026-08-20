@@ -9,7 +9,7 @@ import { Page } from "../../components/page";
 import { SectionHeader } from "../../components/section-header";
 import { StatusBadge } from "../../components/status-badge";
 import { convexErrorMessage } from "../../lib/convex-error-message";
-import { useWorkspace } from "../workspace/WorkspaceLayout";
+import { useWorkspace } from "../workspace/WorkspaceContext";
 
 const registrationAnswerText = (value: string | boolean | ReadonlyArray<string>) =>
   typeof value === "string"

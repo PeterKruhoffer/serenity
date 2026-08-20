@@ -20,8 +20,9 @@ type Organization = {
 type EventBuilderProps = {
   organization: Organization;
   children: JSX.Element;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onSuccess: (eventId: Id<"events">) => void;
-  onCancel?: () => void;
 };
 
 type DraftSession = {
@@ -43,7 +44,6 @@ type DraftDate = {
 };
 
 type EventFormState = {
-  visible: boolean;
   error: string | null;
   title: string;
   description: string;
@@ -77,7 +77,6 @@ const EventBuilder = (props: EventBuilderProps) => {
   );
   const createEvent = useMutation(api.events.create);
   const [eventForm, setEventForm] = createStore<EventFormState>({
-    visible: false,
     error: null,
     title: "",
     description: "",
@@ -114,6 +113,10 @@ const EventBuilder = (props: EventBuilderProps) => {
     });
     setDraftDates([emptyDate()]);
     signupFields.reset();
+  };
+  const closeEventBuilder = () => {
+    resetEventBuilder();
+    props.onOpenChange(false);
   };
 
   const applySignupTemplate = (templateId: string) => {
@@ -184,7 +187,6 @@ const EventBuilder = (props: EventBuilderProps) => {
         signupFields: signupFields.payload(),
       });
       resetEventBuilder();
-      setEventForm("visible", false);
       props.onSuccess(result.eventId);
     } catch (error) {
       setEventForm("error", convexErrorMessage(error));
@@ -200,14 +202,18 @@ const EventBuilder = (props: EventBuilderProps) => {
           type="button"
           disabled={props.organization.teams.length === 0}
           onClick={() => {
-            setEventForm({ error: null, visible: !eventForm.visible });
+            if (props.open) closeEventBuilder();
+            else {
+              setEventForm("error", null);
+              props.onOpenChange(true);
+            }
           }}
         >
-          {eventForm.visible ? "Close" : "New event"} <span aria-hidden="true">＋</span>
+          {props.open ? "Close" : "New event"} <span aria-hidden="true">＋</span>
         </button>
       </Page.Header>
 
-      <Show when={eventForm.visible && props.organization}>
+      <Show when={props.open && props.organization}>
         {(organization) => (
           <form class={styles.eventForm} onSubmit={handleEventCreate}>
             <div class="form-heading">
@@ -572,15 +578,7 @@ const EventBuilder = (props: EventBuilderProps) => {
                 {createEvent.isLoading() ? "Creating draft…" : "Create draft"}
                 <span aria-hidden="true">→</span>
               </button>
-              <button
-                class="text-button"
-                type="button"
-                onClick={() => {
-                  resetEventBuilder();
-                  setEventForm("visible", false);
-                  props.onCancel?.();
-                }}
-              >
+              <button class="text-button" type="button" onClick={closeEventBuilder}>
                 Cancel
               </button>
               <small>The draft is visible only inside Serenity.</small>
