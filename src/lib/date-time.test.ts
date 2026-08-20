@@ -1,5 +1,24 @@
 import { describe, expect, it } from "vite-plus/test";
-import { localDateTimeToMillis, millisToLocalDateTime } from "./date-time";
+import {
+  localDateTimeToMillis,
+  millisToLocalDateTime,
+  searchTimezones,
+  timezoneTypeaheadOptions,
+} from "./date-time";
+
+describe("timezone search", () => {
+  const options = timezoneTypeaheadOptions();
+
+  it.each([
+    ["cet", "Europe/Paris"],
+    ["pst", "America/Los_Angeles"],
+    ["new york", "America/New_York"],
+  ])("finds %s", (query, expectedTimezone) => {
+    expect(searchTimezones(options, query).map((option) => option.timezone)).toContain(
+      expectedTimezone,
+    );
+  });
+});
 
 describe("event timezone conversion", () => {
   it("interprets a wall-clock value in the event timezone, not the browser timezone", () => {

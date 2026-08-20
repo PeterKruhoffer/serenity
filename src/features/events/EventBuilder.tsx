@@ -6,8 +6,9 @@ import { For, Show, type JSX } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import { FormError } from "../../components/form-error";
 import { Page } from "../../components/page";
+import { TimezoneTypeahead } from "../../components/timezone-typeahead";
 import { convexErrorMessage } from "../../lib/convex-error-message";
-import { localDateTimeToMillis, timezoneOptions } from "../../lib/date-time";
+import { localDateTimeToMillis } from "../../lib/date-time";
 import { SignupFieldBuilder, createSignupFields } from "../signup-fields/SignupFieldBuilder";
 
 type Organization = {
@@ -251,15 +252,11 @@ const EventBuilder = (props: EventBuilderProps) => {
               </label>
               <label>
                 <span>Event timezone</span>
-                <select
+                <TimezoneTypeahead
                   value={eventForm.timezone}
-                  onChange={(event) => setEventForm("timezone", event.currentTarget.value)}
+                  onChange={(timezone) => setEventForm("timezone", timezone)}
                   required
-                >
-                  <For each={timezoneOptions()}>
-                    {(timezone) => <option value={timezone}>{timezone}</option>}
-                  </For>
-                </select>
+                />
               </label>
               <label class="wide-field">
                 <span>Description</span>

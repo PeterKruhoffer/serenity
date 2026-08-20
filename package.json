@@ -21,6 +21,7 @@
     "@convex-dev/workos-authkit": "^0.2.7",
     "@corvu/calendar": "^0.1.2",
     "@corvu/popover": "^0.2.0",
+    "@kobalte/core": "^0.13.13",
     "@solidjs/router": "^1.0.0",
     "@workos-inc/authkit-js": "^0.20.2",
     "convex": "^1.43.0",

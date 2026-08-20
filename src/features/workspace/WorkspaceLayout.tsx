@@ -4,7 +4,6 @@ import type { FunctionReturnType } from "convex/server";
 import { useMutation, useQuery } from "convex-solidjs";
 import {
   Match,
-  For,
   Show,
   Switch,
   createContext,
@@ -15,8 +14,9 @@ import {
 } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import { FormError } from "../../components/form-error";
+import { TimezoneTypeahead } from "../../components/timezone-typeahead";
 import { convexErrorMessage } from "../../lib/convex-error-message";
-import { browserTimezone, timezoneOptions } from "../../lib/date-time";
+import { browserTimezone } from "../../lib/date-time";
 
 type WorkspaceData = FunctionReturnType<typeof api.workspace.list>;
 type Organization = WorkspaceData["organizations"][number];
@@ -119,16 +119,12 @@ export default function WorkspaceLayout(props: { children?: JSX.Element }) {
             </label>
             <label>
               <span>Default event timezone</span>
-              <select
+              <TimezoneTypeahead
                 name="defaultTimezone"
                 value={defaultTimezone()}
-                onChange={(event) => setDefaultTimezone(event.currentTarget.value)}
+                onChange={setDefaultTimezone}
                 required
-              >
-                <For each={timezoneOptions()}>
-                  {(timezone) => <option value={timezone}>{timezone}</option>}
-                </For>
-              </select>
+              />
             </label>
             <Show when={formError()}>
               <FormError>{formError()}</FormError>

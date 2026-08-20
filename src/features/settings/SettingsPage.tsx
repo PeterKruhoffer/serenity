@@ -6,8 +6,8 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { FormError } from "../../components/form-error";
 import { Page } from "../../components/page";
 import { SectionHeader } from "../../components/section-header";
+import { TimezoneTypeahead } from "../../components/timezone-typeahead";
 import { convexErrorMessage } from "../../lib/convex-error-message";
-import { timezoneOptions } from "../../lib/date-time";
 import { useWorkspace } from "../workspace/WorkspaceLayout";
 
 export default function SettingsPage() {
@@ -80,14 +80,7 @@ export default function SettingsPage() {
           <form class={styles.timezoneForm} onSubmit={handleTimezoneUpdate}>
             <label>
               <span>Default timezone</span>
-              <select
-                value={defaultTimezone()}
-                onChange={(event) => setDefaultTimezone(event.currentTarget.value)}
-              >
-                <For each={timezoneOptions()}>
-                  {(timezone) => <option value={timezone}>{timezone}</option>}
-                </For>
-              </select>
+              <TimezoneTypeahead value={defaultTimezone()} onChange={setDefaultTimezone} />
             </label>
             <button
               class="primary-button compact-button"
