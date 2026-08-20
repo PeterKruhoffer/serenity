@@ -2,6 +2,7 @@ import { FunctionImpl, GroupImpl } from "@confect/server";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import { IANAZone } from "luxon";
 import databaseSchema from "./_generated/schema";
 import { DatabaseReader, DatabaseWriter } from "./_generated/services";
 import { requireIdentity } from "./access";
@@ -18,6 +19,14 @@ const normalizeName = (value: string, label: string) => {
     );
   }
   return Effect.succeed(normalized);
+};
+
+const normalizeTimezone = (value: string) => {
+  const timezone = value.trim();
+  if (!IANAZone.isValidZone(timezone)) {
+    return Effect.fail(new InvalidInput({ message: "Choose a valid IANA timezone." }));
+  }
+  return Effect.succeed(timezone);
 };
 
 const toSlug = (value: string) =>
@@ -84,6 +93,7 @@ const list = FunctionImpl.make(databaseSchema, workspace, "list", () =>
           id: organization.value._id,
           name: organization.value.name,
           slug: organization.value.slug,
+          defaultTimezone: organization.value.defaultTimezone,
           role: membership.role,
           teams: teams.map((team) => ({ id: team._id, name: team.name, slug: team.slug })),
         } as const;
@@ -104,13 +114,18 @@ const createOrganization = FunctionImpl.make(
   databaseSchema,
   workspace,
   "createOrganization",
-  ({ organizationName: rawOrganizationName, firstTeamName: rawFirstTeamName }) =>
+  ({
+    organizationName: rawOrganizationName,
+    firstTeamName: rawFirstTeamName,
+    defaultTimezone: rawDefaultTimezone,
+  }) =>
     Effect.gen(function* () {
       const identity = yield* getIdentity;
       const reader = yield* DatabaseReader;
       const writer = yield* DatabaseWriter;
       const organizationName = yield* normalizeName(rawOrganizationName, "Organization name");
       const firstTeamName = yield* normalizeName(rawFirstTeamName, "Team name");
+      const defaultTimezone = yield* normalizeTimezone(rawDefaultTimezone);
       const existingMemberships = yield* reader
         .table("organization_memberships")
         .index(
@@ -141,6 +156,7 @@ const createOrganization = FunctionImpl.make(
       const organizationId = yield* writer.table("organizations").insert({
         name: organizationName,
         slug: organizationSlug,
+        defaultTimezone,
         status: "active",
         createdByIdentity: identity.tokenIdentifier,
         createdAt: now,
@@ -178,6 +194,61 @@ const createOrganization = FunctionImpl.make(
       Effect.catchTags({
         DocumentDecodeError: (error) => Effect.die(error),
         DocumentEncodeError: (error) => Effect.die(error),
+      }),
+    ),
+);
+
+const updateDefaultTimezone = FunctionImpl.make(
+  databaseSchema,
+  workspace,
+  "updateDefaultTimezone",
+  ({ organizationId, defaultTimezone: rawDefaultTimezone }) =>
+    Effect.gen(function* () {
+      const identity = yield* getIdentity;
+      const reader = yield* DatabaseReader;
+      const writer = yield* DatabaseWriter;
+      const membership = yield* reader
+        .table("organization_memberships")
+        .get("by_organizationId_and_identityToken", organizationId, identity.tokenIdentifier)
+        .pipe(
+          Effect.mapError(
+            () => new Forbidden({ message: "You cannot manage settings in this organization." }),
+          ),
+        );
+      if (membership.status !== "active" || membership.role !== "administrator") {
+        return yield* Effect.fail(
+          new Forbidden({
+            message: "Only organization administrators can change the default timezone.",
+          }),
+        );
+      }
+      const organization = yield* reader
+        .table("organizations")
+        .get(organizationId)
+        .pipe(
+          Effect.mapError(() => new Forbidden({ message: "This organization is unavailable." })),
+        );
+      const defaultTimezone = yield* normalizeTimezone(rawDefaultTimezone);
+      const now = Date.now();
+      yield* writer.table("organizations").patch(organizationId, {
+        defaultTimezone,
+        updatedAt: now,
+      });
+      yield* writer.table("audit_entries").insert({
+        organizationId,
+        actorIdentity: identity.tokenIdentifier,
+        action: "organization.default_timezone_updated",
+        entityType: "organization",
+        entityId: organizationId,
+        summary: `Changed the default timezone from ${organization.defaultTimezone} to ${defaultTimezone}`,
+        occurredAt: now,
+      });
+      return { defaultTimezone };
+    }).pipe(
+      Effect.catchTags({
+        DocumentDecodeError: (error) => Effect.die(error),
+        DocumentEncodeError: (error) => Effect.die(error),
+        GetByIdFailure: (error) => Effect.die(error),
       }),
     ),
 );
@@ -250,6 +321,7 @@ const createTeam = FunctionImpl.make(
 export default GroupImpl.make(databaseSchema, workspace).pipe(
   Layer.provide(list),
   Layer.provide(createOrganization),
+  Layer.provide(updateDefaultTimezone),
   Layer.provide(createTeam),
   GroupImpl.finalize,
 );

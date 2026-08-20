@@ -7,6 +7,7 @@ import { FormError } from "../../components/form-error";
 import { Page } from "../../components/page";
 import { SectionHeader } from "../../components/section-header";
 import { convexErrorMessage } from "../../lib/convex-error-message";
+import { timezoneOptions } from "../../lib/date-time";
 import { useWorkspace } from "../workspace/WorkspaceLayout";
 
 export default function SettingsPage() {
@@ -17,8 +18,11 @@ export default function SettingsPage() {
     () => ({ enabled: Boolean(activeOrganization()) }),
   );
   const createTeam = useMutation(api.workspace.createTeam);
+  const updateDefaultTimezone = useMutation(api.workspace.updateDefaultTimezone);
   const [newTeamName, setNewTeamName] = createSignal("");
+  const [defaultTimezone, setDefaultTimezone] = createSignal(activeOrganization().defaultTimezone);
   const [formError, setFormError] = createSignal<string | null>(null);
+  const [timezoneError, setTimezoneError] = createSignal<string | null>(null);
   const [showTeamForm, setShowTeamForm] = createSignal(false);
 
   const handleTeamCreate = async (event: SubmitEvent, organizationId: Id<"organizations">) => {
@@ -33,6 +37,19 @@ export default function SettingsPage() {
     }
   };
 
+  const handleTimezoneUpdate = async (event: SubmitEvent) => {
+    event.preventDefault();
+    setTimezoneError(null);
+    try {
+      await updateDefaultTimezone.mutate({
+        organizationId: activeOrganization().id,
+        defaultTimezone: defaultTimezone(),
+      });
+    } catch (error) {
+      setTimezoneError(convexErrorMessage(error));
+    }
+  };
+
   return (
     <Page.Root labelledBy="settings-page-title">
       <Page.Header variant="page">
@@ -44,6 +61,47 @@ export default function SettingsPage() {
           </Page.Description>
         </Page.Heading>
       </Page.Header>
+      <section class={styles.organizationSection} aria-labelledby="organization-settings-title">
+        <SectionHeader.Root>
+          <SectionHeader.Heading>
+            <SectionHeader.Eyebrow>Organization defaults</SectionHeader.Eyebrow>
+            <SectionHeader.Title id="organization-settings-title">
+              Event timezone
+            </SectionHeader.Title>
+          </SectionHeader.Heading>
+        </SectionHeader.Root>
+        <p class={styles.settingDescription}>
+          New events start in this timezone. Changing it does not alter existing events.
+        </p>
+        <Show
+          when={activeOrganization().role === "administrator"}
+          fallback={<p class={styles.settingValue}>{activeOrganization().defaultTimezone}</p>}
+        >
+          <form class={styles.timezoneForm} onSubmit={handleTimezoneUpdate}>
+            <label>
+              <span>Default timezone</span>
+              <select
+                value={defaultTimezone()}
+                onChange={(event) => setDefaultTimezone(event.currentTarget.value)}
+              >
+                <For each={timezoneOptions()}>
+                  {(timezone) => <option value={timezone}>{timezone}</option>}
+                </For>
+              </select>
+            </label>
+            <button
+              class="primary-button compact-button"
+              type="submit"
+              disabled={updateDefaultTimezone.isLoading()}
+            >
+              {updateDefaultTimezone.isLoading() ? "Saving…" : "Save timezone"}
+            </button>
+          </form>
+        </Show>
+        <Show when={timezoneError()}>
+          <FormError>{timezoneError()}</FormError>
+        </Show>
+      </section>
       <section class={styles.teamsSection} aria-labelledby="teams-title">
         <SectionHeader.Root>
           <SectionHeader.Heading>

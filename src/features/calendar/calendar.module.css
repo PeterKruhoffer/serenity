@@ -1,0 +1,448 @@
+.toolbar,
+.periodControls,
+.filterControls,
+.viewSwitch,
+.datePickerHeading {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar {
+  padding: 24px 0 18px;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.periodControls,
+.filterControls {
+  gap: 8px;
+}
+
+.periodControls > button,
+.jumpButton,
+.viewSwitch button,
+.datePickerHeading button {
+  min-height: 38px;
+  padding: 0 12px;
+  color: #4e5748;
+  background: #f9faf6;
+  border: 1px solid #ccd1c6;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.periodControls > button:not(.todayButton) {
+  width: 38px;
+  padding: 0;
+}
+
+.periodControls h2 {
+  margin: 0 0 0 10px;
+  color: #292e27;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+}
+
+.filterControls select {
+  min-width: 150px;
+  min-height: 38px;
+  padding-inline: 11px;
+  background: #f9faf6;
+  font-size: 12px;
+}
+
+.viewSwitch {
+  padding: 3px;
+  gap: 2px;
+  background: #e6e9e0;
+  border-radius: 10px;
+}
+
+.viewSwitch button {
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+}
+
+.viewSwitch button.isActive {
+  color: #263020;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(39 48 34 / 10%);
+}
+
+.calendarFrame {
+  min-height: 280px;
+  border: 1px solid #d9ddd3;
+  border-radius: 15px;
+  background: rgb(255 255 255 / 42%);
+  overflow: hidden;
+}
+
+.calendarFrame[aria-busy="true"] {
+  opacity: 0.62;
+}
+
+.weekGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.weekDay {
+  min-width: 0;
+  min-height: 360px;
+  padding: 13px 9px;
+}
+
+.weekDay + .weekDay {
+  border-left: 1px solid #e0e3db;
+}
+
+.weekDay > header {
+  padding: 2px 5px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: #7c8278;
+  border-bottom: 1px solid #e4e6df;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.weekDay > header strong {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: #363c33;
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+.weekDay > header.isToday strong,
+.monthDay.isToday .monthDayNumber {
+  color: #f6f8f1;
+  background: #526748;
+}
+
+.dayEvents {
+  padding-top: 9px;
+  display: grid;
+  gap: 6px;
+}
+
+.eventChip {
+  min-width: 0;
+  width: 100%;
+  padding: 8px 8px 8px 9px;
+  display: grid;
+  gap: 3px;
+  color: #3b4237;
+  background: #ecefe8;
+  border: 0;
+  border-left: 3px solid #84917c;
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.eventChip strong,
+.eventChip span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventChip strong {
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.eventChip span {
+  color: #747b70;
+  font-size: 8px;
+}
+
+.eventChip.statusSubmitted {
+  color: #5f4e27;
+  background: #f2ead4;
+  border-left-color: #c49737;
+}
+
+.eventChip.statusPublished {
+  color: #315440;
+  background: #deebe1;
+  border-left-color: #4e8a63;
+}
+
+.eventChip.isCancelled {
+  opacity: 0.68;
+  background: #eeece9;
+  border-left-color: #9a655d;
+  text-decoration: line-through;
+}
+
+.eventChip:focus-visible,
+.moreButton:focus-visible,
+.toolbar button:focus-visible,
+.datePickerPopover button:focus-visible {
+  outline: 3px solid rgb(110 140 86 / 30%);
+  outline-offset: 2px;
+}
+
+.noEvents {
+  padding: 12px 5px;
+  color: #a0a59c;
+  font-size: 9px;
+}
+
+.monthScroller {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.monthGrid {
+  min-width: 700px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(100px, 1fr));
+}
+
+.monthWeekday {
+  padding: 11px 12px;
+  color: #7b8177;
+  border-bottom: 1px solid #dfe2da;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.monthDay {
+  min-width: 0;
+  min-height: 132px;
+  padding: 9px;
+  border-right: 1px solid #e1e4dc;
+  border-bottom: 1px solid #e1e4dc;
+}
+
+.monthDay:nth-child(7n) {
+  border-right: 0;
+}
+
+.monthDayNumber {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  color: #51574e;
+  border-radius: 50%;
+  font-size: 10px;
+}
+
+.monthDay.isOutsideMonth {
+  background: rgb(236 238 231 / 52%);
+}
+
+.monthDay.isOutsideMonth .monthDayNumber,
+.monthDay.isOutsideMonth .eventChip {
+  opacity: 0.55;
+}
+
+.moreButton {
+  padding: 3px 2px;
+  color: #66715f;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.eventPopover,
+.datePickerPopover {
+  z-index: 50;
+  padding: 16px;
+  color: #343a31;
+  background: #fff;
+  border: 1px solid #d8dcd2;
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgb(36 44 31 / 18%);
+}
+
+.eventPopover {
+  width: min(300px, calc(100vw - 24px));
+}
+
+.eventPopover h2,
+.eventPopover p {
+  margin: 0;
+}
+
+.eventPopover h2 {
+  color: #292f27;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.eventPopover > p {
+  margin-top: 7px;
+  color: #697066;
+  font-size: 11px;
+}
+
+.eventPopover dl {
+  margin: 14px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.eventPopover dt {
+  color: #969b92;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.eventPopover dd {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+}
+
+.popoverClose {
+  margin-top: 14px;
+  padding: 0;
+  color: #606a5a;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.datePickerPopover {
+  width: 286px;
+}
+
+.datePickerHeading {
+  justify-content: space-between;
+}
+
+.datePickerHeading h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.datePickerHeading button {
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+}
+
+.datePickerTable {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.datePickerTable th {
+  height: 26px;
+  color: #8b9188;
+  font-size: 8px;
+}
+
+.datePickerTable td {
+  padding: 1px;
+  text-align: center;
+}
+
+.datePickerTable td button {
+  width: 31px;
+  height: 31px;
+  color: #42483f;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.datePickerTable td button:hover {
+  background: #edf0e8;
+}
+
+.datePickerTable td button[data-selected] {
+  color: #fff;
+  background: #536749;
+}
+
+.datePickerTable td button[data-today]:not([data-selected]) {
+  box-shadow: inset 0 0 0 1px #7e9274;
+}
+
+.datePickerTable td button[data-disabled] {
+  color: #bec2ba;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 1050px) {
+  .toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 800px) {
+  .weekGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .weekDay {
+    min-height: 128px;
+    padding: 12px;
+  }
+
+  .weekDay + .weekDay {
+    border-top: 1px solid #e0e3db;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .periodControls,
+  .filterControls {
+    flex-wrap: wrap;
+  }
+
+  .periodControls h2 {
+    width: 100%;
+    margin: 8px 0 0;
+  }
+
+  .filterControls > label,
+  .filterControls select {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}

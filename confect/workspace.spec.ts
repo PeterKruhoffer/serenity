@@ -14,6 +14,7 @@ const OrganizationWorkspace = Schema.Struct({
   id: Id("organizations"),
   name: Schema.String,
   slug: Schema.String,
+  defaultTimezone: Schema.String,
   role: Role,
   teams: Schema.Array(TeamSummary),
 });
@@ -60,12 +61,25 @@ export default GroupSpec.make()
         Schema.Struct({
           organizationName: Schema.String,
           firstTeamName: Schema.String,
+          defaultTimezone: Schema.String,
         }),
       returns: () =>
         Schema.Struct({
           organizationId: Id("organizations"),
           teamId: Id("teams"),
         }),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicMutation({
+      name: "updateDefaultTimezone",
+      args: () =>
+        Schema.Struct({
+          organizationId: Id("organizations"),
+          defaultTimezone: Schema.String,
+        }),
+      returns: () => Schema.Struct({ defaultTimezone: Schema.String }),
       error: () => WorkspaceError,
     }),
   )

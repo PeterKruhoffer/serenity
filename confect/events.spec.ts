@@ -35,6 +35,20 @@ const DateSummary = Schema.Struct({
   sessions: Schema.Array(SessionSummary),
 });
 
+const CalendarOccurrence = Schema.Struct({
+  id: Id("event_dates"),
+  eventId: Id("events"),
+  eventTitle: Schema.String,
+  eventStatus: EventStatus,
+  eventTimezone: Schema.String,
+  teamId: Id("teams"),
+  teamName: Schema.String,
+  startsAt: Schema.Number,
+  endsAt: Schema.Number,
+  occurrenceStatus: Schema.Literal("scheduled", "cancelled"),
+  venueName: Schema.String,
+});
+
 const SignupField = Schema.Struct({
   type: Schema.Literal("text", "textarea", "yes_no", "checkboxes"),
   label: Schema.String,
@@ -85,6 +99,20 @@ export default GroupSpec.make()
       name: "get",
       args: () => Schema.Struct({ eventId: Id("events") }),
       returns: () => EventDetail,
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicQuery({
+      name: "listCalendarOccurrences",
+      args: () =>
+        Schema.Struct({
+          organizationId: Id("organizations"),
+          rangeStart: Schema.Number,
+          rangeEnd: Schema.Number,
+          teamId: Schema.optional(Id("teams")),
+        }),
+      returns: () => Schema.Array(CalendarOccurrence),
       error: () => WorkspaceError,
     }),
   )

@@ -7,10 +7,12 @@ import { createStore, reconcile } from "solid-js/store";
 import { FormError } from "../../components/form-error";
 import { Page } from "../../components/page";
 import { convexErrorMessage } from "../../lib/convex-error-message";
+import { localDateTimeToMillis, timezoneOptions } from "../../lib/date-time";
 import { SignupFieldBuilder, createSignupFields } from "../signup-fields/SignupFieldBuilder";
 
 type Organization = {
   id: Id<"organizations">;
+  defaultTimezone: string;
   teams: readonly { id: Id<"teams">; name: string }[];
 };
 
@@ -45,6 +47,7 @@ type EventFormState = {
   title: string;
   description: string;
   teamId: Id<"teams"> | "";
+  timezone: string;
 };
 
 let draftItemId = 0;
@@ -78,6 +81,7 @@ const EventBuilder = (props: EventBuilderProps) => {
     title: "",
     description: "",
     teamId: "",
+    timezone: props.organization.defaultTimezone,
   });
   const [draftDateStore, setDraftDateStore] = createStore<DraftDate[]>([emptyDate()]);
   const signupFields = createSignupFields();
@@ -101,7 +105,12 @@ const EventBuilder = (props: EventBuilderProps) => {
       ) ?? [];
 
   const resetEventBuilder = () => {
-    setEventForm({ title: "", description: "", teamId: "" });
+    setEventForm({
+      title: "",
+      description: "",
+      teamId: "",
+      timezone: props.organization.defaultTimezone,
+    });
     setDraftDates([emptyDate()]);
     signupFields.reset();
   };
@@ -117,10 +126,10 @@ const EventBuilder = (props: EventBuilderProps) => {
     const date = draftDates().find((candidate) => candidate.id === dateId);
     const session = date?.sessionDraft;
     if (!date || !session) return;
-    const startsAt = new Date(session.startsAt).getTime();
-    const endsAt = new Date(session.endsAt).getTime();
-    const dateStartsAt = new Date(date.startsAt).getTime();
-    const dateEndsAt = new Date(date.endsAt).getTime();
+    const startsAt = localDateTimeToMillis(session.startsAt, eventForm.timezone);
+    const endsAt = localDateTimeToMillis(session.endsAt, eventForm.timezone);
+    const dateStartsAt = localDateTimeToMillis(date.startsAt, eventForm.timezone);
+    const dateEndsAt = localDateTimeToMillis(date.endsAt, eventForm.timezone);
     if (session.title.trim().length < 2) {
       setEventForm("error", "Session title must be at least 2 characters.");
       return;
@@ -147,8 +156,6 @@ const EventBuilder = (props: EventBuilderProps) => {
     }));
   };
 
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-
   const handleEventCreate = async (event: SubmitEvent) => {
     event.preventDefault();
     const organization = props.organization;
@@ -161,15 +168,15 @@ const EventBuilder = (props: EventBuilderProps) => {
         teamId,
         title: eventForm.title,
         description: eventForm.description,
-        timezone,
+        timezone: eventForm.timezone,
         dates: draftDates().map((date) => ({
-          startsAt: new Date(date.startsAt).getTime(),
-          endsAt: new Date(date.endsAt).getTime(),
+          startsAt: localDateTimeToMillis(date.startsAt, eventForm.timezone),
+          endsAt: localDateTimeToMillis(date.endsAt, eventForm.timezone),
           venueName: date.venueName,
           sessions: date.sessions.map((session) => ({
             title: session.title,
-            startsAt: new Date(session.startsAt).getTime(),
-            endsAt: new Date(session.endsAt).getTime(),
+            startsAt: localDateTimeToMillis(session.startsAt, eventForm.timezone),
+            endsAt: localDateTimeToMillis(session.endsAt, eventForm.timezone),
             roomName: session.roomName,
           })),
         })),
@@ -208,7 +215,7 @@ const EventBuilder = (props: EventBuilderProps) => {
                 <h2>Create an event</h2>
                 <p>Build the event and its schedule before creating the draft.</p>
               </div>
-              <span>{timezone}</span>
+              <span>{eventForm.timezone}</span>
             </div>
             <div class={styles.builderSectionHeading}>
               <span>01</span>
@@ -239,6 +246,18 @@ const EventBuilder = (props: EventBuilderProps) => {
                 >
                   <For each={organization().teams}>
                     {(team) => <option value={team.id}>{team.name}</option>}
+                  </For>
+                </select>
+              </label>
+              <label>
+                <span>Event timezone</span>
+                <select
+                  value={eventForm.timezone}
+                  onChange={(event) => setEventForm("timezone", event.currentTarget.value)}
+                  required
+                >
+                  <For each={timezoneOptions()}>
+                    {(timezone) => <option value={timezone}>{timezone}</option>}
                   </For>
                 </select>
               </label>

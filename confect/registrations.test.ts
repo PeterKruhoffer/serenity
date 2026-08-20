@@ -18,6 +18,7 @@ const publishedEvent = async (autoAccept: boolean) => {
   const workspace = await manager.mutation(api.workspace.createOrganization, {
     organizationName: autoAccept ? "Auto Events" : "Manual Events",
     firstTeamName: "Programs",
+    defaultTimezone: "UTC",
   });
   await t.run(async (ctx) => {
     await ctx.db.insert("organization_memberships", {

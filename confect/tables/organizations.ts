@@ -5,6 +5,7 @@ export default Table.make(() =>
   Schema.Struct({
     name: Schema.String,
     slug: Schema.String,
+    defaultTimezone: Schema.String,
     status: Schema.Literal("active", "archived"),
     createdByIdentity: Schema.String,
     createdAt: Schema.Number,

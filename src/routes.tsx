@@ -4,6 +4,7 @@ import App from "./App";
 import WorkspaceLayout from "./features/workspace/WorkspaceLayout";
 
 const EventsPage = lazy(() => import("./features/events/EventsPage"));
+const CalendarPage = lazy(() => import("./features/calendar/CalendarPage"));
 const TemplatesPage = lazy(() => import("./features/templates/TemplatesPage"));
 const ApprovalsPage = lazy(() => import("./features/approvals/ApprovalsPage"));
 const ParticipantsPage = lazy(() => import("./features/participants/ParticipantsPage"));
@@ -16,6 +17,7 @@ export const SerenityRoutes = () => (
     <Route path="/" component={App}>
       <Route component={WorkspaceLayout}>
         <Route path={["/", "/events", "/callback"]} component={EventsPage} />
+        <Route path="/calendar" component={CalendarPage} />
         <Route path="/templates" component={TemplatesPage} />
         <Route path="/approvals" component={ApprovalsPage} />
         <Route path="/participants" component={ParticipantsPage} />

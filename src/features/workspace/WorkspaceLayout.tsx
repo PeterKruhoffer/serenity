@@ -4,6 +4,7 @@ import type { FunctionReturnType } from "convex/server";
 import { useMutation, useQuery } from "convex-solidjs";
 import {
   Match,
+  For,
   Show,
   Switch,
   createContext,
@@ -15,6 +16,7 @@ import {
 import { api } from "../../../convex/_generated/api";
 import { FormError } from "../../components/form-error";
 import { convexErrorMessage } from "../../lib/convex-error-message";
+import { browserTimezone, timezoneOptions } from "../../lib/date-time";
 
 type WorkspaceData = FunctionReturnType<typeof api.workspace.list>;
 type Organization = WorkspaceData["organizations"][number];
@@ -43,6 +45,7 @@ export default function WorkspaceLayout(props: { children?: JSX.Element }) {
   const createOrganization = useMutation(api.workspace.createOrganization);
   const [organizationName, setOrganizationName] = createSignal("");
   const [firstTeamName, setFirstTeamName] = createSignal("");
+  const [defaultTimezone, setDefaultTimezone] = createSignal(browserTimezone());
   const [formError, setFormError] = createSignal<string | null>(null);
   const workspace = () => workspaceQuery.data()!;
   const activeOrganization = () => workspace().organizations[0]!;
@@ -58,6 +61,7 @@ export default function WorkspaceLayout(props: { children?: JSX.Element }) {
       await createOrganization.mutate({
         organizationName: organizationName(),
         firstTeamName: firstTeamName(),
+        defaultTimezone: defaultTimezone(),
       });
     } catch (error) {
       setFormError(convexErrorMessage(error));
@@ -113,6 +117,19 @@ export default function WorkspaceLayout(props: { children?: JSX.Element }) {
                 required
               />
             </label>
+            <label>
+              <span>Default event timezone</span>
+              <select
+                name="defaultTimezone"
+                value={defaultTimezone()}
+                onChange={(event) => setDefaultTimezone(event.currentTarget.value)}
+                required
+              >
+                <For each={timezoneOptions()}>
+                  {(timezone) => <option value={timezone}>{timezone}</option>}
+                </For>
+              </select>
+            </label>
             <Show when={formError()}>
               <FormError>{formError()}</FormError>
             </Show>
@@ -140,6 +157,14 @@ export default function WorkspaceLayout(props: { children?: JSX.Element }) {
                   aria-current={isActive("events") ? "page" : undefined}
                 >
                   <span aria-hidden="true">◫</span> Events
+                </A>
+                <A
+                  class={styles.navItem}
+                  classList={{ [styles.isActive]: isActive("calendar") }}
+                  href="/calendar"
+                  aria-current={isActive("calendar") ? "page" : undefined}
+                >
+                  <span aria-hidden="true">□</span> Calendar
                 </A>
                 <A
                   class={styles.navItem}

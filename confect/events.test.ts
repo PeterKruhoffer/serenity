@@ -18,6 +18,7 @@ const setup = async () => {
   const workspace = await manager.mutation(api.workspace.createOrganization, {
     organizationName: "Learning Guild",
     firstTeamName: "Academy",
+    defaultTimezone: "Europe/Copenhagen",
   });
   return { t, manager, workspace };
 };
@@ -103,6 +104,163 @@ describe("recurring event composition", () => {
         })),
       }),
     ).rejects.toMatchObject({ data: { _tag: "InvalidInput" } });
+  });
+
+  it("keeps an event's timezone when the organization default changes", async () => {
+    const { manager, workspace } = await setup();
+    const created = await manager.mutation(api.events.create, {
+      organizationId: workspace.organizationId,
+      teamId: workspace.teamId,
+      title: "Timezone-specific Event",
+      description: "",
+      timezone: "America/New_York",
+      dates: [
+        {
+          startsAt: dayOneStart,
+          endsAt: dayOneEnd,
+          venueName: "Main Hall",
+          sessions: [],
+        },
+      ],
+    });
+
+    await manager.mutation(api.workspace.updateDefaultTimezone, {
+      organizationId: workspace.organizationId,
+      defaultTimezone: "Asia/Tokyo",
+    });
+    expect((await manager.query(api.events.get, { eventId: created.eventId })).event.timezone).toBe(
+      "America/New_York",
+    );
+  });
+
+  it("lists authorized overlapping calendar occurrences and applies team filters", async () => {
+    const { t, manager, workspace } = await setup();
+    const secondTeam = await manager.mutation(api.workspace.createTeam, {
+      organizationId: workspace.organizationId,
+      name: "Community",
+    });
+    const rangeStart = Date.UTC(2026, 8, 10);
+    const rangeEnd = Date.UTC(2026, 8, 17);
+    const createCalendarEvent = (
+      title: string,
+      teamId: typeof workspace.teamId,
+      startsAt: number,
+      endsAt: number,
+    ) =>
+      manager.mutation(api.events.create, {
+        organizationId: workspace.organizationId,
+        teamId,
+        title,
+        description: "",
+        timezone: "UTC",
+        dates: [{ startsAt, endsAt, venueName: "Main Hall", sessions: [] }],
+      });
+    const overlapping = await createCalendarEvent(
+      "Overlapping draft",
+      workspace.teamId,
+      rangeStart - 3_600_000,
+      rangeStart + 3_600_000,
+    );
+    const submitted = await createCalendarEvent(
+      "Submitted event",
+      workspace.teamId,
+      rangeStart + 86_400_000,
+      rangeStart + 90_000_000,
+    );
+    const published = await createCalendarEvent(
+      "Published event",
+      secondTeam.teamId,
+      rangeStart + 2 * 86_400_000,
+      rangeStart + 2 * 86_400_000 + 3_600_000,
+    );
+    const archived = await createCalendarEvent(
+      "Archived event",
+      workspace.teamId,
+      rangeStart + 3 * 86_400_000,
+      rangeStart + 3 * 86_400_000 + 3_600_000,
+    );
+    await createCalendarEvent(
+      "Ends at boundary",
+      workspace.teamId,
+      rangeStart - 3_600_000,
+      rangeStart,
+    );
+    await createCalendarEvent(
+      "Starts at boundary",
+      workspace.teamId,
+      rangeEnd,
+      rangeEnd + 3_600_000,
+    );
+    await t.run(async (ctx) => {
+      await ctx.db.patch(submitted.eventId, { status: "submitted" });
+      await ctx.db.patch(published.eventId, { status: "published" });
+      await ctx.db.patch(archived.eventId, { status: "archived" });
+      const overlappingDate = await ctx.db
+        .query("event_dates")
+        .withIndex("by_eventId_and_sortOrder", (q) => q.eq("eventId", overlapping.eventId))
+        .unique();
+      if (overlappingDate) await ctx.db.patch(overlappingDate._id, { status: "cancelled" });
+    });
+
+    const all = await manager.query(api.events.listCalendarOccurrences, {
+      organizationId: workspace.organizationId,
+      rangeStart,
+      rangeEnd,
+    });
+    expect(all.map((occurrence) => occurrence.eventTitle)).toEqual([
+      "Overlapping draft",
+      "Submitted event",
+      "Published event",
+    ]);
+    expect(all[0]).toMatchObject({
+      eventStatus: "draft",
+      occurrenceStatus: "cancelled",
+      teamName: "Academy",
+    });
+
+    const communityOnly = await manager.query(api.events.listCalendarOccurrences, {
+      organizationId: workspace.organizationId,
+      rangeStart,
+      rangeEnd,
+      teamId: secondTeam.teamId,
+    });
+    expect(communityOnly.map((occurrence) => occurrence.eventTitle)).toEqual(["Published event"]);
+
+    const eventManagerToken = "issuer|calendar-manager";
+    await t.run(async (ctx) => {
+      await ctx.db.insert("organization_memberships", {
+        organizationId: workspace.organizationId,
+        identityToken: eventManagerToken,
+        displayName: "Calendar Manager",
+        role: "event_manager",
+        status: "active",
+        joinedAt: Date.now(),
+      });
+      await ctx.db.insert("team_memberships", {
+        organizationId: workspace.organizationId,
+        teamId: workspace.teamId,
+        identityToken: eventManagerToken,
+        assignedAt: Date.now(),
+      });
+    });
+    const eventManager = t.withIdentity({ tokenIdentifier: eventManagerToken });
+    expect(
+      (
+        await eventManager.query(api.events.listCalendarOccurrences, {
+          organizationId: workspace.organizationId,
+          rangeStart,
+          rangeEnd,
+        })
+      ).map((occurrence) => occurrence.eventTitle),
+    ).toEqual(["Overlapping draft", "Submitted event"]);
+    await expect(
+      eventManager.query(api.events.listCalendarOccurrences, {
+        organizationId: workspace.organizationId,
+        rangeStart,
+        rangeEnd,
+        teamId: secondTeam.teamId,
+      }),
+    ).rejects.toMatchObject({ data: { _tag: "Forbidden" } });
   });
 
   it("keeps event details private from unrelated identities", async () => {

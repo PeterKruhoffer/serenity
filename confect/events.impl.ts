@@ -3,6 +3,7 @@ import type { GenericId } from "convex/values";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import { IANAZone } from "luxon";
 import databaseSchema from "./_generated/schema";
 import { DatabaseReader, DatabaseWriter } from "./_generated/services";
 import { canAccessTeam, membershipFor, requireEventAccess, requireIdentity } from "./access";
@@ -214,6 +215,109 @@ const get = FunctionImpl.make(databaseSchema, events, "get", ({ eventId }) =>
       })),
     };
   }).pipe(Effect.catchTag("DocumentDecodeError", (error) => Effect.die(error))),
+);
+
+const listCalendarOccurrences = FunctionImpl.make(
+  databaseSchema,
+  events,
+  "listCalendarOccurrences",
+  ({ organizationId, rangeStart, rangeEnd, teamId }) =>
+    Effect.gen(function* () {
+      const identity = yield* getIdentity;
+      const reader = yield* DatabaseReader;
+      const membership = yield* membershipFor(organizationId, identity.tokenIdentifier);
+      if (
+        !Number.isFinite(rangeStart) ||
+        !Number.isFinite(rangeEnd) ||
+        rangeEnd <= rangeStart ||
+        rangeEnd - rangeStart > 70 * 86_400_000
+      ) {
+        return yield* Effect.fail(
+          new InvalidInput({ message: "Choose a valid calendar range of 70 days or fewer." }),
+        );
+      }
+
+      if (teamId !== undefined) {
+        const team = yield* reader
+          .table("teams")
+          .get(teamId)
+          .pipe(
+            Effect.mapError(() => new Forbidden({ message: "The selected team is unavailable." })),
+          );
+        const allowed = yield* canAccessTeam(
+          membership.role,
+          organizationId,
+          teamId,
+          identity.tokenIdentifier,
+        );
+        if (!allowed || team.organizationId !== organizationId || team.status !== "active") {
+          return yield* Effect.fail(
+            new Forbidden({ message: "The selected team is unavailable." }),
+          );
+        }
+      }
+
+      const assignments =
+        membership.role === "event_manager" && teamId === undefined
+          ? yield* reader
+              .table("team_memberships")
+              .index("by_organizationId_and_identityToken", (q) =>
+                q
+                  .eq("organizationId", organizationId)
+                  .eq("identityToken", identity.tokenIdentifier),
+              )
+              .take(100)
+          : [];
+      const assignedTeamIds = new Set(assignments.map((assignment) => assignment.teamId));
+      const candidateDates = yield* reader
+        .table("event_dates")
+        .index(
+          "by_organizationId_and_startsAt",
+          (q) => q.eq("organizationId", organizationId).lt("startsAt", rangeEnd),
+          "desc",
+        )
+        .take(1_000);
+      const overlappingDates = candidateDates.filter((date) => date.endsAt > rangeStart);
+
+      const occurrences = yield* Effect.forEach(overlappingDates, (date) =>
+        Effect.gen(function* () {
+          const event = yield* reader.table("events").get(date.eventId).pipe(Effect.option);
+          if (Option.isNone(event) || event.value.status === "archived") return null;
+          if (teamId !== undefined && event.value.teamId !== teamId) return null;
+          if (
+            membership.role === "event_manager" &&
+            teamId === undefined &&
+            !assignedTeamIds.has(event.value.teamId)
+          ) {
+            return null;
+          }
+          const team = yield* reader.table("teams").get(event.value.teamId).pipe(Effect.option);
+          if (
+            Option.isNone(team) ||
+            team.value.organizationId !== organizationId ||
+            team.value.status !== "active"
+          ) {
+            return null;
+          }
+          return {
+            id: date._id,
+            eventId: event.value._id,
+            eventTitle: event.value.title,
+            eventStatus: event.value.status,
+            eventTimezone: event.value.timezone,
+            teamId: event.value.teamId,
+            teamName: team.value.name,
+            startsAt: date.startsAt,
+            endsAt: date.endsAt,
+            occurrenceStatus: date.status,
+            venueName: date.venueName,
+          } as const;
+        }),
+      );
+      return occurrences
+        .filter((occurrence) => occurrence !== null)
+        .sort((left, right) => left.startsAt - right.startsAt);
+    }).pipe(Effect.catchTag("DocumentDecodeError", (error) => Effect.die(error))),
 );
 
 const listSignupTemplates = FunctionImpl.make(
@@ -563,6 +667,9 @@ const create = FunctionImpl.make(
 
       const title = yield* normalizeText(rawTitle, "Event title", 2, 120);
       const normalizedTimezone = yield* normalizeText(timezone, "Timezone", 2, 80);
+      if (!IANAZone.isValidZone(normalizedTimezone)) {
+        return yield* Effect.fail(new InvalidInput({ message: "Choose a valid IANA timezone." }));
+      }
       if (description.length > 5_000) {
         return yield* Effect.fail(
           new InvalidInput({ message: "Description cannot exceed 5,000 characters." }),
@@ -866,6 +973,7 @@ const addSession = FunctionImpl.make(
 export default GroupImpl.make(databaseSchema, events).pipe(
   Layer.provide(list),
   Layer.provide(get),
+  Layer.provide(listCalendarOccurrences),
   Layer.provide(listSignupTemplates),
   Layer.provide(saveSignupTemplate),
   Layer.provide(updateSignupTemplate),

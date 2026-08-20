@@ -47,6 +47,7 @@ beforeEach(() => {
             {
               id: "organization-id",
               name: "Serenity Test",
+              defaultTimezone: "Europe/Copenhagen",
               role: "administrator",
               teams: [{ id: "team-id", name: "Events team" }],
             },
@@ -56,6 +57,22 @@ beforeEach(() => {
       case "publication:listPending":
       case "registrations:list":
         return queryResult([]);
+      case "events:listCalendarOccurrences":
+        return queryResult([
+          {
+            id: "occurrence-id",
+            eventId: "event-id",
+            eventTitle: "Leadership essentials",
+            eventStatus: "draft",
+            eventTimezone: "Europe/Copenhagen",
+            teamId: "team-id",
+            teamName: "Events team",
+            startsAt: Date.UTC(2026, 7, 19, 7),
+            endsAt: Date.UTC(2026, 7, 19, 15),
+            occurrenceStatus: "cancelled",
+            venueName: "Harbor House",
+          },
+        ]);
       case "events:listSignupTemplates":
         return queryResult([
           {
@@ -257,6 +274,54 @@ describe("signed-in workspace navigation", () => {
     expect(host.textContent).toContain("Create template");
   });
 
+  it("keeps calendar view, date, and team filters in the URL", async () => {
+    window.history.replaceState({}, "", "/calendar?view=month&date=2026-08-19");
+    const host = document.createElement("div");
+    document.body.append(host);
+    disposers.push(
+      render(
+        () => (
+          <Router>
+            <SerenityRoutes />
+          </Router>
+        ),
+        host,
+      ),
+    );
+
+    await vi.waitFor(() => expect(host.querySelector("h1")?.textContent).toBe("Calendar"));
+    expect(host.textContent).toContain("August 2026");
+    expect(host.textContent).toContain("Leadership essentials");
+    expect(host.textContent).toContain("Events team · Draft · Cancelled");
+
+    host
+      .querySelector<HTMLButtonElement>('[data-corvu-popover-trigger][class*="eventChip"]')
+      ?.click();
+    await vi.waitFor(() => expect(host.textContent).toContain("Harbor House"));
+    expect(host.textContent).toContain("Europe/Copenhagen");
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent === "Close")
+      ?.click();
+
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent === "Jump to date")
+      ?.click();
+    await vi.waitFor(() => expect(host.querySelector("[data-corvu-calendar-table]")).toBeTruthy());
+
+    const teamFilter = host.querySelector<HTMLSelectElement>('select[aria-label="Filter by team"]');
+    expect(teamFilter).toBeTruthy();
+    teamFilter!.value = "team-id";
+    teamFilter!.dispatchEvent(new Event("change", { bubbles: true }));
+    await vi.waitFor(() =>
+      expect(new URLSearchParams(window.location.search).get("team")).toBe("team-id"),
+    );
+
+    host.querySelector<HTMLButtonElement>('button[aria-label="Previous month"]')?.click();
+    await vi.waitFor(() =>
+      expect(new URLSearchParams(window.location.search).get("date")).toBe("2026-07-01"),
+    );
+  });
+
   it("renders each page when its sidebar link is clicked", async () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");
@@ -275,6 +340,7 @@ describe("signed-in workspace navigation", () => {
     await vi.waitFor(() => expect(host.querySelector("h1")?.textContent).toContain("Ada"));
 
     for (const [linkName, pathname, heading] of [
+      ["Calendar", "/calendar", "Calendar"],
       ["Templates", "/templates", "Templates"],
       ["Approvals", "/approvals", "Approvals"],
       ["Participants", "/participants", "Participants"],

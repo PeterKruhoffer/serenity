@@ -24,6 +24,7 @@ describe("workspace boundaries", () => {
     const created = await administrator.mutation(api.workspace.createOrganization, {
       organizationName: "Northstar Learning",
       firstTeamName: "Programs",
+      defaultTimezone: "Europe/Copenhagen",
     });
     await administrator.mutation(api.workspace.createTeam, {
       organizationId: created.organizationId,
@@ -34,12 +35,34 @@ describe("workspace boundaries", () => {
     expect(workspace.organizations[0]).toMatchObject({
       name: "Northstar Learning",
       slug: "northstar-learning",
+      defaultTimezone: "Europe/Copenhagen",
       role: "administrator",
     });
     expect(workspace.organizations[0]?.teams.map((team) => team.name)).toEqual([
       "Programs",
       "Partnerships",
     ]);
+
+    await administrator.mutation(api.workspace.updateDefaultTimezone, {
+      organizationId: created.organizationId,
+      defaultTimezone: "America/New_York",
+    });
+    expect((await administrator.query(api.workspace.list, {})).organizations[0]).toMatchObject({
+      defaultTimezone: "America/New_York",
+    });
+  });
+
+  it("rejects invalid organization timezones", async () => {
+    const t = convexTest(schema, modules);
+    const administrator = t.withIdentity({ tokenIdentifier: "issuer|administrator" });
+
+    await expect(
+      administrator.mutation(api.workspace.createOrganization, {
+        organizationName: "Timezone Test",
+        firstTeamName: "Events",
+        defaultTimezone: "Europe/Not_A_Real_Place",
+      }),
+    ).rejects.toMatchObject({ data: { _tag: "InvalidInput" } });
   });
 
   it("does not allow an unrelated identity to create a team", async () => {
@@ -49,6 +72,7 @@ describe("workspace boundaries", () => {
     const created = await administrator.mutation(api.workspace.createOrganization, {
       organizationName: "Serenity Events",
       firstTeamName: "Events",
+      defaultTimezone: "UTC",
     });
 
     await expect(

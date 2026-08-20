@@ -14,4 +14,6 @@ export default Table.make(() =>
     createdAt: Schema.Number,
     updatedAt: Schema.Number,
   }),
-).index("by_eventId_and_sortOrder", ["eventId", "sortOrder"]);
+)
+  .index("by_eventId_and_sortOrder", ["eventId", "sortOrder"])
+  .index("by_organizationId_and_startsAt", ["organizationId", "startsAt"]);

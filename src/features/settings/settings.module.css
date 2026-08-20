@@ -3,12 +3,46 @@
   gap: 8px;
 }
 
-.teamsSection {
+.organizationSection {
   padding-top: 52px;
 }
 
 .teamsSection {
   padding-top: 52px;
+}
+
+.settingDescription {
+  max-width: 620px;
+  margin: 16px 0 0;
+  color: #747970;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.settingValue {
+  margin: 14px 0 0;
+  color: #353a32;
+  font-weight: 650;
+}
+
+.timezoneForm {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: minmax(240px, 380px) auto;
+  align-items: end;
+  justify-content: start;
+  gap: 10px;
+}
+
+.timezoneForm label {
+  display: grid;
+  gap: 8px;
+}
+
+.timezoneForm label > span {
+  color: #656b62;
+  font-size: 11px;
+  font-weight: 650;
 }
 
 .inlineForm {
@@ -103,7 +137,8 @@
 }
 
 @media (max-width: 600px) {
-  .inlineForm {
+  .inlineForm,
+  .timezoneForm {
     grid-template-columns: 1fr;
   }
 }

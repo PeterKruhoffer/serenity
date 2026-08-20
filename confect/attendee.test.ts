@@ -30,6 +30,7 @@ const publishedEvent = async (signupFields: SignupField[] = []) => {
   const workspace = await manager.mutation(api.workspace.createOrganization, {
     organizationName: "Open Table",
     firstTeamName: "Community",
+    defaultTimezone: "UTC",
   });
   await t.run(async (ctx) => {
     await ctx.db.insert("organization_memberships", {

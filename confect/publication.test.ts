@@ -21,6 +21,7 @@ const setupSubmission = async (
   const workspace = await author.mutation(api.workspace.createOrganization, {
     organizationName: "Publication Lab",
     firstTeamName: "Programs",
+    defaultTimezone: "UTC",
   });
   await t.run(async (ctx) => {
     await ctx.db.insert("organization_memberships", {

@@ -13,6 +13,7 @@ import { Page } from "../../components/page";
 import { SectionHeader } from "../../components/section-header";
 import { StatusBadge } from "../../components/status-badge";
 import { convexErrorMessage } from "../../lib/convex-error-message";
+import { localDateTimeToMillis } from "../../lib/date-time";
 import EventBuilder from "./EventBuilder";
 
 type OrganizationRole = "administrator" | "super_user" | "event_manager";
@@ -65,7 +66,7 @@ const EventsPage = () => {
     () => ({ enabled: editor.selectedEventId !== null }),
   );
 
-  const formatDate = (timestamp: number) =>
+  const formatDate = (timestamp: number, timezone: string) =>
     new Intl.DateTimeFormat(undefined, {
       weekday: "short",
       day: "numeric",
@@ -73,7 +74,11 @@ const EventsPage = () => {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: timezone,
     }).format(timestamp);
+
+  const selectedTimezone = () =>
+    eventDetail.data()?.event.timezone ?? activeOrganization()?.defaultTimezone ?? "UTC";
 
   const handleDateCreate = async (event: SubmitEvent) => {
     event.preventDefault();
@@ -84,8 +89,8 @@ const EventsPage = () => {
       await addEventDate.mutate({
         eventId,
         date: {
-          startsAt: new Date(editor.newDate.startsAt).getTime(),
-          endsAt: new Date(editor.newDate.endsAt).getTime(),
+          startsAt: localDateTimeToMillis(editor.newDate.startsAt, selectedTimezone()),
+          endsAt: localDateTimeToMillis(editor.newDate.endsAt, selectedTimezone()),
           venueName: editor.newDate.venueName,
         },
       });
@@ -104,8 +109,8 @@ const EventsPage = () => {
       await addSession.mutate({
         eventDateId,
         title: editor.session.title,
-        startsAt: new Date(editor.session.startsAt).getTime(),
-        endsAt: new Date(editor.session.endsAt).getTime(),
+        startsAt: localDateTimeToMillis(editor.session.startsAt, selectedTimezone()),
+        endsAt: localDateTimeToMillis(editor.session.endsAt, selectedTimezone()),
         roomName: editor.session.roomName,
       });
       setEditor("session", { title: "", startsAt: "", endsAt: "", roomName: "" });
@@ -319,9 +324,10 @@ const EventsPage = () => {
                         <div class={styles.dateContent}>
                           <div class={styles.dateHeading}>
                             <div>
-                              <h3>{formatDate(date.startsAt)}</h3>
+                              <h3>{formatDate(date.startsAt, detail().event.timezone)}</h3>
                               <p>
-                                {date.venueName} · ends {formatDate(date.endsAt)}
+                                {date.venueName} · ends{" "}
+                                {formatDate(date.endsAt, detail().event.timezone)}
                               </p>
                             </div>
                             <Show when={detail().event.status === "draft"}>
