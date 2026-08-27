@@ -8,6 +8,12 @@ export type Command = {
   keywords: readonly string[];
   href: string;
   icon: string;
+  shortcut?: string;
+};
+
+export type CommandGroup = {
+  label: string;
+  items: Command[];
 };
 
 const kindPriority: Record<CommandKind, number> = {

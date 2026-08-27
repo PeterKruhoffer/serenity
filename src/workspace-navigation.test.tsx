@@ -171,6 +171,54 @@ describe("signed-in workspace navigation", () => {
     await vi.waitFor(() => expect(host.textContent).toContain("Create an event"));
   });
 
+  it("supports palette accelerators and global key sequences without intercepting typing", async () => {
+    window.history.replaceState({}, "", "/events");
+    const host = document.createElement("div");
+    document.body.append(host);
+    disposers.push(
+      render(
+        () => (
+          <Router>
+            <SerenityRoutes />
+          </Router>
+        ),
+        host,
+      ),
+    );
+
+    await vi.waitFor(() => expect(host.textContent).toContain("Search"));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
+    await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeTruthy());
+
+    const input = document.querySelector<HTMLInputElement>('[role="combobox"]')!;
+    input.value = "calendar";
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await vi.waitFor(() => expect(document.querySelectorAll('[role="option"]')).toHaveLength(2));
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Alt" }));
+    expect(document.body.textContent).toContain("Alt+1");
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "1", code: "Digit1", altKey: true }));
+    await vi.waitFor(() => expect(window.location.pathname).toBe("/calendar"));
+
+    const pageInput = document.createElement("input");
+    document.body.append(pageInput);
+    pageInput.focus();
+    pageInput.dispatchEvent(new KeyboardEvent("keydown", { key: "g", bubbles: true }));
+    pageInput.dispatchEvent(new KeyboardEvent("keydown", { key: "e", bubbles: true }));
+    expect(window.location.pathname).toBe("/calendar");
+
+    pageInput.blur();
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "g" }));
+    expect(document.querySelector('[role="status"]')?.textContent).toContain("Events");
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "e" }));
+    await vi.waitFor(() => expect(window.location.pathname).toBe("/events"));
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    await vi.waitFor(() => expect(document.body.textContent).toContain("Keyboard shortcuts"));
+    expect(document.body.textContent).toContain("g p");
+    expect(document.body.textContent).toContain("c e");
+  });
+
   it("builds sections and drag-reorders custom sign-up fields", async () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");

@@ -199,6 +199,19 @@
   font-size: 12px;
 }
 
+.accelerator {
+  margin-left: auto;
+  min-width: 30px;
+  padding: 3px 6px;
+  color: #4f6048;
+  background: #f5f7f1;
+  border: 1px solid #d5dccf;
+  border-radius: 6px;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  text-align: center;
+}
+
 .noResult {
   padding: 52px 20px;
   color: #7d8379;
@@ -219,6 +232,105 @@
 
 .footer span:last-child {
   margin-left: auto;
+}
+
+.helpContent {
+  width: min(460px, calc(100vw - 32px));
+}
+
+.helpTitle {
+  padding: 24px 24px 0;
+  display: block;
+  color: #30362d;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.helpDescription {
+  margin: 5px 0 0;
+  padding: 0 24px 20px;
+  color: #70776c;
+  font-size: 12px;
+}
+
+.shortcutGroups {
+  max-height: min(500px, calc(100vh - 210px));
+  overflow-y: auto;
+  padding: 0 16px 16px;
+  display: grid;
+  gap: 18px;
+}
+
+.shortcutGroups h2 {
+  margin: 0;
+  padding: 8px;
+  color: #92978e;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.shortcutRow {
+  min-height: 38px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  color: #3e463a;
+  border-top: 1px solid #e7e9e2;
+  font-size: 12px;
+}
+
+.shortcutRow kbd,
+.helpFooter kbd,
+.sequenceHint kbd {
+  padding: 3px 7px;
+  color: #586451;
+  background: #eff2eb;
+  border: 1px solid #d8ddd2;
+  border-radius: 6px;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+}
+
+.shortcutRow kbd {
+  margin-left: auto;
+}
+
+.helpFooter {
+  min-height: 44px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #747b70;
+  border-top: 1px solid #e0e3da;
+  font-size: 10px;
+}
+
+.sequenceHint {
+  position: fixed;
+  z-index: 90;
+  right: 20px;
+  bottom: 20px;
+  max-width: calc(100vw - 40px);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #586051;
+  background: rgb(251 252 248 / 96%);
+  border: 1px solid #d9ddd3;
+  border-radius: 10px;
+  box-shadow: 0 12px 38px rgb(23 29 20 / 16%);
+  font-size: 10px;
+}
+
+.sequenceHint > kbd {
+  color: #f8faf5;
+  background: #526049;
+  border-color: #526049;
 }
 
 @media (max-width: 600px) {
