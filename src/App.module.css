@@ -6,7 +6,7 @@
 
 .appHeader,
 .appFooter {
-  width: min(1320px, calc(100% - 48px));
+  width: min(1440px, calc(100% - 36px));
   margin: 0 auto;
 }
 
@@ -16,14 +16,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  border-bottom: 1px solid #dfe1d8;
+  border-bottom: 1px solid var(--ritual-line);
 }
 
 .wordmark {
   display: inline-flex;
   align-items: center;
   gap: 11px;
-  color: #171a16;
+  color: var(--ritual-ink);
   font-size: 15px;
   font-weight: 650;
   letter-spacing: -0.02em;
@@ -35,19 +35,19 @@
   height: 30px;
   display: grid;
   place-items: center;
-  color: #eff7dd;
-  background: #293225;
-  border-radius: 9px;
-  font-family: Georgia, serif;
+  color: var(--ritual-inverse);
+  background: var(--ritual-ink);
+  border-radius: 0;
+  font-family: var(--ritual-display);
   font-size: 15px;
 }
 
 .statusDot {
   width: 7px;
   height: 7px;
-  background: #6e8c56;
+  background: var(--ritual-ink);
   border-radius: 50%;
-  box-shadow: 0 0 0 4px rgb(110 140 86 / 12%);
+  box-shadow: 0 0 0 4px var(--ritual-line-soft);
 }
 
 .accountSummary {
@@ -62,10 +62,10 @@
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  color: #eff7dd;
-  background: #596d4d;
+  color: var(--ritual-inverse);
+  background: var(--ritual-ink);
   border-radius: 50%;
-  font-family: Georgia, serif;
+  font-family: var(--ritual-display);
   font-size: 12px;
 }
 
@@ -85,24 +85,24 @@
 }
 
 .accountCopy strong {
-  color: #30352e;
+  color: var(--ritual-ink);
   font-size: 11px;
   font-weight: 650;
 }
 
 .accountCopy small {
-  color: #8b9087;
+  color: var(--ritual-muted);
   font-size: 9px;
 }
 
 .accountSummary :global(.text-button) {
   margin-left: 5px;
   padding-left: 14px;
-  border-left: 1px solid #dfe1d8;
+  border-left: 1px solid var(--ritual-line);
 }
 
 .appMain {
-  width: min(1320px, calc(100% - 48px));
+  width: min(1440px, calc(100% - 36px));
   margin: 0 auto;
   display: grid;
   align-items: center;
@@ -127,16 +127,16 @@
 }
 
 .authNote {
-  color: #858a81;
+  color: var(--ritual-muted);
 }
 
 .setupNote {
   width: fit-content;
   padding: 12px 14px;
-  color: #6b5a35;
-  background: #eee7d6;
-  border: 1px solid #ded2b7;
-  border-radius: 10px;
+  color: var(--ritual-ink);
+  background: var(--ritual-surface-strong);
+  border: 1px solid var(--ritual-line);
+  border-radius: 0;
   font-size: 13px;
 }
 
@@ -150,8 +150,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  color: #8b8f86;
-  border-top: 1px solid #dfe1d8;
+  color: var(--ritual-muted);
+  border-top: 1px solid var(--ritual-line);
   font-size: 11px;
 }
 

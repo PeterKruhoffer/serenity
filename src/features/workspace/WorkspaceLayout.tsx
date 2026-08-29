@@ -68,9 +68,9 @@ export default function WorkspaceLayout(props: { children?: JSX.Element }) {
         <section class={styles.onboarding} aria-labelledby="onboarding-title">
           <div class={styles.onboardingCopy}>
             <p class="eyebrow">Create your workspace</p>
-            <h1 id="onboarding-title">A calm place for every event.</h1>
+            <h1 id="onboarding-title">Set up your organization.</h1>
             <p class="intro">
-              Start with your organization and the first team responsible for delivering events.
+              Add your organization and the first team responsible for delivering events.
             </p>
           </div>
           <form class={styles.setupForm} onSubmit={setup}>

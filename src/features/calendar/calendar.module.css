@@ -24,10 +24,10 @@
 .datePickerHeading button {
   min-height: 38px;
   padding: 0 12px;
-  color: #4e5748;
-  background: #f9faf6;
-  border: 1px solid #ccd1c6;
-  border-radius: 9px;
+  color: var(--ritual-ink);
+  background: transparent;
+  border: 1px solid var(--ritual-line);
+  border-radius: 0;
   cursor: pointer;
   font-size: 12px;
   font-weight: 650;
@@ -40,8 +40,8 @@
 
 .periodControls h2 {
   margin: 0 0 0 10px;
-  color: #292e27;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: 24px;
   font-weight: 400;
   letter-spacing: -0.025em;
@@ -51,15 +51,15 @@
   min-width: 150px;
   min-height: 38px;
   padding-inline: 11px;
-  background: #f9faf6;
+  background: transparent;
   font-size: 12px;
 }
 
 .viewSwitch {
   padding: 3px;
   gap: 2px;
-  background: #e6e9e0;
-  border-radius: 10px;
+  background: var(--ritual-faint);
+  border-radius: 0;
 }
 
 .viewSwitch button {
@@ -69,16 +69,16 @@
 }
 
 .viewSwitch button.isActive {
-  color: #263020;
-  background: #fff;
-  box-shadow: 0 2px 8px rgb(39 48 34 / 10%);
+  color: var(--ritual-inverse);
+  background: var(--ritual-ink);
+  box-shadow: none;
 }
 
 .calendarFrame {
   min-height: 280px;
-  border: 1px solid #d9ddd3;
-  border-radius: 15px;
-  background: rgb(255 255 255 / 42%);
+  border: 1px solid var(--ritual-line);
+  border-radius: 0;
+  background: transparent;
   overflow: hidden;
 }
 
@@ -98,7 +98,7 @@
 }
 
 .weekDay + .weekDay {
-  border-left: 1px solid #e0e3db;
+  border-left: 1px solid var(--ritual-line-soft);
 }
 
 .weekDay > header {
@@ -107,8 +107,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  color: #7c8278;
-  border-bottom: 1px solid #e4e6df;
+  color: var(--ritual-muted);
+  border-bottom: 1px solid var(--ritual-line-soft);
   font-size: 10px;
   text-transform: uppercase;
 }
@@ -118,15 +118,15 @@
   height: 28px;
   display: grid;
   place-items: center;
-  color: #363c33;
+  color: var(--ritual-ink);
   border-radius: 50%;
   font-size: 12px;
 }
 
 .weekDay > header.isToday strong,
 .monthDay.isToday .monthDayNumber {
-  color: #f6f8f1;
-  background: #526748;
+  color: var(--ritual-inverse);
+  background: var(--ritual-ink);
 }
 
 .dayEvents {
@@ -141,11 +141,11 @@
   padding: 8px 8px 8px 9px;
   display: grid;
   gap: 3px;
-  color: #3b4237;
-  background: #ecefe8;
+  color: var(--ritual-ink);
+  background: transparent;
   border: 0;
-  border-left: 3px solid #84917c;
-  border-radius: 7px;
+  border-left: 3px solid var(--ritual-ink);
+  border-radius: 0;
   cursor: pointer;
   text-align: left;
 }
@@ -164,7 +164,7 @@
 }
 
 .eventChip span {
-  color: #747b70;
+  color: var(--ritual-muted);
   font-size: 8px;
 }
 
@@ -182,7 +182,7 @@
 
 .eventChip.isCancelled {
   opacity: 0.68;
-  background: #eeece9;
+  background: transparent;
   border-left-color: #9a655d;
   text-decoration: line-through;
 }
@@ -197,7 +197,7 @@
 
 .noEvents {
   padding: 12px 5px;
-  color: #a0a59c;
+  color: var(--ritual-subtle);
   font-size: 9px;
 }
 
@@ -214,8 +214,8 @@
 
 .monthWeekday {
   padding: 11px 12px;
-  color: #7b8177;
-  border-bottom: 1px solid #dfe2da;
+  color: var(--ritual-muted);
+  border-bottom: 1px solid var(--ritual-line);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -226,8 +226,8 @@
   min-width: 0;
   min-height: 132px;
   padding: 9px;
-  border-right: 1px solid #e1e4dc;
-  border-bottom: 1px solid #e1e4dc;
+  border-right: 1px solid var(--ritual-line-soft);
+  border-bottom: 1px solid var(--ritual-line-soft);
 }
 
 .monthDay:nth-child(7n) {
@@ -239,13 +239,13 @@
   height: 23px;
   display: grid;
   place-items: center;
-  color: #51574e;
+  color: var(--ritual-ink);
   border-radius: 50%;
   font-size: 10px;
 }
 
 .monthDay.isOutsideMonth {
-  background: rgb(236 238 231 / 52%);
+  background: transparent;
 }
 
 .monthDay.isOutsideMonth .monthDayNumber,
@@ -255,7 +255,7 @@
 
 .moreButton {
   padding: 3px 2px;
-  color: #66715f;
+  color: var(--ritual-muted);
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -268,11 +268,11 @@
 .datePickerPopover {
   z-index: 50;
   padding: 16px;
-  color: #343a31;
-  background: #fff;
-  border: 1px solid #d8dcd2;
-  border-radius: 12px;
-  box-shadow: 0 18px 50px rgb(36 44 31 / 18%);
+  color: var(--ritual-ink);
+  background: var(--ritual-surface);
+  border: 1px solid var(--ritual-line);
+  border-radius: 0;
+  box-shadow: 0 18px 50px rgb(36 35 31 / 18%);
 }
 
 .eventPopover {
@@ -285,15 +285,15 @@
 }
 
 .eventPopover h2 {
-  color: #292f27;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: 19px;
   font-weight: 400;
 }
 
 .eventPopover > p {
   margin-top: 7px;
-  color: #697066;
+  color: var(--ritual-muted);
   font-size: 11px;
 }
 
@@ -305,7 +305,7 @@
 }
 
 .eventPopover dt {
-  color: #969b92;
+  color: var(--ritual-subtle);
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -321,7 +321,7 @@
 .popoverClose {
   margin-top: 14px;
   padding: 0;
-  color: #606a5a;
+  color: var(--ritual-muted);
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -338,7 +338,7 @@
 
 .datePickerHeading h2 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--ritual-display);
   font-size: 17px;
   font-weight: 400;
 }
@@ -358,7 +358,7 @@
 
 .datePickerTable th {
   height: 26px;
-  color: #8b9188;
+  color: var(--ritual-muted);
   font-size: 8px;
 }
 
@@ -370,21 +370,21 @@
 .datePickerTable td button {
   width: 31px;
   height: 31px;
-  color: #42483f;
+  color: var(--ritual-ink);
   background: transparent;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 10px;
 }
 
 .datePickerTable td button:hover {
-  background: #edf0e8;
+  background: var(--ritual-faint);
 }
 
 .datePickerTable td button[data-selected] {
-  color: #fff;
-  background: #536749;
+  color: var(--ritual-inverse);
+  background: var(--ritual-ink);
 }
 
 .datePickerTable td button[data-today]:not([data-selected]) {
@@ -392,7 +392,7 @@
 }
 
 .datePickerTable td button[data-disabled] {
-  color: #bec2ba;
+  color: var(--ritual-subtle);
 }
 
 .srOnly {
@@ -424,7 +424,7 @@
   }
 
   .weekDay + .weekDay {
-    border-top: 1px solid #e0e3db;
+    border-top: 1px solid var(--ritual-line-soft);
     border-left: 0;
   }
 }

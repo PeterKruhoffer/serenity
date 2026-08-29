@@ -1,9 +1,10 @@
 .templateEditorForm {
   margin-top: 28px;
-  padding: 28px;
-  background: rgb(255 255 255 / 62%);
-  border: 1px solid #dfe2d8;
-  border-radius: 16px;
+  padding: 28px 0;
+  background: var(--ritual-card);
+  border-block: 1px solid var(--ritual-line);
+  border-inline: 0;
+  border-radius: 0;
 }
 
 .templateDetailsGrid {
@@ -22,15 +23,16 @@
   margin-top: 22px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  column-gap: 28px;
 }
 
 .templateCard {
   min-width: 0;
-  padding: 22px;
-  background: rgb(255 255 255 / 58%);
-  border: 1px solid #dfe2d8;
-  border-radius: 14px;
+  padding: 22px 0;
+  background: var(--ritual-card);
+  border: 0;
+  border-bottom: 1px solid var(--ritual-line);
+  border-radius: 0;
 }
 
 .templateCardHeading,
@@ -46,9 +48,10 @@
 
 .templateCardHeading > span {
   padding: 5px 9px;
-  color: #676d63;
-  background: #e8eae3;
-  border-radius: 999px;
+  color: var(--ritual-muted);
+  background: transparent;
+  border: 1px solid var(--ritual-line);
+  border-radius: 0;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -62,42 +65,44 @@
 
 .templateCard h3 {
   margin: 20px 0 5px;
-  color: #292d27;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: 22px;
   font-weight: 400;
 }
 
 .templateCard > p,
 .templateCard small {
-  color: #848980;
+  color: var(--ritual-muted);
   font-size: 10px;
 }
 
 .templateQuestionPreview {
   margin: 18px 0 10px;
-  padding: 15px 15px 15px 34px;
+  padding: 15px 0 15px 24px;
   display: grid;
   gap: 8px;
-  color: #50564d;
-  background: #f2f4ee;
-  border-radius: 10px;
+  color: var(--ritual-ink);
+  background: transparent;
+  border-block: 1px solid var(--ritual-line-soft);
+  border-radius: 0;
   font-size: 11px;
 }
 
 .templateLibraryEmpty {
   margin-top: 22px;
-  padding: 38px;
-  color: #777d73;
+  padding: 38px 0;
+  color: var(--ritual-muted);
   text-align: center;
-  background: rgb(255 255 255 / 44%);
-  border: 1px dashed #cdd2c7;
-  border-radius: 14px;
+  background: var(--ritual-card);
+  border: 0;
+  border-bottom: 1px dashed var(--ritual-line);
+  border-radius: 0;
 }
 
 .templateLibraryEmpty strong {
-  color: #3d433a;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: 20px;
   font-weight: 400;
 }

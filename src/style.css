@@ -1,6 +1,29 @@
 :root {
-  color: #20231f;
-  background: #f4f5ef;
+  color-scheme: light;
+  --ritual-bg: #e9e6dc;
+  --ritual-surface: #efede5;
+  --ritual-surface-strong: #ddd9cd;
+  --ritual-card: transparent;
+  --ritual-panel: #24231f;
+  --ritual-panel-ink: #f3f5ee;
+  --ritual-panel-muted: #b7beb1;
+  --ritual-ink: #24231f;
+  --ritual-muted: #6d6a61;
+  --ritual-subtle: #8b877c;
+  --ritual-line: rgb(36 35 31 / 25%);
+  --ritual-line-soft: rgb(36 35 31 / 12%);
+  --ritual-faint: rgb(36 35 31 / 7%);
+  --ritual-inverse: #eeece4;
+  --ritual-glow: rgb(117 90 52 / 16%);
+  --ritual-input: transparent;
+  --ritual-button-hover: #3a3831;
+  --ritual-success: #31513e;
+  --ritual-success-bg: rgb(49 81 62 / 9%);
+  --ritual-warning: #6f5623;
+  --ritual-warning-bg: rgb(151 115 43 / 9%);
+  --ritual-display: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  background: #050707;
   font-family:
     Inter,
     ui-sans-serif,
@@ -11,6 +34,31 @@
     sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+}
+
+:root[data-theme="nocturne"] {
+  color-scheme: dark;
+  --ritual-bg: #0f1515;
+  --ritual-surface: #151d1e;
+  --ritual-surface-strong: #22302f;
+  --ritual-card: transparent;
+  --ritual-panel: #151d1e;
+  --ritual-panel-ink: #d9e1de;
+  --ritual-panel-muted: #95a19d;
+  --ritual-ink: #d9e1de;
+  --ritual-muted: #95a19d;
+  --ritual-subtle: #788682;
+  --ritual-line: rgb(190 214 207 / 24%);
+  --ritual-line-soft: rgb(190 214 207 / 13%);
+  --ritual-faint: rgb(190 214 207 / 7%);
+  --ritual-inverse: #111817;
+  --ritual-glow: rgb(113 151 138 / 22%);
+  --ritual-input: transparent;
+  --ritual-button-hover: #b8c5c1;
+  --ritual-success: #a7c7b2;
+  --ritual-success-bg: rgb(111 157 126 / 18%);
+  --ritual-warning: #dccb9a;
+  --ritual-warning-bg: rgb(176 147 72 / 18%);
 }
 
 * {
@@ -27,6 +75,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background:
+    radial-gradient(ellipse 34rem 28rem at 78% 18%, var(--ritual-glow), transparent 72%),
+    var(--ritual-bg);
 }
 
 a {
@@ -50,13 +101,13 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #6f746b;
+  color: var(--ritual-muted);
   font-size: 12px;
 }
 
 .text-button {
   padding: 8px 0;
-  color: #60665c;
+  color: var(--ritual-muted);
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -64,13 +115,14 @@ p {
 }
 
 .text-button:hover {
-  color: #20231f;
+  color: var(--ritual-ink);
 }
 
 .eyebrow {
   margin: 0 0 22px;
-  color: #6e765f;
-  font-size: 11px;
+  color: var(--ritual-muted);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -79,8 +131,8 @@ p {
 h1 {
   max-width: 650px;
   margin-bottom: 24px;
-  color: #181b17;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: clamp(48px, 8vw, 88px);
   font-weight: 400;
   line-height: 0.98;
@@ -90,7 +142,7 @@ h1 {
 .intro {
   max-width: 570px;
   margin-bottom: 48px;
-  color: #686d65;
+  color: var(--ritual-muted);
   font-size: clamp(17px, 2.2vw, 20px);
   line-height: 1.6;
 }
@@ -102,11 +154,11 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 28px;
-  color: #f7faef;
-  background: #293225;
-  border: 1px solid #293225;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgb(41 50 37 / 12%);
+  color: var(--ritual-inverse);
+  background: var(--ritual-ink);
+  border: 1px solid var(--ritual-ink);
+  border-radius: 0;
+  box-shadow: none;
   cursor: pointer;
   font-size: 14px;
   font-weight: 650;
@@ -118,21 +170,21 @@ h1 {
 .secondary-button {
   min-height: 50px;
   padding: 0 20px;
-  color: #293225;
+  color: var(--ritual-ink);
   background: transparent;
-  border: 1px solid #bfc4b9;
-  border-radius: 12px;
+  border: 1px solid var(--ritual-line);
+  border-radius: 0;
   cursor: pointer;
   font-size: 14px;
   font-weight: 650;
 }
 
 .secondary-button:hover {
-  background: rgb(41 50 37 / 5%);
+  background: var(--ritual-faint);
 }
 
 .primary-button:hover {
-  background: #364230;
+  background: var(--ritual-button-hover);
   transform: translateY(-1px);
 }
 
@@ -145,7 +197,7 @@ h1 {
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
 .text-button:focus-visible {
-  outline: 3px solid rgb(110 140 86 / 32%);
+  outline: 2px solid var(--ritual-ink);
   outline-offset: 3px;
 }
 
@@ -153,11 +205,12 @@ input,
 select,
 textarea {
   width: 100%;
-  padding: 0 14px;
-  color: #20231f;
-  background: #fff;
-  border: 1px solid #cdd1c8;
-  border-radius: 10px;
+  padding: 0;
+  color: var(--ritual-ink);
+  background: var(--ritual-input);
+  border: 0;
+  border-bottom: 1px solid var(--ritual-line);
+  border-radius: 0;
   font-size: 14px;
 }
 
@@ -174,27 +227,28 @@ textarea {
 }
 
 input::placeholder {
-  color: #a1a69d;
+  color: var(--ritual-subtle);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #6e8c56;
-  box-shadow: 0 0 0 3px rgb(110 140 86 / 14%);
+  border-bottom-color: var(--ritual-ink);
+  box-shadow: 0 1px 0 var(--ritual-ink);
   outline: 0;
 }
 
 .empty-page-state {
   margin-top: 38px;
-  padding: 28px;
+  padding: 28px 0;
   display: flex;
   align-items: center;
   gap: 20px;
-  color: #8a9086;
-  background: rgb(255 255 255 / 42%);
-  border: 1px dashed #cdd1c8;
-  border-radius: 14px;
+  color: var(--ritual-muted);
+  background: var(--ritual-card);
+  border: 0;
+  border-bottom: 1px dashed var(--ritual-line);
+  border-radius: 0;
 }
 
 .empty-page-state > span {
@@ -203,15 +257,15 @@ textarea:focus {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  color: #687460;
-  background: #e9ece2;
-  border-radius: 12px;
+  color: var(--ritual-ink);
+  background: var(--ritual-surface-strong);
+  border-radius: 0;
   font-size: 18px;
 }
 
 .empty-page-state h2 {
   margin: 0 0 6px;
-  color: #3b4038;
+  color: var(--ritual-ink);
   font-size: 14px;
 }
 
@@ -230,7 +284,7 @@ textarea:focus {
 
 .form-heading p:not(.eyebrow) {
   margin: 8px 0 0;
-  color: #858a81;
+  color: var(--ritual-muted);
   font-size: 11px;
 }
 
@@ -239,15 +293,15 @@ textarea:focus {
 }
 
 .form-heading > span {
-  color: #8b9087;
+  color: var(--ritual-muted);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-size: 10px;
 }
 
 .form-heading h2 {
   margin: 0;
-  color: #252924;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: 30px;
   font-weight: 400;
   letter-spacing: -0.035em;
@@ -265,7 +319,7 @@ textarea:focus {
 }
 
 .form-grid label > span {
-  color: #656b62;
+  color: var(--ritual-muted);
   font-size: 11px;
   font-weight: 650;
 }
@@ -293,7 +347,7 @@ textarea:focus {
 .compact-button {
   min-height: 40px;
   padding-inline: 15px;
-  border-radius: 9px;
+  border-radius: 0;
   font-size: 12px;
 }
 

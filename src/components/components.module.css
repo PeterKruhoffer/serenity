@@ -28,14 +28,14 @@
 
 .contentHeading > div > p:last-child {
   margin: 0;
-  color: #747970;
+  color: var(--ritual-muted);
   font-size: 15px;
 }
 
 .pageHeading {
   align-items: center;
   padding-bottom: 46px;
-  border-bottom: 1px solid #dfe1d8;
+  border-bottom: 1px solid var(--ritual-line);
 }
 
 .pageHeading h1 {
@@ -45,24 +45,27 @@
 .pageTotal {
   flex: 0 0 auto;
   padding: 9px 12px;
-  color: #66705e;
-  background: #e9ece2;
-  border-radius: 999px;
+  color: var(--ritual-muted);
+  background: transparent;
+  border: 1px solid var(--ritual-line);
+  border-radius: 0;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-size: 11px;
   font-weight: 650;
 }
 
 .sectionCount {
-  color: #8b9087;
+  color: var(--ritual-muted);
   font-size: 11px;
 }
 
 .eventStatus {
   width: fit-content;
   padding: 4px 7px;
-  color: #66735d;
-  background: #e8eddf;
-  border-radius: 999px;
+  color: var(--ritual-muted);
+  background: transparent;
+  border: 1px solid var(--ritual-line);
+  border-radius: 0;
   font-size: 9px;
   font-weight: 750;
   letter-spacing: 0.08em;
@@ -70,13 +73,13 @@
 }
 
 .statusSubmitted {
-  color: #796432;
-  background: #f1ead7;
+  color: var(--ritual-warning);
+  background: var(--ritual-warning-bg);
 }
 
 .statusPublished {
-  color: #38614a;
-  background: #dcebe1;
+  color: var(--ritual-success);
+  background: var(--ritual-success-bg);
 }
 
 .sectionTitleRow {
@@ -92,8 +95,8 @@
 
 .sectionTitleRow h2 {
   margin-bottom: 0;
-  color: #252924;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: 34px;
   font-weight: 400;
   letter-spacing: -0.035em;

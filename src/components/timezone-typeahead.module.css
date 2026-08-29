@@ -9,10 +9,10 @@
 .results {
   z-index: 20;
   width: var(--kb-popper-anchor-width);
-  background: #fff;
-  border: 1px solid #cdd1c8;
-  border-radius: 10px;
-  box-shadow: 0 14px 36px rgb(41 50 37 / 14%);
+  background: var(--ritual-surface);
+  border: 1px solid var(--ritual-line);
+  border-radius: 0;
+  box-shadow: 0 14px 36px rgb(36 35 31 / 14%);
 }
 
 .listbox {
@@ -26,14 +26,14 @@
 
 .option {
   padding: 9px 10px;
-  border-radius: 7px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 13px;
   outline: none;
 }
 
 .option[data-highlighted] {
-  background: #e9ece2;
+  background: var(--ritual-faint);
 }
 
 .optionLabel {
@@ -50,13 +50,13 @@
 }
 
 .optionLabel small {
-  color: #7a8076;
+  color: var(--ritual-muted);
   font-size: 10px;
   font-weight: 650;
 }
 
 .empty {
   padding: 10px;
-  color: #7a8076;
+  color: var(--ritual-muted);
   font-size: 12px;
 }

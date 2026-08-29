@@ -37,6 +37,8 @@ const queryResult = (data: unknown) => ({
 
 beforeEach(() => {
   window.scrollTo = vi.fn();
+  window.localStorage.clear();
+  document.documentElement.removeAttribute("data-theme");
   convex.useMutation.mockReturnValue({ isLoading: () => false, mutate: vi.fn() });
   convex.useQuery.mockImplementation((reference: FunctionReference<"query">) => {
     switch (getFunctionName(reference)) {
@@ -123,11 +125,41 @@ beforeEach(() => {
 afterEach(() => {
   for (const dispose of disposers.splice(0)) dispose();
   document.body.replaceChildren();
+  window.localStorage.clear();
+  document.documentElement.removeAttribute("data-theme");
   window.history.replaceState({}, "", "/");
   vi.clearAllMocks();
 });
 
 describe("signed-in workspace navigation", () => {
+  it("applies and remembers the selected appearance", async () => {
+    window.history.replaceState({}, "", "/settings");
+    const host = document.createElement("div");
+    document.body.append(host);
+    disposers.push(
+      render(
+        () => (
+          <Router>
+            <SerenityRoutes />
+          </Router>
+        ),
+        host,
+      ),
+    );
+
+    await vi.waitFor(() => expect(host.querySelector("h1")?.textContent).toBe("Settings"));
+    const nocturne = Array.from(host.querySelectorAll("button")).find((button) =>
+      button.textContent?.includes("Nocturne"),
+    );
+    expect(nocturne?.getAttribute("aria-pressed")).toBe("false");
+
+    nocturne?.click();
+
+    expect(document.documentElement.dataset.theme).toBe("nocturne");
+    expect(window.localStorage.getItem("serenity-theme")).toBe("nocturne");
+    expect(nocturne?.getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("opens the global command palette and routes actions without creating anything", async () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");

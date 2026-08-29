@@ -9,6 +9,7 @@ import { Page } from "../../components/page";
 import { SectionHeader } from "../../components/section-header";
 import { TimezoneTypeahead } from "../../components/timezone-typeahead";
 import { convexErrorMessage } from "../../lib/convex-error-message";
+import { applyTheme, readTheme, type Theme } from "../../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 
 export default function SettingsPage() {
@@ -25,6 +26,7 @@ export default function SettingsPage() {
   const [defaultTimezone, setDefaultTimezone] = createSignal(activeOrganization().defaultTimezone);
   const [formError, setFormError] = createSignal<string | null>(null);
   const [timezoneError, setTimezoneError] = createSignal<string | null>(null);
+  const [theme, setTheme] = createSignal<Theme>(readTheme());
   const showTeamForm = () =>
     searchParams.action === "new-team" && activeOrganization().role === "administrator";
 
@@ -53,6 +55,11 @@ export default function SettingsPage() {
     }
   };
 
+  const selectTheme = (nextTheme: Theme) => {
+    setTheme(nextTheme);
+    applyTheme(nextTheme);
+  };
+
   return (
     <Page.Root labelledBy="settings-page-title">
       <Page.Header variant="page">
@@ -64,6 +71,49 @@ export default function SettingsPage() {
           </Page.Description>
         </Page.Heading>
       </Page.Header>
+      <section class={styles.appearanceSection} aria-labelledby="appearance-settings-title">
+        <SectionHeader.Root>
+          <SectionHeader.Heading>
+            <SectionHeader.Eyebrow>Personal preference</SectionHeader.Eyebrow>
+            <SectionHeader.Title id="appearance-settings-title">Appearance</SectionHeader.Title>
+          </SectionHeader.Heading>
+        </SectionHeader.Root>
+        <p class={styles.settingDescription}>
+          Choose how Serenity looks on this browser. Your selection is saved on this device.
+        </p>
+        <div class={styles.themeOptions} aria-label="Color theme">
+          <button
+            class={styles.themeOption}
+            type="button"
+            aria-pressed={theme() === "ritual"}
+            onClick={() => selectTheme("ritual")}
+          >
+            <span class={`${styles.themePreview} ${styles.ritualPreview}`} aria-hidden="true">
+              <i />
+              <i />
+            </span>
+            <span>
+              <strong>Ritual</strong>
+              <small>Warm light</small>
+            </span>
+          </button>
+          <button
+            class={styles.themeOption}
+            type="button"
+            aria-pressed={theme() === "nocturne"}
+            onClick={() => selectTheme("nocturne")}
+          >
+            <span class={`${styles.themePreview} ${styles.nocturnePreview}`} aria-hidden="true">
+              <i />
+              <i />
+            </span>
+            <span>
+              <strong>Nocturne</strong>
+              <small>Deep dark</small>
+            </span>
+          </button>
+        </div>
+      </section>
       <section class={styles.organizationSection} aria-labelledby="organization-settings-title">
         <SectionHeader.Root>
           <SectionHeader.Heading>

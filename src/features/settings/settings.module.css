@@ -3,6 +3,10 @@
   gap: 8px;
 }
 
+.appearanceSection {
+  padding-top: 52px;
+}
+
 .organizationSection {
   padding-top: 52px;
 }
@@ -14,15 +18,95 @@
 .settingDescription {
   max-width: 620px;
   margin: 16px 0 0;
-  color: #747970;
+  color: var(--ritual-muted);
   font-size: 12px;
   line-height: 1.6;
 }
 
 .settingValue {
   margin: 14px 0 0;
-  color: #353a32;
+  color: var(--ritual-ink);
   font-weight: 650;
+}
+
+.themeOptions {
+  max-width: 620px;
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.themeOption {
+  min-width: 0;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  color: var(--ritual-muted);
+  background: transparent;
+  border: 1px solid var(--ritual-line);
+  border-radius: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.themeOption:hover,
+.themeOption[aria-pressed="true"] {
+  color: var(--ritual-ink);
+  border-color: var(--ritual-ink);
+}
+
+.themeOption[aria-pressed="true"] {
+  box-shadow: inset 3px 0 0 var(--ritual-ink);
+}
+
+.themeOption > span:last-child {
+  display: grid;
+  gap: 5px;
+}
+
+.themeOption strong {
+  font-family: var(--ritual-display);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.themeOption small {
+  color: var(--ritual-muted);
+  font-size: 10px;
+}
+
+.themePreview {
+  height: 54px;
+  padding: 9px;
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 7px;
+  border: 1px solid rgb(127 127 127 / 35%);
+}
+
+.themePreview i:first-child {
+  border-right: 1px solid currentColor;
+  opacity: 0.35;
+}
+
+.themePreview i:last-child {
+  align-self: center;
+  height: 20px;
+  border-block: 1px solid currentColor;
+  opacity: 0.5;
+}
+
+.ritualPreview {
+  color: #594f41;
+  background: #e9e6dc;
+}
+
+.nocturnePreview {
+  color: #b7c8c3;
+  background: #172220;
 }
 
 .timezoneForm {
@@ -40,20 +124,22 @@
 }
 
 .timezoneForm label > span {
-  color: #656b62;
+  color: var(--ritual-muted);
   font-size: 11px;
   font-weight: 650;
 }
 
 .inlineForm {
   margin-top: 22px;
-  padding: 16px;
+  padding: 16px 0;
   display: grid;
   grid-template-columns: minmax(180px, 360px) auto;
   justify-content: start;
   gap: 10px;
-  background: #ebece6;
-  border-radius: 12px;
+  background: var(--ritual-card);
+  border-block: 1px solid var(--ritual-line-soft);
+  border-inline: 0;
+  border-radius: 0;
 }
 
 .inlineForm input {
@@ -64,26 +150,27 @@
   margin-top: 22px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  column-gap: 24px;
 }
 
 .teamCard {
   min-width: 0;
-  padding: 22px;
+  padding: 22px 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
-  background: rgb(255 255 255 / 54%);
-  border: 1px solid #dfe1d8;
-  border-radius: 14px;
+  background: var(--ritual-card);
+  border: 0;
+  border-bottom: 1px solid var(--ritual-line);
+  border-radius: 0;
   transition:
     border-color 150ms ease,
     transform 150ms ease;
 }
 
 .teamCard:hover {
-  border-color: #bdc3b7;
+  border-bottom-color: var(--ritual-ink);
   transform: translateY(-1px);
 }
 
@@ -92,17 +179,17 @@
   height: 42px;
   display: grid;
   place-items: center;
-  color: #f0f5e8;
-  background: #596d4d;
-  border-radius: 11px;
-  font-family: Georgia, serif;
+  color: var(--ritual-inverse);
+  background: var(--ritual-ink);
+  border-radius: 0;
+  font-family: var(--ritual-display);
   font-size: 13px;
 }
 
 .teamCard h3 {
   margin: 0 0 5px;
   overflow: hidden;
-  color: #292d27;
+  color: var(--ritual-ink);
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -110,12 +197,12 @@
 
 .teamCard p {
   margin: 0;
-  color: #92978e;
+  color: var(--ritual-muted);
   font-size: 11px;
 }
 
 .cardArrow {
-  color: #9ca198;
+  color: var(--ritual-subtle);
   font-size: 16px;
 }
 
@@ -131,6 +218,10 @@
 }
 
 @media (max-width: 600px) {
+  .themeOptions {
+    grid-template-columns: 1fr;
+  }
+
   .teamGrid {
     grid-template-columns: 1fr;
   }

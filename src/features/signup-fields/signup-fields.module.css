@@ -18,14 +18,15 @@
 }
 
 .signupEmptyState {
-  padding: 22px;
+  padding: 22px 0;
   display: grid;
   gap: 5px;
   color: #858a81;
   text-align: center;
-  background: #f6f7f2;
-  border: 1px dashed #d3d7cc;
-  border-radius: 12px;
+  background: var(--ritual-card);
+  border: 0;
+  border-bottom: 1px dashed var(--ritual-line);
+  border-radius: 0;
   font-size: 10px;
 }
 
@@ -36,10 +37,11 @@
 
 .signupFieldCard {
   position: relative;
-  padding: 18px;
-  background: #f4f6f0;
-  border: 1px solid #dfe3d9;
-  border-radius: 12px;
+  padding: 18px 0;
+  background: var(--ritual-card);
+  border: 0;
+  border-bottom: 1px solid var(--ritual-line);
+  border-radius: 0;
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease,
@@ -98,7 +100,7 @@
   background: #eaf0e5;
   border: 1px solid #cfd9c8;
   border-left: 4px solid #819875;
-  border-radius: 12px;
+  border-radius: 0;
   transition:
     box-shadow 140ms ease,
     opacity 140ms ease;
@@ -260,9 +262,11 @@
 
 .signupFieldPalette {
   flex-wrap: wrap;
-  padding: 14px;
-  background: #f6f7f2;
-  border-radius: 12px;
+  padding: 14px 0;
+  background: var(--ritual-card);
+  border-block: 1px solid var(--ritual-line-soft);
+  border-inline: 0;
+  border-radius: 0;
 }
 
 .signupFieldPalette > span {

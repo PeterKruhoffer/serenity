@@ -3,6 +3,7 @@ import { ConvexProvider, setupConvex } from "convex-solidjs";
 import { Router, useLocation, type RouteSectionProps } from "@solidjs/router";
 import { WorkOSAuthProvider } from "./auth";
 import { SerenityRoutes } from "./routes";
+import { applyTheme, readTheme } from "./theme";
 import "./style.css";
 
 const root = document.getElementById("app");
@@ -10,6 +11,8 @@ const root = document.getElementById("app");
 if (!root) {
   throw new Error("Application root element was not found");
 }
+
+applyTheme(readTheme(), false);
 
 render(() => {
   const convex = setupConvex(import.meta.env.VITE_CONVEX_URL);

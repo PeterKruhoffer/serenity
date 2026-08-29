@@ -2,7 +2,7 @@
   margin-top: 54px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-block: 1px solid #dfe1d8;
+  border-block: 1px solid var(--ritual-line);
 }
 
 .metricGrid article {
@@ -13,29 +13,30 @@
 }
 
 .metricGrid article + article {
-  border-left: 1px solid #dfe1d8;
+  border-left: 1px solid var(--ritual-line);
 }
 
 .metricGrid span,
 .metricGrid small {
-  color: #858a81;
+  color: var(--ritual-muted);
   font-size: 11px;
 }
 
 .metricGrid strong {
-  color: #282d26;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: 38px;
   font-weight: 400;
 }
 
 .eventForm {
   margin-top: 34px;
-  padding: clamp(22px, 4vw, 36px);
-  background: #fafbf7;
-  border: 1px solid #d8dbd1;
-  border-radius: 18px;
-  box-shadow: 0 18px 50px rgb(41 50 37 / 7%);
+  padding: clamp(22px, 4vw, 36px) 0;
+  background: var(--ritual-card);
+  border-block: 1px solid var(--ritual-line);
+  border-inline: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .eventDetailHeading,
@@ -53,8 +54,8 @@
 
 .eventDetailHeading h2 {
   margin: 0;
-  color: #252924;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: 30px;
   font-weight: 400;
   letter-spacing: -0.035em;
@@ -110,10 +111,11 @@
 }
 
 .builderDateCard {
-  padding: 20px;
-  background: #f4f6f0;
-  border: 1px solid #dfe3d9;
-  border-radius: 14px;
+  padding: 20px 0;
+  background: var(--ritual-card);
+  border: 0;
+  border-bottom: 1px solid var(--ritual-line-soft);
+  border-radius: 0;
 }
 
 .builderCardHeading,
@@ -212,9 +214,10 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  background: #fff;
-  border: 1px solid #d9ddd3;
-  border-radius: 10px;
+  background: transparent;
+  border-block: 1px solid var(--ritual-line);
+  border-inline: 0;
+  border-radius: 0;
 }
 
 .sessionEditorHeading,
@@ -244,10 +247,11 @@
 
 .signupHeading {
   margin-bottom: 12px;
-  padding: 20px;
-  background: #f2f3ed;
-  border: 1px dashed #ced2c7;
-  border-radius: 12px;
+  padding: 20px 0;
+  background: var(--ritual-card);
+  border: 0;
+  border-bottom: 1px dashed var(--ritual-line);
+  border-radius: 0;
 }
 
 .templatePicker {
@@ -267,13 +271,14 @@
 
 .emptyEvents {
   margin-top: 22px;
-  padding: 28px;
+  padding: 28px 0;
   display: flex;
   align-items: center;
   gap: 20px;
-  color: #8a9086;
-  border: 1px dashed #cdd1c8;
-  border-radius: 14px;
+  color: var(--ritual-muted);
+  border: 0;
+  border-bottom: 1px dashed var(--ritual-line);
+  border-radius: 0;
 }
 
 .emptyEvents > span {
@@ -282,7 +287,7 @@
 
 .emptyEvents h3 {
   margin: 0 0 5px;
-  color: #3b4038;
+  color: var(--ritual-ink);
   font-size: 14px;
 }
 
@@ -295,16 +300,17 @@
   margin-top: 22px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  column-gap: 28px;
 }
 
 .eventCard {
   min-width: 0;
-  padding: 22px;
+  padding: 22px 0;
   color: inherit;
-  background: rgb(255 255 255 / 56%);
-  border: 1px solid #dfe1d8;
-  border-radius: 14px;
+  background: var(--ritual-card);
+  border: 0;
+  border-bottom: 1px solid var(--ritual-line);
+  border-radius: 0;
   cursor: pointer;
   text-align: left;
   transition:
@@ -315,8 +321,8 @@
 
 .eventCard:hover,
 .eventCard.isSelected {
-  border-color: #9eaa96;
-  box-shadow: 0 12px 30px rgb(41 50 37 / 7%);
+  border-bottom-color: var(--ritual-ink);
+  box-shadow: none;
   transform: translateY(-1px);
 }
 
@@ -328,14 +334,14 @@
 
 .eventCardTopline {
   justify-content: space-between;
-  color: #8b9087;
+  color: var(--ritual-muted);
   font-size: 10px;
 }
 
 .eventCard h3 {
   margin: 22px 0 8px;
-  color: #282d26;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: 23px;
   font-weight: 400;
   letter-spacing: -0.025em;
@@ -346,7 +352,7 @@
   margin: 0;
   display: -webkit-box;
   overflow: hidden;
-  color: #7d8279;
+  color: var(--ritual-muted);
   font-size: 12px;
   line-height: 1.55;
   -webkit-box-orient: vertical;
@@ -356,8 +362,8 @@
 .eventCardStats {
   margin-top: 22px;
   padding-top: 15px;
-  color: #8b9087;
-  border-top: 1px solid #e2e4dd;
+  color: var(--ritual-muted);
+  border-top: 1px solid var(--ritual-line-soft);
   font-size: 10px;
 }
 
@@ -369,9 +375,9 @@
 .eventDetail {
   margin-top: 52px;
   padding: clamp(22px, 4vw, 36px);
-  background: #2c3328;
-  border-radius: 18px;
-  box-shadow: 0 24px 60px rgb(26 31 24 / 16%);
+  background: var(--ritual-panel);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .eventDetailHeading {
@@ -380,20 +386,20 @@
 
 .eventDetailHeading h2 {
   margin-top: 14px;
-  color: #f3f5ee;
+  color: var(--ritual-panel-ink);
   font-size: 38px;
 }
 
 .eventDetailHeading p {
   max-width: 680px;
   margin: 12px 0 0;
-  color: #b7beb1;
+  color: var(--ritual-panel-muted);
   font-size: 13px;
   line-height: 1.6;
 }
 
 .eventDetailHeading :global(.text-button) {
-  color: #c4cabe;
+  color: var(--ritual-panel-muted);
 }
 
 .eventDetailActions {
@@ -412,7 +418,7 @@
 }
 
 .eventMeta {
-  color: #aeb6a7;
+  color: var(--ritual-panel-muted);
   font-size: 10px;
 }
 
@@ -425,7 +431,7 @@
   gap: 12px;
   background: rgb(255 255 255 / 6%);
   border: 1px solid rgb(255 255 255 / 10%);
-  border-radius: 13px;
+  border-radius: 0;
 }
 
 .dateForm > div {
@@ -448,7 +454,9 @@
 .dateForm input,
 .sessionForm input {
   min-height: 40px;
-  background: #f8f9f5;
+  color: var(--ritual-panel-ink);
+  background: var(--ritual-input);
+  border-bottom-color: rgb(255 255 255 / 22%);
   font-size: 11px;
 }
 
@@ -459,16 +467,17 @@
 }
 
 .dateCard {
-  padding: 20px;
+  padding: 20px 0;
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr);
   gap: 16px;
-  background: #f5f6f1;
-  border-radius: 13px;
+  background: transparent;
+  border-bottom: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 0;
 }
 
 .dateIndex {
-  color: #9aa092;
+  color: var(--ritual-panel-muted);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-size: 10px;
 }
@@ -482,14 +491,14 @@
 
 .dateHeading h3 {
   margin: 0 0 5px;
-  color: #30352e;
+  color: var(--ritual-panel-ink);
   font-size: 13px;
 }
 
 .dateHeading p,
 .emptySessions {
   margin: 0;
-  color: #8a8f86;
+  color: var(--ritual-panel-muted);
   font-size: 10px;
 }
 
@@ -517,17 +526,17 @@
   grid-template-columns: 70px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  border-top: 1px solid #dde0d7;
+  border-top: 1px solid rgb(255 255 255 / 12%);
 }
 
 .sessionList span,
 .sessionList small {
-  color: #8a8f86;
+  color: var(--ritual-panel-muted);
   font-size: 10px;
 }
 
 .sessionList strong {
-  color: #393e36;
+  color: var(--ritual-panel-ink);
   font-size: 11px;
 }
 
@@ -540,7 +549,7 @@
   gap: 20px;
   background: rgb(255 255 255 / 6%);
   border: 1px solid rgb(255 255 255 / 9%);
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 .signupIntegration > div > span,

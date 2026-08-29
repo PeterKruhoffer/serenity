@@ -14,10 +14,11 @@
 
 .participantEventPicker {
   min-width: 0;
-  padding: 22px;
-  background: rgb(255 255 255 / 46%);
-  border: 1px solid #dfe1d8;
-  border-radius: 15px;
+  padding: 22px 0;
+  background: var(--ritual-card);
+  border: 0;
+  border-bottom: 1px solid var(--ritual-line);
+  border-radius: 0;
 }
 
 .participantEventPicker h2 {
@@ -38,19 +39,19 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 11px;
-  color: #6f756b;
+  color: var(--ritual-muted);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 0;
   cursor: pointer;
   text-align: left;
 }
 
 .participantEventOption:hover,
 .participantEventOption.isSelected {
-  color: #2d3528;
-  background: #eef0e9;
-  border-color: #d9ddd3;
+  color: var(--ritual-ink);
+  background: var(--ritual-faint);
+  border-color: var(--ritual-line);
 }
 
 .participantEventOption > span:nth-child(2) {
@@ -84,10 +85,10 @@
   min-height: 260px;
   margin-top: 0;
   padding: 26px;
-  background: #2c3328;
+  background: var(--ritual-panel);
   border: 0;
-  border-radius: 15px;
-  box-shadow: 0 18px 44px rgb(26 31 24 / 12%);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .standaloneRegistrationPanel .registrationHeading {
@@ -96,13 +97,13 @@
 
 .standaloneRegistrationPanel .registrationHeading p {
   margin: 7px 0 0;
-  color: #9fa79a;
+  color: var(--ritual-panel-muted);
   font-size: 10px;
 }
 
 .registrationNote {
   margin: 18px 0 0;
-  color: #aeb6a7;
+  color: var(--ritual-panel-muted);
   font-size: 11px;
 }
 
@@ -118,7 +119,7 @@
 }
 
 .registrationHeading span {
-  color: #aeb6a7;
+  color: var(--ritual-panel-muted);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.09em;
@@ -127,14 +128,14 @@
 
 .registrationHeading h3 {
   margin: 5px 0 0;
-  color: #f0f3eb;
+  color: var(--ritual-panel-ink);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 24px;
   font-weight: 400;
 }
 
 .registrationHeading > strong {
-  color: #f0f3eb;
+  color: var(--ritual-panel-ink);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 28px;
   font-weight: 400;
@@ -163,7 +164,7 @@
   padding: 9px 12px;
   gap: 12px;
   background: rgb(255 255 255 / 6%);
-  border-radius: 10px;
+  border-radius: 0;
 }
 
 .participantAvatar {
@@ -203,7 +204,7 @@
   padding: 4px 7px;
   color: #b8c3b1;
   background: rgb(255 255 255 / 7%);
-  border-radius: 999px;
+  border-radius: 0;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.06em;

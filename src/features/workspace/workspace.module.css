@@ -4,7 +4,7 @@
   place-items: center;
   align-content: center;
   gap: 18px;
-  color: #747970;
+  color: var(--ritual-muted);
 }
 
 .workspaceState p {
@@ -23,8 +23,8 @@
 .loadingMark {
   width: 22px;
   height: 22px;
-  border: 2px solid #cdd1c8;
-  border-top-color: #596d4d;
+  border: 2px solid var(--ritual-line);
+  border-top-color: var(--ritual-ink);
   border-radius: 50%;
   animation: spin 800ms linear infinite;
 }
@@ -47,13 +47,14 @@
 }
 
 .setupForm {
-  padding: 32px;
+  padding: 32px 0;
   display: grid;
   gap: 22px;
-  background: #fafbf7;
-  border: 1px solid #dfe1d8;
-  border-radius: 20px;
-  box-shadow: 0 24px 70px rgb(41 50 37 / 8%);
+  background: var(--ritual-card);
+  border-block: 1px solid var(--ritual-line);
+  border-inline: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .setupForm label {
@@ -62,7 +63,7 @@
 }
 
 .setupForm label > span {
-  color: #555b51;
+  color: var(--ritual-muted);
   font-size: 12px;
   font-weight: 650;
 }
@@ -70,8 +71,8 @@
 .workspaceLayout {
   min-height: 650px;
   display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
-  gap: clamp(36px, 6vw, 90px);
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 72px);
   align-self: start;
   align-items: start;
 }
@@ -80,7 +81,9 @@
   position: sticky;
   top: 24px;
   display: grid;
-  gap: 38px;
+  gap: 34px;
+  padding-right: 22px;
+  border-right: 1px solid var(--ritual-line);
 }
 
 .workspaceSidebar > div {
@@ -90,7 +93,8 @@
 
 .sidebarLabel {
   margin: 0 0 5px;
-  color: #94998f;
+  color: var(--ritual-muted);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -99,20 +103,21 @@
 
 .workspaceSidebar strong {
   overflow: hidden;
-  color: #292d27;
+  color: var(--ritual-ink);
+  font-family: var(--ritual-display);
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .workspaceSidebar > div > span {
-  color: #8a8f86;
+  color: var(--ritual-muted);
   font-size: 11px;
 }
 
 .workspaceSidebar nav {
   display: grid;
-  gap: 6px;
+  gap: 3px;
 }
 
 .navItem {
@@ -121,8 +126,9 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  color: #757a71;
-  border-radius: 9px;
+  color: var(--ritual-muted);
+  border-left: 1px solid transparent;
+  border-radius: 0;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -130,14 +136,15 @@
 
 .navItem > span {
   width: 16px;
-  color: #9ba096;
+  color: var(--ritual-subtle);
   text-align: center;
 }
 
 .navItem:hover,
 .navItem.isActive {
-  color: #2d3528;
-  background: #e9ece2;
+  color: var(--ritual-ink);
+  background: var(--ritual-faint);
+  border-left-color: var(--ritual-ink);
 }
 
 .workspaceContent {
@@ -167,6 +174,8 @@
   .workspaceSidebar {
     position: static;
     gap: 16px;
+    padding-right: 0;
+    border-right: 0;
   }
 }
 
