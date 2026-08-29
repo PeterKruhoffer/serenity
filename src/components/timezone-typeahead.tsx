@@ -39,7 +39,6 @@ export const TimezoneTypeahead = (props: TimezoneTypeaheadProps) => {
       allowsEmptyCollection
       sameWidth
       name={props.name}
-      required={props.required}
       placeholder="Search CET, PST, New York…"
       itemComponent={(itemProps) => (
         <Combobox.Item item={itemProps.item} class={styles.option}>
@@ -54,7 +53,11 @@ export const TimezoneTypeahead = (props: TimezoneTypeaheadProps) => {
     >
       <Combobox.HiddenSelect />
       <Combobox.Control>
-        <Combobox.Input class={styles.input} placeholder="Search CET, PST, New York…" />
+        <Combobox.Input
+          class={styles.input}
+          placeholder="Search CET, PST, New York…"
+          required={props.required}
+        />
       </Combobox.Control>
       <Combobox.Portal>
         <Combobox.Content class={styles.results}>

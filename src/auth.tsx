@@ -48,7 +48,8 @@ export const workOSRedirectUri = (configuredRedirectUri: string | undefined, ori
     ? `${origin}/callback`
     : configuredRedirectUri || `${origin}/callback`;
 
-export const usesWorkOSDevelopmentStorage = (hostname: string) => hostname.endsWith(".onamp.dev");
+export const usesWorkOSDevelopmentStorage = (hostname: string, apiHostname?: string) =>
+  hostname.endsWith(".onamp.dev") || !apiHostname;
 
 export const topLevelSignInUrl = (location: Pick<Location, "href">) => {
   const url = new URL(location.href);
@@ -59,6 +60,7 @@ export const topLevelSignInUrl = (location: Pick<Location, "href">) => {
 export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (props) => {
   const navigate = useNavigate();
   const clientId = import.meta.env.VITE_WORKOS_CLIENT_ID;
+  const apiHostname = import.meta.env.VITE_WORKOS_API_HOSTNAME;
   const redirectUri = workOSRedirectUri(
     import.meta.env.VITE_WORKOS_REDIRECT_URI,
     window.location.origin,
@@ -74,8 +76,9 @@ export const WorkOSAuthProvider: ParentComponent<{ client: ConvexClient }> = (pr
     if (!clientId) return;
 
     void createClient(clientId, {
+      apiHostname: apiHostname || undefined,
       redirectUri,
-      devMode: usesWorkOSDevelopmentStorage(window.location.hostname) || undefined,
+      devMode: usesWorkOSDevelopmentStorage(window.location.hostname, apiHostname) || undefined,
       onRedirectCallback: () => {
         navigate("/", { replace: true, scroll: false });
       },

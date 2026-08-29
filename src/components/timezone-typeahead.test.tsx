@@ -14,6 +14,20 @@ afterEach(() => {
 });
 
 describe("TimezoneTypeahead", () => {
+  it("treats a selected required timezone as valid form input", () => {
+    const form = document.createElement("form");
+    document.body.append(form);
+    dispose = render(
+      () => (
+        <TimezoneTypeahead value="Europe/Copenhagen" name="timezone" onChange={vi.fn()} required />
+      ),
+      form,
+    );
+
+    expect(form.querySelector<HTMLInputElement>('[role="combobox"]')?.required).toBe(true);
+    expect(form.checkValidity()).toBe(true);
+  });
+
   it("finds and selects a timezone by abbreviation", () => {
     const onChange = vi.fn();
     const [value, setValue] = createSignal("UTC");

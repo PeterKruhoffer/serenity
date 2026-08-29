@@ -31,3 +31,4 @@ dist-ssr
 # Amp orb runtime state
 .amp/portal-proxy.mjs
 .amp/portals/
+.vercel

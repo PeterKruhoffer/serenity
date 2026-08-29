@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm exec convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm run build'",
+  "installCommand": "curl -fsSL https://vite.plus | VP_VERSION=0.2.8 VP_NODE_MANAGER=no bash && $HOME/.vite-plus/bin/vp install --frozen-lockfile",
+  "outputDirectory": "dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

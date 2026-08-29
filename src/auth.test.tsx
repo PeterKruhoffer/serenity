@@ -49,10 +49,13 @@ describe("WorkOS navigation", () => {
     ).toBe("https://example-thread-p30836.onamp.dev/events?view=upcoming&workos-sign-in=true");
   });
 
-  it("uses development session storage only for portal hosts", () => {
+  it("uses client-side session storage without a same-site authentication API domain", () => {
     expect(usesWorkOSDevelopmentStorage("example-thread-p30836.onamp.dev")).toBe(true);
-    expect(usesWorkOSDevelopmentStorage("app.example.com")).toBe(false);
-    expect(usesWorkOSDevelopmentStorage("onamp.dev.example.com")).toBe(false);
+    expect(usesWorkOSDevelopmentStorage("app.example.com")).toBe(true);
+    expect(usesWorkOSDevelopmentStorage("app.example.com", "auth.example.com")).toBe(false);
+    expect(
+      usesWorkOSDevelopmentStorage("example-thread-p30836.onamp.dev", "auth.example.com"),
+    ).toBe(true);
   });
 
   it("keeps the router location in sync after an authentication redirect", async () => {
