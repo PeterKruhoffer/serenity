@@ -484,6 +484,29 @@ describe("signed-in workspace navigation", () => {
     );
   });
 
+  it("defaults the calendar to month view", async () => {
+    window.history.replaceState({}, "", "/calendar");
+    const host = document.createElement("div");
+    document.body.append(host);
+    disposers.push(
+      render(
+        () => (
+          <Router>
+            <SerenityRoutes />
+          </Router>
+        ),
+        host,
+      ),
+    );
+
+    await vi.waitFor(() => expect(host.querySelector("h1")?.textContent).toBe("Calendar"));
+    const monthButton = Array.from(host.querySelectorAll("button")).find(
+      (button) => button.textContent === "Month",
+    );
+    expect(monthButton?.getAttribute("aria-pressed")).toBe("true");
+    expect(host.querySelector('button[aria-label="Previous month"]')).toBeTruthy();
+  });
+
   it("renders each page when its sidebar link is clicked", async () => {
     window.history.replaceState({}, "", "/events");
     const host = document.createElement("div");

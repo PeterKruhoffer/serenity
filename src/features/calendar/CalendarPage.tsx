@@ -144,7 +144,7 @@ export default function CalendarPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [datePickerOpen, setDatePickerOpen] = createSignal(false);
   const [expandedDays, setExpandedDays] = createSignal<string[]>([]);
-  const view = (): CalendarView => (searchParams.view === "month" ? "month" : "week");
+  const view = (): CalendarView => (searchParams.view === "week" ? "week" : "month");
   const anchorDate = () =>
     calendarDate(
       typeof searchParams.date === "string" ? searchParams.date : undefined,
