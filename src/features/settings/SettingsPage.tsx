@@ -20,12 +20,24 @@ export default function SettingsPage() {
     () => ({ organizationId: activeOrganization()?.id ?? ("" as Id<"organizations">) }),
     () => ({ enabled: Boolean(activeOrganization()) }),
   );
+  const topics = useQuery(
+    api.events.listTopics,
+    () => ({ organizationId: activeOrganization().id }),
+    () => ({ enabled: Boolean(activeOrganization()) }),
+  );
   const createTeam = useMutation(api.workspace.createTeam);
   const updateDefaultTimezone = useMutation(api.workspace.updateDefaultTimezone);
+  const createTopic = useMutation(api.events.createTopic);
+  const updateTopic = useMutation(api.events.updateTopic);
+  const archiveTopic = useMutation(api.events.archiveTopic);
   const [newTeamName, setNewTeamName] = createSignal("");
+  const [newTopicName, setNewTopicName] = createSignal("");
+  const [editingTopicId, setEditingTopicId] = createSignal<Id<"event_topics"> | null>(null);
+  const [editingTopicName, setEditingTopicName] = createSignal("");
   const [defaultTimezone, setDefaultTimezone] = createSignal(activeOrganization().defaultTimezone);
   const [formError, setFormError] = createSignal<string | null>(null);
   const [timezoneError, setTimezoneError] = createSignal<string | null>(null);
+  const [topicError, setTopicError] = createSignal<string | null>(null);
   const [theme, setTheme] = createSignal<Theme>(readTheme());
   const showTeamForm = () =>
     searchParams.action === "new-team" && activeOrganization().role === "administrator";
@@ -52,6 +64,44 @@ export default function SettingsPage() {
       });
     } catch (error) {
       setTimezoneError(convexErrorMessage(error));
+    }
+  };
+
+  const handleTopicCreate = async (event: SubmitEvent) => {
+    event.preventDefault();
+    setTopicError(null);
+    try {
+      await createTopic.mutate({
+        organizationId: activeOrganization().id,
+        name: newTopicName(),
+      });
+      setNewTopicName("");
+    } catch (error) {
+      setTopicError(convexErrorMessage(error));
+    }
+  };
+
+  const handleTopicUpdate = async (event: SubmitEvent) => {
+    event.preventDefault();
+    const topicId = editingTopicId();
+    if (!topicId) return;
+    setTopicError(null);
+    try {
+      await updateTopic.mutate({ topicId, name: editingTopicName() });
+      setEditingTopicId(null);
+      setEditingTopicName("");
+    } catch (error) {
+      setTopicError(convexErrorMessage(error));
+    }
+  };
+
+  const handleTopicArchive = async (topicId: Id<"event_topics">) => {
+    setTopicError(null);
+    try {
+      await archiveTopic.mutate({ topicId });
+      if (editingTopicId() === topicId) setEditingTopicId(null);
+    } catch (error) {
+      setTopicError(convexErrorMessage(error));
     }
   };
 
@@ -147,6 +197,106 @@ export default function SettingsPage() {
         <Show when={timezoneError()}>
           <FormError>{timezoneError()}</FormError>
         </Show>
+      </section>
+      <section class={styles.topicsSection} aria-labelledby="event-topics-title">
+        <SectionHeader.Root>
+          <SectionHeader.Heading>
+            <SectionHeader.Eyebrow>Event classification</SectionHeader.Eyebrow>
+            <SectionHeader.Title id="event-topics-title">Topics</SectionHeader.Title>
+          </SectionHeader.Heading>
+        </SectionHeader.Root>
+        <p class={styles.settingDescription}>
+          Event creators choose from this list. Renaming updates a topic everywhere; removing it
+          hides it from future event pickers.
+        </p>
+        <Show when={activeOrganization().role === "administrator"}>
+          <form class={styles.inlineForm} onSubmit={handleTopicCreate}>
+            <label>
+              <span class={styles.srOnly}>New topic name</span>
+              <input
+                placeholder="New topic"
+                value={newTopicName()}
+                onInput={(event) => setNewTopicName(event.currentTarget.value)}
+                required
+              />
+            </label>
+            <button
+              class="primary-button compact-button"
+              type="submit"
+              disabled={createTopic.isLoading()}
+            >
+              {createTopic.isLoading() ? "Adding…" : "Add topic"}
+            </button>
+          </form>
+        </Show>
+        <Show when={topicError()}>
+          <FormError>{topicError()}</FormError>
+        </Show>
+        <ul class={styles.topicList}>
+          <For
+            each={topics.data()?.topics}
+            fallback={<li>No topics have been added to this organization.</li>}
+          >
+            {(topic) => (
+              <li>
+                <Show
+                  when={editingTopicId() === topic.id}
+                  fallback={
+                    <>
+                      <span>{topic.name}</span>
+                      <Show when={activeOrganization().role === "administrator"}>
+                        <div>
+                          <button
+                            class="text-button"
+                            type="button"
+                            onClick={() => {
+                              setEditingTopicId(topic.id);
+                              setEditingTopicName(topic.name);
+                            }}
+                          >
+                            Rename
+                          </button>
+                          <button
+                            class="text-button danger-button"
+                            type="button"
+                            disabled={archiveTopic.isLoading()}
+                            onClick={() => void handleTopicArchive(topic.id)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </Show>
+                    </>
+                  }
+                >
+                  <form class={styles.topicEditForm} onSubmit={handleTopicUpdate}>
+                    <input
+                      aria-label="Topic name"
+                      value={editingTopicName()}
+                      onInput={(event) => setEditingTopicName(event.currentTarget.value)}
+                      required
+                      autofocus
+                    />
+                    <button
+                      class="primary-button compact-button"
+                      type="submit"
+                      disabled={updateTopic.isLoading()}
+                    >
+                      {updateTopic.isLoading() ? "Saving…" : "Save"}
+                    </button>
+                    <button
+                      class="text-button"
+                      type="button"
+                      onClick={() => setEditingTopicId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                </Show>
+              </li>
+            )}
+          </For>
+        </ul>
       </section>
       <section class={styles.teamsSection} aria-labelledby="teams-title">
         <SectionHeader.Root>

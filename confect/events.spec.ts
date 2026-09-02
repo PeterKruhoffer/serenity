@@ -11,6 +11,8 @@ const EventSummary = Schema.Struct({
   teamName: Schema.String,
   title: Schema.String,
   description: Schema.String,
+  topicId: Schema.optional(Id("event_topics")),
+  topicName: Schema.optional(Schema.String),
   timezone: Schema.String,
   status: EventStatus,
   occurrenceCount: Schema.Number,
@@ -85,6 +87,11 @@ const SignupTemplate = Schema.Struct({
   fields: Schema.Array(SignupField),
 });
 
+const EventTopic = Schema.Struct({
+  id: Id("event_topics"),
+  name: Schema.String,
+});
+
 export default GroupSpec.make()
   .addFunction(
     FunctionSpec.publicQuery({
@@ -125,10 +132,54 @@ export default GroupSpec.make()
           teamId: Id("teams"),
           title: Schema.String,
           description: Schema.String,
+          topicId: Id("event_topics"),
           timezone: Schema.String,
           dates: Schema.Array(DateInput),
           signupFields: Schema.optional(Schema.Array(SignupField)),
         }),
+      returns: () => Schema.Struct({ eventId: Id("events") }),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicQuery({
+      name: "listTopics",
+      args: () => Schema.Struct({ organizationId: Id("organizations") }),
+      returns: () =>
+        Schema.Struct({
+          topics: Schema.Array(EventTopic),
+        }),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicMutation({
+      name: "createTopic",
+      args: () => Schema.Struct({ organizationId: Id("organizations"), name: Schema.String }),
+      returns: () => Schema.Struct({ topicId: Id("event_topics") }),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicMutation({
+      name: "updateTopic",
+      args: () => Schema.Struct({ topicId: Id("event_topics"), name: Schema.String }),
+      returns: () => Schema.Struct({ topicId: Id("event_topics") }),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicMutation({
+      name: "archiveTopic",
+      args: () => Schema.Struct({ topicId: Id("event_topics") }),
+      returns: () => Schema.Struct({ topicId: Id("event_topics") }),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
+    FunctionSpec.publicMutation({
+      name: "updateEventTopic",
+      args: () => Schema.Struct({ eventId: Id("events"), topicId: Id("event_topics") }),
       returns: () => Schema.Struct({ eventId: Id("events") }),
       error: () => WorkspaceError,
     }),

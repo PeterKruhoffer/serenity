@@ -5,6 +5,7 @@ export type AuditEntriesDoc = Document.Document<typeof schemaDefinition, "audit_
 export type DateDeclinesDoc = Document.Document<typeof schemaDefinition, "date_declines">;
 export type EventDatesDoc = Document.Document<typeof schemaDefinition, "event_dates">;
 export type EventRevisionsDoc = Document.Document<typeof schemaDefinition, "event_revisions">;
+export type EventTopicsDoc = Document.Document<typeof schemaDefinition, "event_topics">;
 export type EventTypeVersionsDoc = Document.Document<typeof schemaDefinition, "event_type_versions">;
 export type EventTypesDoc = Document.Document<typeof schemaDefinition, "event_types">;
 export type EventsDoc = Document.Document<typeof schemaDefinition, "events">;
@@ -27,6 +28,7 @@ export interface Docs {
   date_declines: DateDeclinesDoc;
   event_dates: EventDatesDoc;
   event_revisions: EventRevisionsDoc;
+  event_topics: EventTopicsDoc;
   event_type_versions: EventTypeVersionsDoc;
   event_types: EventTypesDoc;
   events: EventsDoc;

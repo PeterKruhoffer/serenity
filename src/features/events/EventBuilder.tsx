@@ -47,6 +47,7 @@ type EventFormState = {
   error: string | null;
   title: string;
   description: string;
+  topicId: Id<"event_topics"> | "";
   teamId: Id<"teams"> | "";
   timezone: string;
 };
@@ -75,11 +76,17 @@ const EventBuilder = (props: EventBuilderProps) => {
     () => ({ organizationId: props.organization?.id ?? ("" as Id<"organizations">) }),
     () => ({ enabled: Boolean(props.organization) }),
   );
+  const topics = useQuery(
+    api.events.listTopics,
+    () => ({ organizationId: props.organization.id }),
+    () => ({ enabled: Boolean(props.organization) }),
+  );
   const createEvent = useMutation(api.events.create);
   const [eventForm, setEventForm] = createStore<EventFormState>({
     error: null,
     title: "",
     description: "",
+    topicId: "",
     teamId: "",
     timezone: props.organization.defaultTimezone,
   });
@@ -108,6 +115,7 @@ const EventBuilder = (props: EventBuilderProps) => {
     setEventForm({
       title: "",
       description: "",
+      topicId: "",
       teamId: "",
       timezone: props.organization.defaultTimezone,
     });
@@ -164,7 +172,8 @@ const EventBuilder = (props: EventBuilderProps) => {
     event.preventDefault();
     const organization = props.organization;
     const teamId = eventForm.teamId || organization?.teams[0]?.id;
-    if (!organization || !teamId) return;
+    const topicId = eventForm.topicId;
+    if (!organization || !teamId || !topicId) return;
     setEventForm("error", null);
     try {
       const result = await createEvent.mutate({
@@ -172,6 +181,7 @@ const EventBuilder = (props: EventBuilderProps) => {
         teamId,
         title: eventForm.title,
         description: eventForm.description,
+        topicId,
         timezone: eventForm.timezone,
         dates: draftDates().map((date) => ({
           startsAt: localDateTimeToMillis(date.startsAt, eventForm.timezone),
@@ -253,6 +263,23 @@ const EventBuilder = (props: EventBuilderProps) => {
                 >
                   <For each={organization().teams}>
                     {(team) => <option value={team.id}>{team.name}</option>}
+                  </For>
+                </select>
+              </label>
+              <label>
+                <span>Topic</span>
+                <select
+                  value={eventForm.topicId}
+                  onChange={(event) =>
+                    setEventForm("topicId", event.currentTarget.value as Id<"event_topics">)
+                  }
+                  required
+                >
+                  <option value="" disabled>
+                    Choose a topic
+                  </option>
+                  <For each={topics.data()?.topics}>
+                    {(topic) => <option value={topic.id}>{topic.name}</option>}
                   </For>
                 </select>
               </label>

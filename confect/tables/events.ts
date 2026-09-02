@@ -10,6 +10,8 @@ export default Table.make(() =>
     title: Schema.String,
     slug: Schema.String,
     description: Schema.String,
+    topic: Schema.optional(Schema.String),
+    topicId: Schema.optional(Id("event_topics")),
     timezone: Schema.String,
     status: Schema.Literal("draft", "submitted", "published", "archived"),
     publishedRevisionId: Schema.optional(Id("event_revisions")),

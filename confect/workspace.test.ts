@@ -42,6 +42,11 @@ describe("workspace boundaries", () => {
       "Programs",
       "Partnerships",
     ]);
+    expect(
+      await administrator.query(api.events.listTopics, {
+        organizationId: created.organizationId,
+      }),
+    ).toEqual({ topics: [] });
 
     await administrator.mutation(api.workspace.updateDefaultTimezone, {
       organizationId: created.organizationId,

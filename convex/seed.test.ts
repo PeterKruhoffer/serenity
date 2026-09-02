@@ -17,11 +17,16 @@ describe("demo seed", () => {
       firstTeamName: "Network",
       defaultTimezone: "Europe/Copenhagen",
     });
+    const topic = await admin.mutation(api.events.createTopic, {
+      organizationId: workspace.organizationId,
+      name: "Seed topic",
+    });
     const existing = await admin.mutation(api.events.create, {
       organizationId: workspace.organizationId,
       teamId: workspace.teamId,
       title: "Existing Event",
       description: "This event must survive a demo reset.",
+      topicId: topic.topicId,
       timezone: "Europe/Copenhagen",
       dates: [
         {
@@ -52,6 +57,7 @@ describe("demo seed", () => {
     });
 
     expect(result.events).toHaveLength(10);
+    expect(result.events.every(({ topicId }) => topicId !== undefined)).toBe(true);
     expect(result.teams.map(({ name }) => name).sort()).toEqual([
       "Community",
       "Conferences",

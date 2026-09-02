@@ -20,17 +20,22 @@ const setup = async () => {
     firstTeamName: "Academy",
     defaultTimezone: "Europe/Copenhagen",
   });
-  return { t, manager, workspace };
+  const topic = await manager.mutation(api.events.createTopic, {
+    organizationId: workspace.organizationId,
+    name: "Leadership",
+  });
+  return { t, manager, workspace, topicId: topic.topicId };
 };
 
 describe("recurring event composition", () => {
   it("creates an event with dates and sessions and keeps its counts in sync", async () => {
-    const { t, manager, workspace } = await setup();
+    const { t, manager, workspace, topicId } = await setup();
     const created = await manager.mutation(api.events.create, {
       organizationId: workspace.organizationId,
       teamId: workspace.teamId,
       title: "Leadership Essentials",
       description: "A practical two-day course.",
+      topicId,
       timezone: "Europe/Copenhagen",
       dates: [
         {
@@ -58,6 +63,8 @@ describe("recurring event composition", () => {
     const detail = await manager.query(api.events.get, { eventId: created.eventId });
     expect(detail.event).toMatchObject({
       title: "Leadership Essentials",
+      topicId,
+      topicName: "Leadership",
       status: "draft",
       occurrenceCount: 2,
       sessionCount: 1,
@@ -72,7 +79,12 @@ describe("recurring event composition", () => {
       organizationId: workspace.organizationId,
     });
     expect(listed).toHaveLength(1);
-    expect(listed[0]).toMatchObject({ occurrenceCount: 2, sessionCount: 1 });
+    expect(listed[0]).toMatchObject({
+      topicId,
+      topicName: "Leadership",
+      occurrenceCount: 2,
+      sessionCount: 1,
+    });
 
     const auditActions = await t.run(async (ctx) => {
       const entries = await ctx.db
@@ -86,8 +98,80 @@ describe("recurring event composition", () => {
     expect(auditActions).toContain("event.created");
   });
 
+  it("lets administrators manage topics and updates event topic references", async () => {
+    const { manager, workspace, topicId } = await setup();
+    const createdTopic = await manager.mutation(api.events.createTopic, {
+      organizationId: workspace.organizationId,
+      name: "Governance",
+    });
+    const event = await manager.mutation(api.events.create, {
+      organizationId: workspace.organizationId,
+      teamId: workspace.teamId,
+      title: "Board Responsibilities",
+      description: "",
+      topicId: createdTopic.topicId,
+      timezone: "UTC",
+      dates: [
+        {
+          startsAt: dayOneStart,
+          endsAt: dayOneEnd,
+          venueName: "Main Hall",
+          sessions: [],
+        },
+      ],
+    });
+
+    await manager.mutation(api.events.updateTopic, {
+      topicId: createdTopic.topicId,
+      name: "Corporate governance",
+    });
+    expect((await manager.query(api.events.get, { eventId: event.eventId })).event).toMatchObject({
+      topicId: createdTopic.topicId,
+      topicName: "Corporate governance",
+    });
+
+    await manager.mutation(api.events.updateEventTopic, { eventId: event.eventId, topicId });
+    expect((await manager.query(api.events.get, { eventId: event.eventId })).event).toMatchObject({
+      topicId,
+      topicName: "Leadership",
+    });
+
+    await manager.mutation(api.events.archiveTopic, { topicId: createdTopic.topicId });
+    expect(
+      (await manager.query(api.events.listTopics, { organizationId: workspace.organizationId }))
+        .topics,
+    ).not.toContainEqual(expect.objectContaining({ id: createdTopic.topicId }));
+  });
+
+  it("lets members use topics but only administrators manage the list", async () => {
+    const { t, workspace } = await setup();
+    const memberToken = "issuer|topic-member";
+    await t.run(async (ctx) => {
+      await ctx.db.insert("organization_memberships", {
+        organizationId: workspace.organizationId,
+        identityToken: memberToken,
+        displayName: "Topic Member",
+        role: "super_user",
+        status: "active",
+        joinedAt: Date.now(),
+      });
+    });
+    const member = t.withIdentity({ tokenIdentifier: memberToken });
+
+    expect(
+      (await member.query(api.events.listTopics, { organizationId: workspace.organizationId }))
+        .topics,
+    ).toHaveLength(1);
+    await expect(
+      member.mutation(api.events.createTopic, {
+        organizationId: workspace.organizationId,
+        name: "Unauthorized topic",
+      }),
+    ).rejects.toMatchObject({ data: { _tag: "Forbidden" } });
+  });
+
   it("rejects event shapes that cannot be read back completely", async () => {
-    const { manager, workspace } = await setup();
+    const { manager, workspace, topicId } = await setup();
 
     await expect(
       manager.mutation(api.events.create, {
@@ -95,6 +179,7 @@ describe("recurring event composition", () => {
         teamId: workspace.teamId,
         title: "Oversized Program",
         description: "",
+        topicId,
         timezone: "UTC",
         dates: Array.from({ length: 101 }, (_, index) => ({
           startsAt: dayOneStart + index * 86_400_000,
@@ -106,13 +191,40 @@ describe("recurring event composition", () => {
     ).rejects.toMatchObject({ data: { _tag: "InvalidInput" } });
   });
 
+  it("rejects topics removed from the organization's picker", async () => {
+    const { manager, workspace, topicId } = await setup();
+    await manager.mutation(api.events.archiveTopic, { topicId });
+
+    await expect(
+      manager.mutation(api.events.create, {
+        organizationId: workspace.organizationId,
+        teamId: workspace.teamId,
+        title: "Unknown Topic",
+        description: "",
+        topicId,
+        timezone: "UTC",
+        dates: [
+          {
+            startsAt: dayOneStart,
+            endsAt: dayOneEnd,
+            venueName: "Main Hall",
+            sessions: [],
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({
+      data: { _tag: "InvalidInput", message: "Choose a valid event topic." },
+    });
+  });
+
   it("keeps an event's timezone when the organization default changes", async () => {
-    const { manager, workspace } = await setup();
+    const { manager, workspace, topicId } = await setup();
     const created = await manager.mutation(api.events.create, {
       organizationId: workspace.organizationId,
       teamId: workspace.teamId,
       title: "Timezone-specific Event",
       description: "",
+      topicId,
       timezone: "America/New_York",
       dates: [
         {
@@ -134,7 +246,7 @@ describe("recurring event composition", () => {
   });
 
   it("lists authorized overlapping calendar occurrences and applies team filters", async () => {
-    const { t, manager, workspace } = await setup();
+    const { t, manager, workspace, topicId } = await setup();
     const secondTeam = await manager.mutation(api.workspace.createTeam, {
       organizationId: workspace.organizationId,
       name: "Community",
@@ -152,6 +264,7 @@ describe("recurring event composition", () => {
         teamId,
         title,
         description: "",
+        topicId,
         timezone: "UTC",
         dates: [{ startsAt, endsAt, venueName: "Main Hall", sessions: [] }],
       });
@@ -264,12 +377,13 @@ describe("recurring event composition", () => {
   });
 
   it("keeps event details private from unrelated identities", async () => {
-    const { t, manager, workspace } = await setup();
+    const { t, manager, workspace, topicId } = await setup();
     const created = await manager.mutation(api.events.create, {
       organizationId: workspace.organizationId,
       teamId: workspace.teamId,
       title: "Private Program",
       description: "",
+      topicId,
       timezone: "UTC",
       dates: [
         {
@@ -288,7 +402,7 @@ describe("recurring event composition", () => {
   });
 
   it("shares organization sign-up templates with events owned by any team", async () => {
-    const { manager, workspace } = await setup();
+    const { manager, workspace, topicId } = await setup();
     const secondTeam = await manager.mutation(api.workspace.createTeam, {
       organizationId: workspace.organizationId,
       name: "Community",
@@ -331,6 +445,7 @@ describe("recurring event composition", () => {
       teamId: secondTeam.teamId,
       title: "Custom Registration Workshop",
       description: "",
+      topicId,
       timezone: "UTC",
       dates: [
         {
@@ -347,7 +462,7 @@ describe("recurring event composition", () => {
   });
 
   it("updates and deletes templates without changing forms copied into events", async () => {
-    const { manager, workspace } = await setup();
+    const { manager, workspace, topicId } = await setup();
     const originalFields = [
       {
         type: "text" as const,
@@ -368,6 +483,7 @@ describe("recurring event composition", () => {
       teamId: workspace.teamId,
       title: "Existing Event",
       description: "",
+      topicId,
       timezone: "UTC",
       dates: [
         {

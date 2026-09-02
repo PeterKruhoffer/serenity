@@ -15,8 +15,23 @@ const getIdentity = requireIdentity("Sign in to manage events.");
 const requireEvent = (eventId: GenericId<"events">, identityToken: string) =>
   requireEventAccess(eventId, identityToken).pipe(Effect.map(({ event }) => event));
 
+const requireTopicAdministrator = (
+  organizationId: GenericId<"organizations">,
+  identityToken: string,
+) =>
+  Effect.gen(function* () {
+    const membership = yield* membershipFor(organizationId, identityToken);
+    if (membership.role !== "administrator") {
+      return yield* Effect.fail(
+        new Forbidden({ message: "Only organization administrators can manage event topics." }),
+      );
+    }
+    return membership;
+  });
+
 const MAX_DATES_PER_EVENT = 100;
 const MAX_SESSIONS_PER_DATE = 100;
+const normalizedTopicName = (name: string) => name.toLocaleLowerCase();
 
 const normalizeText = (value: string, label: string, minimum: number, maximum: number) => {
   const normalized = value.trim().replace(/\s+/g, " ");
@@ -130,12 +145,18 @@ const list = FunctionImpl.make(databaseSchema, events, "list", ({ organizationId
               () => new Forbidden({ message: "The event's owning team is unavailable." }),
             ),
           );
+        const topic = event.topicId
+          ? yield* reader.table("event_topics").get(event.topicId).pipe(Effect.option)
+          : Option.none();
         return {
           id: event._id,
           teamId: event.teamId,
           teamName: team.name,
           title: event.title,
           description: event.description,
+          ...(Option.isSome(topic)
+            ? { topicId: topic.value._id, topicName: topic.value.name }
+            : {}),
           timezone: event.timezone,
           status: event.status,
           occurrenceCount: event.occurrenceCount,
@@ -161,6 +182,9 @@ const get = FunctionImpl.make(databaseSchema, events, "get", ({ eventId }) =>
           () => new Forbidden({ message: "The event's owning team is unavailable." }),
         ),
       );
+    const topic = event.topicId
+      ? yield* reader.table("event_topics").get(event.topicId).pipe(Effect.option)
+      : Option.none();
     const dates = yield* reader
       .table("event_dates")
       .index("by_eventId_and_sortOrder", (q) => q.eq("eventId", eventId))
@@ -199,6 +223,7 @@ const get = FunctionImpl.make(databaseSchema, events, "get", ({ eventId }) =>
         teamName: team.name,
         title: event.title,
         description: event.description,
+        ...(Option.isSome(topic) ? { topicId: topic.value._id, topicName: topic.value.name } : {}),
         timezone: event.timezone,
         status: event.status,
         occurrenceCount: event.occurrenceCount,
@@ -318,6 +343,170 @@ const listCalendarOccurrences = FunctionImpl.make(
         .filter((occurrence) => occurrence !== null)
         .sort((left, right) => left.startsAt - right.startsAt);
     }).pipe(Effect.catchTag("DocumentDecodeError", (error) => Effect.die(error))),
+);
+
+const listTopics = FunctionImpl.make(databaseSchema, events, "listTopics", ({ organizationId }) =>
+  Effect.gen(function* () {
+    const identity = yield* getIdentity;
+    const reader = yield* DatabaseReader;
+    yield* membershipFor(organizationId, identity.tokenIdentifier);
+    const topics = yield* reader
+      .table("event_topics")
+      .index("by_organizationId_and_status", (q) =>
+        q.eq("organizationId", organizationId).eq("status", "active"),
+      )
+      .collect();
+    return {
+      topics: topics
+        .map((topic) => ({ id: topic._id, name: topic.name }))
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    };
+  }).pipe(Effect.catchTag("DocumentDecodeError", (error) => Effect.die(error))),
+);
+
+const createTopic = FunctionImpl.make(
+  databaseSchema,
+  events,
+  "createTopic",
+  ({ organizationId, name: rawName }) =>
+    Effect.gen(function* () {
+      const identity = yield* getIdentity;
+      const reader = yield* DatabaseReader;
+      const writer = yield* DatabaseWriter;
+      yield* requireTopicAdministrator(organizationId, identity.tokenIdentifier);
+      const name = yield* normalizeText(rawName, "Topic name", 2, 80);
+      const normalizedName = normalizedTopicName(name);
+      const existing = yield* reader
+        .table("event_topics")
+        .index("by_organizationId_and_normalizedName", (q) =>
+          q.eq("organizationId", organizationId).eq("normalizedName", normalizedName),
+        )
+        .first();
+      const now = Date.now();
+      if (Option.isSome(existing)) {
+        if (existing.value.status === "active") {
+          return yield* Effect.fail(new Conflict({ message: "That event topic already exists." }));
+        }
+        yield* writer.table("event_topics").patch(existing.value._id, {
+          name,
+          status: "active",
+          updatedAt: now,
+        });
+        yield* writer.table("audit_entries").insert({
+          organizationId,
+          actorIdentity: identity.tokenIdentifier,
+          action: "event_topic.created",
+          entityType: "event_topic",
+          entityId: existing.value._id,
+          summary: `Restored event topic ${name}`,
+          occurredAt: now,
+        });
+        return { topicId: existing.value._id };
+      }
+      const topicId = yield* writer.table("event_topics").insert({
+        organizationId,
+        name,
+        normalizedName,
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+      });
+      yield* writer.table("audit_entries").insert({
+        organizationId,
+        actorIdentity: identity.tokenIdentifier,
+        action: "event_topic.created",
+        entityType: "event_topic",
+        entityId: topicId,
+        summary: `Created event topic ${name}`,
+        occurredAt: now,
+      });
+      return { topicId };
+    }).pipe(
+      Effect.catchTags({
+        DocumentDecodeError: (error) => Effect.die(error),
+        DocumentEncodeError: (error) => Effect.die(error),
+        GetByIdFailure: (error) => Effect.die(error),
+      }),
+    ),
+);
+
+const updateTopic = FunctionImpl.make(
+  databaseSchema,
+  events,
+  "updateTopic",
+  ({ topicId, name: rawName }) =>
+    Effect.gen(function* () {
+      const identity = yield* getIdentity;
+      const reader = yield* DatabaseReader;
+      const writer = yield* DatabaseWriter;
+      const topic = yield* reader
+        .table("event_topics")
+        .get(topicId)
+        .pipe(
+          Effect.mapError(() => new Forbidden({ message: "This event topic is unavailable." })),
+        );
+      yield* requireTopicAdministrator(topic.organizationId, identity.tokenIdentifier);
+      const name = yield* normalizeText(rawName, "Topic name", 2, 80);
+      const normalizedName = normalizedTopicName(name);
+      const duplicate = yield* reader
+        .table("event_topics")
+        .index("by_organizationId_and_normalizedName", (q) =>
+          q.eq("organizationId", topic.organizationId).eq("normalizedName", normalizedName),
+        )
+        .first();
+      if (Option.isSome(duplicate) && duplicate.value._id !== topicId) {
+        return yield* Effect.fail(new Conflict({ message: "That event topic already exists." }));
+      }
+      const now = Date.now();
+      yield* writer.table("event_topics").patch(topicId, { name, normalizedName, updatedAt: now });
+      yield* writer.table("audit_entries").insert({
+        organizationId: topic.organizationId,
+        actorIdentity: identity.tokenIdentifier,
+        action: "event_topic.updated",
+        entityType: "event_topic",
+        entityId: topicId,
+        summary: `Renamed event topic ${topic.name} to ${name}`,
+        occurredAt: now,
+      });
+      return { topicId };
+    }).pipe(
+      Effect.catchTags({
+        DocumentDecodeError: (error) => Effect.die(error),
+        DocumentEncodeError: (error) => Effect.die(error),
+        GetByIdFailure: (error) => Effect.die(error),
+      }),
+    ),
+);
+
+const archiveTopic = FunctionImpl.make(databaseSchema, events, "archiveTopic", ({ topicId }) =>
+  Effect.gen(function* () {
+    const identity = yield* getIdentity;
+    const reader = yield* DatabaseReader;
+    const writer = yield* DatabaseWriter;
+    const topic = yield* reader
+      .table("event_topics")
+      .get(topicId)
+      .pipe(Effect.mapError(() => new Forbidden({ message: "This event topic is unavailable." })));
+    yield* requireTopicAdministrator(topic.organizationId, identity.tokenIdentifier);
+    const now = Date.now();
+    yield* writer.table("event_topics").patch(topicId, { status: "archived", updatedAt: now });
+    yield* writer.table("audit_entries").insert({
+      organizationId: topic.organizationId,
+      actorIdentity: identity.tokenIdentifier,
+      action: "event_topic.archived",
+      entityType: "event_topic",
+      entityId: topicId,
+      summary: `Removed event topic ${topic.name}`,
+      occurredAt: now,
+    });
+    return { topicId };
+  }).pipe(
+    Effect.catchTags({
+      DocumentDecodeError: (error) => Effect.die(error),
+      DocumentEncodeError: (error) => Effect.die(error),
+      GetByIdFailure: (error) => Effect.die(error),
+    }),
+  ),
 );
 
 const listSignupTemplates = FunctionImpl.make(
@@ -638,7 +827,16 @@ const create = FunctionImpl.make(
   databaseSchema,
   events,
   "create",
-  ({ organizationId, teamId, title: rawTitle, description, timezone, dates, signupFields }) =>
+  ({
+    organizationId,
+    teamId,
+    title: rawTitle,
+    description,
+    topicId,
+    timezone,
+    dates,
+    signupFields,
+  }) =>
     Effect.gen(function* () {
       const identity = yield* getIdentity;
       const reader = yield* DatabaseReader;
@@ -666,6 +864,13 @@ const create = FunctionImpl.make(
       }
 
       const title = yield* normalizeText(rawTitle, "Event title", 2, 120);
+      const topic = yield* reader
+        .table("event_topics")
+        .get(topicId)
+        .pipe(Effect.mapError(() => new InvalidInput({ message: "Choose a valid event topic." })));
+      if (topic.organizationId !== organizationId || topic.status !== "active") {
+        return yield* Effect.fail(new InvalidInput({ message: "Choose a valid event topic." }));
+      }
       const normalizedTimezone = yield* normalizeText(timezone, "Timezone", 2, 80);
       if (!IANAZone.isValidZone(normalizedTimezone)) {
         return yield* Effect.fail(new InvalidInput({ message: "Choose a valid IANA timezone." }));
@@ -774,6 +979,7 @@ const create = FunctionImpl.make(
         title,
         slug,
         description: description.trim(),
+        topicId,
         timezone: normalizedTimezone,
         status: "draft",
         capacity: 40,
@@ -839,6 +1045,47 @@ const create = FunctionImpl.make(
       Effect.catchTags({
         DocumentDecodeError: (error) => Effect.die(error),
         DocumentEncodeError: (error) => Effect.die(error),
+      }),
+    ),
+);
+
+const updateEventTopic = FunctionImpl.make(
+  databaseSchema,
+  events,
+  "updateEventTopic",
+  ({ eventId, topicId }) =>
+    Effect.gen(function* () {
+      const identity = yield* getIdentity;
+      const reader = yield* DatabaseReader;
+      const writer = yield* DatabaseWriter;
+      const event = yield* requireEvent(eventId, identity.tokenIdentifier);
+      if (event.status !== "draft") {
+        return yield* Effect.fail(new Conflict({ message: "Only draft events can be edited." }));
+      }
+      const topic = yield* reader
+        .table("event_topics")
+        .get(topicId)
+        .pipe(Effect.mapError(() => new InvalidInput({ message: "Choose a valid event topic." })));
+      if (topic.organizationId !== event.organizationId || topic.status !== "active") {
+        return yield* Effect.fail(new InvalidInput({ message: "Choose a valid event topic." }));
+      }
+      const now = Date.now();
+      yield* writer.table("events").patch(eventId, { topicId, updatedAt: now });
+      yield* writer.table("audit_entries").insert({
+        organizationId: event.organizationId,
+        actorIdentity: identity.tokenIdentifier,
+        action: "event.topic_updated",
+        entityType: "event",
+        entityId: eventId,
+        summary: `Changed ${event.title} topic to ${topic.name}`,
+        occurredAt: now,
+      });
+      return { eventId };
+    }).pipe(
+      Effect.catchTags({
+        DocumentDecodeError: (error) => Effect.die(error),
+        DocumentEncodeError: (error) => Effect.die(error),
+        GetByIdFailure: (error) => Effect.die(error),
       }),
     ),
 );
@@ -974,11 +1221,16 @@ export default GroupImpl.make(databaseSchema, events).pipe(
   Layer.provide(list),
   Layer.provide(get),
   Layer.provide(listCalendarOccurrences),
+  Layer.provide(listTopics),
+  Layer.provide(createTopic),
+  Layer.provide(updateTopic),
+  Layer.provide(archiveTopic),
   Layer.provide(listSignupTemplates),
   Layer.provide(saveSignupTemplate),
   Layer.provide(updateSignupTemplate),
   Layer.provide(deleteSignupTemplate),
   Layer.provide(create),
+  Layer.provide(updateEventTopic),
   Layer.provide(addDate),
   Layer.provide(addSession),
   GroupImpl.finalize,

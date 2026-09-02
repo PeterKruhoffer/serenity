@@ -4,6 +4,7 @@ import audit_entries from "./tables/audit_entries";
 import date_declines from "./tables/date_declines";
 import event_dates from "./tables/event_dates";
 import event_revisions from "./tables/event_revisions";
+import event_topics from "./tables/event_topics";
 import event_type_versions from "./tables/event_type_versions";
 import event_types from "./tables/event_types";
 import events from "./tables/events";
@@ -26,6 +27,7 @@ export default $defineSchema({
   date_declines: date_declines.tableDefinition,
   event_dates: event_dates.tableDefinition,
   event_revisions: event_revisions.tableDefinition,
+  event_topics: event_topics.tableDefinition,
   event_type_versions: event_type_versions.tableDefinition,
   event_types: event_types.tableDefinition,
   events: events.tableDefinition,

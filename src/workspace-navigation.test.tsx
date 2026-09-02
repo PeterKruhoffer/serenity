@@ -61,6 +61,8 @@ beforeEach(() => {
             id: "event-id",
             title: "Leadership essentials",
             description: "A focused leadership program",
+            topicId: "leadership-topic-id",
+            topicName: "Leadership",
             status: "draft",
             teamId: "team-id",
             teamName: "Events team",
@@ -103,12 +105,21 @@ beforeEach(() => {
             ],
           },
         ]);
+      case "events:listTopics":
+        return queryResult({
+          topics: [
+            { id: "leadership-topic-id", name: "Leadership" },
+            { id: "law-topic-id", name: "Law" },
+          ],
+        });
       case "events:get":
         return queryResult({
           event: {
             id: "event-id",
             title: "Leadership essentials",
             description: "A focused leadership program",
+            topicId: "leadership-topic-id",
+            topicName: "Leadership",
             status: "draft",
             teamId: "team-id",
             teamName: "Events team",
@@ -158,6 +169,41 @@ describe("signed-in workspace navigation", () => {
     expect(document.documentElement.dataset.theme).toBe("nocturne");
     expect(window.localStorage.getItem("serenity-theme")).toBe("nocturne");
     expect(nocturne?.getAttribute("aria-pressed")).toBe("true");
+
+    expect(host.querySelector('input[placeholder="New topic"]')).toBeTruthy();
+    expect(host.textContent).toContain("Leadership");
+    expect(host.textContent).toContain("Law");
+    Array.from(host.querySelectorAll("button"))
+      .find((button) => button.textContent === "Rename")
+      ?.click();
+    expect(host.querySelector<HTMLInputElement>('input[aria-label="Topic name"]')?.value).toBe(
+      "Leadership",
+    );
+  });
+
+  it("uses the organization topic picker when editing a draft event", async () => {
+    window.history.replaceState({}, "", "/events/event-id");
+    const host = document.createElement("div");
+    document.body.append(host);
+    disposers.push(
+      render(
+        () => (
+          <Router>
+            <SerenityRoutes />
+          </Router>
+        ),
+        host,
+      ),
+    );
+
+    await vi.waitFor(() => expect(host.textContent).toContain("Save topic"));
+    const topicPicker = Array.from(host.querySelectorAll("label")).find(
+      (label) => label.querySelector(":scope > span")?.textContent === "Topic",
+    );
+    const select = topicPicker?.querySelector<HTMLSelectElement>("select");
+    expect(select?.value).toBe("leadership-topic-id");
+    expect(Array.from(select?.options ?? []).map((option) => option.text)).toContain("Law");
+    expect(topicPicker?.querySelector("input")).toBeNull();
   });
 
   it("opens the global command palette and routes actions without creating anything", async () => {
@@ -201,6 +247,13 @@ describe("signed-in workspace navigation", () => {
     await vi.waitFor(() => expect(window.location.pathname).toBe("/events/new"));
     await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
     await vi.waitFor(() => expect(host.textContent).toContain("Create an event"));
+    const topicPicker = Array.from(host.querySelectorAll("label")).find(
+      (label) => label.querySelector(":scope > span")?.textContent === "Topic",
+    );
+    expect(topicPicker?.querySelector("select[required]")).toBeTruthy();
+    expect(topicPicker?.querySelector("input")).toBeNull();
+    expect(topicPicker?.textContent).toContain("Leadership");
+    expect(topicPicker?.textContent).toContain("Law");
   });
 
   it("supports palette accelerators and global key sequences without intercepting typing", async () => {

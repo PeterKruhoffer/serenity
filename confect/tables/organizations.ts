@@ -7,6 +7,7 @@ export default Table.make(() =>
     slug: Schema.String,
     defaultTimezone: Schema.String,
     status: Schema.Literal("active", "archived"),
+    topicsInitialized: Schema.optional(Schema.Boolean),
     createdByIdentity: Schema.String,
     createdAt: Schema.Number,
     updatedAt: Schema.Number,

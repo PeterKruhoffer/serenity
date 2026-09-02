@@ -22,6 +22,7 @@ type OrganizationRole = "administrator" | "super_user" | "event_manager";
 type EventEditorState = {
   error: string | null;
   selectedDateId: Id<"event_dates"> | null;
+  topicId: Id<"event_topics"> | null;
   newDate: { startsAt: string; endsAt: string; venueName: string };
   session: { title: string; startsAt: string; endsAt: string; roomName: string };
 };
@@ -52,13 +53,20 @@ const EventsPage = () => {
     () => ({ organizationId: activeOrganization()?.id ?? ("" as Id<"organizations">) }),
     () => ({ enabled: canReviewRevisions(activeOrganization()?.role) }),
   );
+  const topics = useQuery(
+    api.events.listTopics,
+    () => ({ organizationId: activeOrganization()?.id ?? ("" as Id<"organizations">) }),
+    () => ({ enabled: Boolean(activeOrganization()) }),
+  );
   const addEventDate = useMutation(api.events.addDate);
   const addSession = useMutation(api.events.addSession);
+  const updateEventTopic = useMutation(api.events.updateEventTopic);
   const submitRevision = useMutation(api.publication.submit);
   const startDraft = useMutation(api.publication.startDraft);
   const [editor, setEditor] = createStore<EventEditorState>({
     error: null,
     selectedDateId: null,
+    topicId: null,
     newDate: { startsAt: "", endsAt: "", venueName: "" },
     session: { title: "", startsAt: "", endsAt: "", roomName: "" },
   });
@@ -141,6 +149,19 @@ const EventsPage = () => {
     }
   };
 
+  const handleTopicUpdate = async (event: SubmitEvent, eventId: Id<"events">) => {
+    event.preventDefault();
+    const topicId = editor.topicId ?? eventDetail.data()?.event.topicId;
+    if (!topicId) return;
+    setEditor("error", null);
+    try {
+      await updateEventTopic.mutate({ eventId, topicId });
+      setEditor("topicId", null);
+    } catch (error) {
+      setEditor("error", convexErrorMessage(error));
+    }
+  };
+
   return (
     <>
       <Page.Root labelledBy="events-title">
@@ -148,7 +169,10 @@ const EventsPage = () => {
           organization={activeOrganization()!}
           open={location.pathname === "/events/new"}
           onOpenChange={(builderOpen) => navigate(builderOpen ? "/events/new" : "/events")}
-          onSuccess={(eventId) => navigate(`/events/${eventId}`)}
+          onSuccess={(eventId) => {
+            setEditor({ error: null, selectedDateId: null, topicId: null });
+            navigate(`/events/${eventId}`);
+          }}
         >
           <Page.Eyebrow>Event operations</Page.Eyebrow>
           <Page.Title id="events-title">
@@ -201,6 +225,9 @@ const EventsPage = () => {
                     <div class={styles.eventMeta}>
                       <StatusBadge status={detail().event.status} />
                       <span>{detail().event.teamName}</span>
+                      <Show when={detail().event.topicName}>
+                        {(topicName) => <span>{topicName()}</span>}
+                      </Show>
                     </div>
                     <h2>{detail().event.title}</h2>
                     <p>{detail().event.description || "No description yet."}</p>
@@ -231,6 +258,7 @@ const EventsPage = () => {
                       type="button"
                       onClick={() => {
                         setEditor("selectedDateId", null);
+                        setEditor("topicId", null);
                         navigate("/events");
                       }}
                     >
@@ -238,6 +266,38 @@ const EventsPage = () => {
                     </button>
                   </div>
                 </div>
+
+                <Show when={detail().event.status === "draft"}>
+                  <form
+                    class={styles.topicForm}
+                    onSubmit={(event) => handleTopicUpdate(event, detail().event.id)}
+                  >
+                    <label>
+                      <span>Topic</span>
+                      <select
+                        value={editor.topicId ?? detail().event.topicId ?? ""}
+                        onChange={(event) =>
+                          setEditor("topicId", event.currentTarget.value as Id<"event_topics">)
+                        }
+                        required
+                      >
+                        <option value="" disabled>
+                          Choose a topic
+                        </option>
+                        <For each={topics.data()?.topics}>
+                          {(topic) => <option value={topic.id}>{topic.name}</option>}
+                        </For>
+                      </select>
+                    </label>
+                    <button
+                      class={`secondary-button compact-button ${styles.inverseButton}`}
+                      type="submit"
+                      disabled={updateEventTopic.isLoading()}
+                    >
+                      {updateEventTopic.isLoading() ? "Saving…" : "Save topic"}
+                    </button>
+                  </form>
+                </Show>
 
                 <Show when={detail().event.status === "published"}>
                   <section
@@ -469,13 +529,16 @@ const EventsPage = () => {
                   classList={{ [styles.isSelected]: selectedEventId() === event.id }}
                   type="button"
                   onClick={() => {
-                    setEditor({ error: null, selectedDateId: null });
+                    setEditor({ error: null, selectedDateId: null, topicId: null });
                     navigate(`/events/${event.id}`);
                   }}
                 >
                   <div class={styles.eventCardTopline}>
                     <StatusBadge status={event.status} />
-                    <span>{event.teamName}</span>
+                    <span>
+                      {event.teamName}
+                      <Show when={event.topicName}>{(topicName) => <> · {topicName()}</>}</Show>
+                    </span>
                   </div>
                   <h3>{event.title}</h3>
                   <p>{event.description || "No description yet."}</p>

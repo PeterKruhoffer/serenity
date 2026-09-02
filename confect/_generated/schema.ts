@@ -4,6 +4,7 @@ import audit_entries from "./tables/audit_entries";
 import date_declines from "./tables/date_declines";
 import event_dates from "./tables/event_dates";
 import event_revisions from "./tables/event_revisions";
+import event_topics from "./tables/event_topics";
 import event_type_versions from "./tables/event_type_versions";
 import event_types from "./tables/event_types";
 import events from "./tables/events";
@@ -26,6 +27,7 @@ const databaseSchema: $DatabaseSchema.DatabaseSchema<
   typeof date_declines |
   typeof event_dates |
   typeof event_revisions |
+  typeof event_topics |
   typeof event_type_versions |
   typeof event_types |
   typeof events |
@@ -47,6 +49,7 @@ const databaseSchema: $DatabaseSchema.DatabaseSchema<
   date_declines,
   event_dates,
   event_revisions,
+  event_topics,
   event_type_versions,
   event_types,
   events,

@@ -11,6 +11,10 @@
   padding-top: 52px;
 }
 
+.topicsSection {
+  padding-top: 52px;
+}
+
 .teamsSection {
   max-width: 1088px;
   padding-top: 52px;
@@ -147,6 +151,41 @@
   min-height: 40px;
 }
 
+.topicList {
+  max-width: 620px;
+  max-height: 336px;
+  margin: 20px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  list-style: none;
+}
+
+.topicList > li {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--ritual-ink);
+  border-bottom: 1px solid var(--ritual-line-soft);
+  font-size: 13px;
+}
+
+.topicList > li > div {
+  display: flex;
+  gap: 12px;
+}
+
+.topicEditForm {
+  width: 100%;
+  padding-block: 8px;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
 .teamGrid {
   margin-top: 22px;
   display: grid;
@@ -231,7 +270,8 @@
 
 @media (max-width: 600px) {
   .inlineForm,
-  .timezoneForm {
+  .timezoneForm,
+  .topicEditForm {
     grid-template-columns: 1fr;
   }
 }

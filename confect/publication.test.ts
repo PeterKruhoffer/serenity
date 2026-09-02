@@ -23,6 +23,10 @@ const setupSubmission = async (
     firstTeamName: "Programs",
     defaultTimezone: "UTC",
   });
+  const topic = await author.mutation(api.events.createTopic, {
+    organizationId: workspace.organizationId,
+    name: "Safety",
+  });
   await t.run(async (ctx) => {
     await ctx.db.insert("organization_memberships", {
       organizationId: workspace.organizationId,
@@ -49,6 +53,7 @@ const setupSubmission = async (
     teamId: workspace.teamId,
     title: "Safety in Practice",
     description: "A complete publication workflow.",
+    topicId: topic.topicId,
     timezone: "UTC",
     dates: [{ startsAt, endsAt, venueName: "Learning Center", sessions: [] }],
   });

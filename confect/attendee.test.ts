@@ -42,11 +42,16 @@ const publishedEvent = async (signupFields: SignupField[] = []) => {
       joinedAt: Date.now(),
     });
   });
+  const topic = await manager.mutation(api.events.createTopic, {
+    organizationId: workspace.organizationId,
+    name: "Community",
+  });
   const event = await manager.mutation(api.events.create, {
     organizationId: workspace.organizationId,
     teamId: workspace.teamId,
     title: "Autumn Supper",
     description: "A relaxed evening around one shared table.",
+    topicId: topic.topicId,
     timezone: "Europe/Copenhagen",
     dates: [{ startsAt, endsAt, venueName: "The Glasshouse", sessions: [] }],
     signupFields,

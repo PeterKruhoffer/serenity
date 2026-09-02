@@ -218,6 +218,15 @@ const seedDemoData = async (
     roomName,
   });
 
+  const activeTopics = await ctx.db
+    .query("event_topics")
+    .withIndex("by_organizationId_and_status", (q) =>
+      q.eq("organizationId", organizationId).eq("status", "active"),
+    )
+    .take(1);
+  const topicId = activeTopics[0]?._id;
+  if (!topicId) throw new Error("Add at least one event topic before seeding demo events.");
+
   const teamIds = {
     network: await ensureTeam(ctx, organizationId, "Network", "network", now),
     course: await ensureTeam(ctx, organizationId, "Course", "course", now),
@@ -427,6 +436,7 @@ const seedDemoData = async (
       title: event.title,
       slug: event.slug,
       description: event.description,
+      topicId,
       timezone: event.timezone ?? organization.defaultTimezone,
       status: event.status === "archived" ? "archived" : event.status,
       capacity: event.capacity,

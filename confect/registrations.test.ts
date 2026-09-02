@@ -30,11 +30,16 @@ const publishedEvent = async (autoAccept: boolean) => {
       joinedAt: Date.now(),
     });
   });
+  const topic = await manager.mutation(api.events.createTopic, {
+    organizationId: workspace.organizationId,
+    name: "Courses",
+  });
   const event = await manager.mutation(api.events.create, {
     organizationId: workspace.organizationId,
     teamId: workspace.teamId,
     title: autoAccept ? "Automatic Course" : "Reviewed Course",
     description: "Registration behavior",
+    topicId: topic.topicId,
     timezone: "UTC",
     dates: [{ startsAt, endsAt, venueName: "Main Hall", sessions: [] }],
   });

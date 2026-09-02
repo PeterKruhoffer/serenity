@@ -425,6 +425,31 @@
   font-size: 10px;
 }
 
+.topicForm {
+  margin-top: 24px;
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+
+.topicForm label {
+  width: min(100%, 320px);
+  display: grid;
+  gap: 7px;
+}
+
+.topicForm label > span {
+  color: var(--ritual-panel-muted);
+  font-size: 9px;
+}
+
+.topicForm select {
+  min-height: 40px;
+  color: var(--ritual-panel-ink);
+  background: var(--ritual-input);
+  border-bottom-color: rgb(255 255 255 / 22%);
+}
+
 .dateForm {
   margin-top: 30px;
   padding: 18px;
@@ -698,6 +723,11 @@
 @media (max-width: 600px) {
   .eventDetailActions {
     flex-wrap: wrap;
+  }
+
+  .topicForm {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

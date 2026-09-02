@@ -120,7 +120,7 @@ export const buildCommandCatalog = (
     kind: "event",
     label: event.title,
     description: `${event.teamName} · ${event.status}`,
-    keywords: [event.description, event.teamName, event.status],
+    keywords: [event.description, event.teamName, event.status, event.topicName ?? ""],
     href: `/events/${event.id}`,
     icon: "◇",
   }));
