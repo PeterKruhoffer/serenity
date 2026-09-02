@@ -37,7 +37,7 @@
 
 .signupFieldCard {
   position: relative;
-  padding: 18px 0;
+  padding: 18px;
   background: var(--ritual-card);
   border: 0;
   border-bottom: 1px solid var(--ritual-line);
@@ -178,6 +178,7 @@
 
 .signupSectionDivider input {
   min-height: 38px;
+  padding-inline: 8px;
   color: #34402f;
   background: rgb(255 255 255 / 70%);
   font-family: Georgia, "Times New Roman", serif;
@@ -229,11 +230,17 @@
 }
 
 .signupFieldEditor {
-  margin-top: 14px;
+  margin: 14px 0 0 40px;
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr) auto;
   align-items: end;
   gap: 12px;
+}
+
+.signupFieldEditor input:not([type="checkbox"]),
+.signupFieldEditor select,
+.signupOptions input {
+  padding-inline: 8px;
 }
 
 .signupFieldEditor .requiredToggle {
@@ -249,7 +256,7 @@
 }
 
 .signupOptions {
-  margin-top: 14px;
+  margin: 14px 0 0 40px;
   padding-top: 14px;
   display: grid;
   gap: 8px;

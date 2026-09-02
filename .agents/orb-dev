@@ -23,8 +23,9 @@ const registrations = [
 ];
 
 for (const registration of registrations) {
+  const url = `https://api.workos.com/user_management/${registration.endpoint}`;
   const response = await fetch(
-    `https://api.workos.com/user_management/${registration.endpoint}`,
+    url,
     {
       method: "POST",
       headers: {
@@ -37,7 +38,17 @@ for (const registration of registrations) {
 
   if (!response.ok) {
     const body = await response.text();
-    const alreadyRegistered = response.status === 422 && body.includes("already exists");
+    let alreadyRegistered = false;
+
+    if ((response.status === 409 || response.status === 422) && body.includes("already exists")) {
+      const listResponse = await fetch(url, {
+        headers: { Authorization: `Bearer ${process.env.WORKOS_API_KEY}` },
+      });
+      const list = listResponse.ok ? await listResponse.json() : null;
+      alreadyRegistered = list?.data?.some(
+        (entry) => entry.uri === registration.value || entry.origin === registration.value,
+      );
+    }
 
     if (!alreadyRegistered) {
       throw new Error(
