@@ -311,7 +311,7 @@
 .sequenceHint {
   position: fixed;
   z-index: 90;
-  right: 20px;
+  left: 50%;
   bottom: 20px;
   max-width: calc(100vw - 40px);
   padding: 8px;
@@ -325,6 +325,7 @@
   border-radius: 0;
   box-shadow: 0 12px 38px rgb(23 29 20 / 16%);
   font-size: 10px;
+  transform: translateX(-50%);
 }
 
 .sequenceHint > kbd {
