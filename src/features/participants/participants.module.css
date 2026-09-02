@@ -5,11 +5,12 @@
 }
 
 .participantsLayout {
+  max-width: 1404px;
   margin-top: 38px;
   display: grid;
-  grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.6fr);
+  grid-template-columns: minmax(360px, 620px) minmax(0, 720px);
   align-items: start;
-  gap: 18px;
+  gap: 64px;
 }
 
 .participantEventPicker {

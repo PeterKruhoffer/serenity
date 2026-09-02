@@ -16,14 +16,17 @@
 }
 
 .templatesSection {
+  max-width: 1456px;
   padding-top: 46px;
 }
 
 .templateGrid {
   margin-top: 22px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 28px;
+  grid-template-columns: repeat(2, minmax(0, 680px));
+  justify-content: start;
+  column-gap: 96px;
+  row-gap: 48px;
 }
 
 .templateCard {

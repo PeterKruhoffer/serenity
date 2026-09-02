@@ -69,7 +69,9 @@
 }
 
 .workspaceLayout {
+  width: calc(100vw - 36px);
   min-height: 650px;
+  margin-inline: calc((100% - 100vw + 36px) / 2);
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);
   gap: clamp(32px, 5vw, 72px);
@@ -166,6 +168,8 @@
 
 @media (max-width: 600px) {
   .workspaceLayout {
+    width: auto;
+    margin-inline: 0;
     grid-template-columns: 1fr;
   }
 }
