@@ -97,14 +97,6 @@ p {
   margin-top: 0;
 }
 
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--ritual-muted);
-  font-size: 12px;
-}
-
 .text-button {
   padding: 8px 0;
   color: var(--ritual-muted);
@@ -352,10 +344,6 @@ textarea:focus {
 }
 
 @media (max-width: 600px) {
-  .status {
-    font-size: 0;
-  }
-
   .form-grid {
     grid-template-columns: 1fr;
   }

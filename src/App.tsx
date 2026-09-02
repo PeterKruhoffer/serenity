@@ -16,15 +16,7 @@ const App: Component<{ children?: JSX.Element }> = (props) => {
           </span>
           <span>Serenity</span>
         </a>
-        <Show
-          when={auth.isAuthenticated()}
-          fallback={
-            <span class="status">
-              <span class={styles.statusDot} aria-hidden="true" />
-              Secure workspace
-            </span>
-          }
-        >
+        <Show when={auth.isAuthenticated()}>
           <div class={styles.accountSummary} aria-label={`Signed in as ${signedInName()}`}>
             <span class={styles.headerAvatar} aria-hidden="true">
               {signedInName().slice(0, 1).toUpperCase()}
