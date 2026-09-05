@@ -1,0 +1,241 @@
+.section {
+  padding-top: 52px;
+}
+
+.description,
+.empty {
+  max-width: 700px;
+  margin: 16px 0 0;
+  color: var(--ritual-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.form {
+  max-width: 760px;
+  margin-top: 22px;
+  padding: 20px;
+  display: grid;
+  gap: 18px;
+  background: var(--ritual-card);
+  border: 1px solid var(--ritual-line);
+}
+
+.form > label,
+.form fieldset {
+  display: grid;
+  gap: 8px;
+}
+
+.form > label > span,
+.form legend {
+  color: var(--ritual-muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.form fieldset {
+  padding: 0;
+  border: 0;
+}
+
+.eventOptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 20px;
+}
+
+.eventOptions label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ritual-ink);
+  font-size: 12px;
+}
+
+.eventOptions input {
+  width: 15px;
+  height: 15px;
+  min-height: 0;
+  margin: 0;
+  flex: 0 0 15px;
+  accent-color: var(--ritual-ink);
+}
+
+.secret {
+  max-width: 760px;
+  margin-top: 18px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  background: var(--ritual-ink);
+  color: var(--ritual-inverse);
+}
+
+.secret p {
+  margin: 4px 0 0;
+  color: var(--ritual-subtle);
+  font-size: 11px;
+}
+
+.secret code {
+  max-width: 280px;
+  padding: 8px;
+  overflow: auto;
+  background: rgb(255 255 255 / 8%);
+  font-size: 11px;
+}
+
+.dismiss,
+.deleteButton {
+  padding: 4px 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.dismiss {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.notice {
+  max-width: 760px;
+  margin: 16px 0 0;
+  color: var(--ritual-ink);
+  font-size: 12px;
+}
+
+.endpointList {
+  max-width: 900px;
+  margin-top: 22px;
+  display: grid;
+  gap: 12px;
+}
+
+.endpointCard {
+  padding: 18px 0;
+  border-block: 1px solid var(--ritual-line-soft);
+}
+
+.endpointHeading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.endpointHeading > div {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.endpointHeading code {
+  overflow: hidden;
+  color: var(--ritual-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.endpointCard > p {
+  margin: 12px 0 0;
+  color: var(--ritual-muted);
+  font-size: 11px;
+}
+
+.endpointCard .failure {
+  color: var(--ritual-warning);
+}
+
+.actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.deleteButton {
+  margin-left: auto;
+  color: var(--ritual-warning);
+}
+
+.active,
+.disabled,
+.pending,
+.attempting,
+.delivered,
+.failed {
+  color: var(--ritual-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.active,
+.delivered {
+  color: var(--ritual-success);
+}
+
+.failed {
+  color: var(--ritual-warning);
+}
+
+.deliveries {
+  max-width: 900px;
+  margin-top: 30px;
+}
+
+.deliveries h3 {
+  margin: 0 0 10px;
+  font-family: var(--ritual-display);
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.deliveryRow {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 100px 100px auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--ritual-line-soft);
+  font-size: 11px;
+}
+
+.deliveryRow > div {
+  display: grid;
+  gap: 3px;
+}
+
+.deliveryRow > div span,
+.deliveryRow > span {
+  color: var(--ritual-muted);
+}
+
+@media (max-width: 700px) {
+  .eventOptions {
+    grid-template-columns: 1fr;
+  }
+
+  .secret {
+    grid-template-columns: 1fr;
+  }
+
+  .dismiss {
+    grid-column: auto;
+  }
+
+  .deliveryRow {
+    padding: 10px 0;
+    grid-template-columns: 1fr auto;
+  }
+}

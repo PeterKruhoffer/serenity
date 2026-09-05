@@ -9,11 +9,14 @@
  */
 
 import type * as attendee from "../attendee.js";
+import type * as crons from "../crons.js";
 import type * as events from "../events.js";
 import type * as http from "../http.js";
 import type * as publication from "../publication.js";
 import type * as registrations from "../registrations.js";
 import type * as seed from "../seed.js";
+import type * as webhookDelivery from "../webhookDelivery.js";
+import type * as webhooks from "../webhooks.js";
 import type * as workspace from "../workspace.js";
 
 import type {
@@ -24,11 +27,14 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   attendee: typeof attendee;
+  crons: typeof crons;
   events: typeof events;
   http: typeof http;
   publication: typeof publication;
   registrations: typeof registrations;
   seed: typeof seed;
+  webhookDelivery: typeof webhookDelivery;
+  webhooks: typeof webhooks;
   workspace: typeof workspace;
 }>;
 

@@ -21,6 +21,10 @@ import signup_form_fields from "./tables/signup_form_fields";
 import signup_form_templates from "./tables/signup_form_templates";
 import team_memberships from "./tables/team_memberships";
 import teams from "./tables/teams";
+import webhook_deliveries from "./tables/webhook_deliveries";
+import webhook_delivery_attempts from "./tables/webhook_delivery_attempts";
+import webhook_endpoints from "./tables/webhook_endpoints";
+import webhook_events from "./tables/webhook_events";
 
 const databaseSchema: $DatabaseSchema.DatabaseSchema<
   typeof audit_entries |
@@ -43,7 +47,11 @@ const databaseSchema: $DatabaseSchema.DatabaseSchema<
   typeof signup_form_fields |
   typeof signup_form_templates |
   typeof team_memberships |
-  typeof teams
+  typeof teams |
+  typeof webhook_deliveries |
+  typeof webhook_delivery_attempts |
+  typeof webhook_endpoints |
+  typeof webhook_events
 > = $DatabaseSchema.make({
   audit_entries,
   date_declines,
@@ -66,6 +74,10 @@ const databaseSchema: $DatabaseSchema.DatabaseSchema<
   signup_form_templates,
   team_memberships,
   teams,
+  webhook_deliveries,
+  webhook_delivery_attempts,
+  webhook_endpoints,
+  webhook_events,
 });
 
 export default databaseSchema;

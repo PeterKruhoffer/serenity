@@ -11,6 +11,7 @@ import { TimezoneTypeahead } from "../../components/timezone-typeahead";
 import { convexErrorMessage } from "../../lib/convex-error-message";
 import { applyTheme, readTheme, type Theme } from "../../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
+import WebhooksSettings from "./WebhooksSettings";
 
 export default function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -364,6 +365,7 @@ export default function SettingsPage() {
           </For>
         </div>
       </section>
+      <WebhooksSettings />
     </Page.Root>
   );
 }

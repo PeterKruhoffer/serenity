@@ -2,10 +2,11 @@ import { FunctionImpl, GroupImpl } from "@confect/server";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import databaseSchema from "./_generated/schema";
-import { DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { DatabaseReader, DatabaseWriter, MutationCtx } from "./_generated/services";
 import { membershipFor, requireEventAccess, requireIdentity } from "./access";
 import publication from "./publication.spec";
 import { Conflict, Forbidden, InvalidInput } from "./workspace.spec";
+import { emitPublishedEventWebhook } from "./webhookEvents";
 
 const getIdentity = requireIdentity("Sign in to manage publication.");
 
@@ -246,6 +247,7 @@ const submit = FunctionImpl.make(databaseSchema, publication, "submit", ({ event
 const approve = FunctionImpl.make(databaseSchema, publication, "approve", ({ revisionId, note }) =>
   Effect.gen(function* () {
     const identity = yield* getIdentity;
+    const ctx = yield* MutationCtx;
     const reader = yield* DatabaseReader;
     const writer = yield* DatabaseWriter;
     const revision = yield* reader
@@ -289,6 +291,7 @@ const approve = FunctionImpl.make(databaseSchema, publication, "approve", ({ rev
       summary: `Approved ${revision.title} as published version ${publishedVersion}`,
       occurredAt: now,
     });
+    yield* Effect.promise(() => emitPublishedEventWebhook(ctx, event._id, now));
     return { publishedVersion };
   }).pipe(
     Effect.catchTags({

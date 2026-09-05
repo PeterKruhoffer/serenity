@@ -21,6 +21,10 @@ import signup_form_fields from "./tables/signup_form_fields";
 import signup_form_templates from "./tables/signup_form_templates";
 import team_memberships from "./tables/team_memberships";
 import teams from "./tables/teams";
+import webhook_deliveries from "./tables/webhook_deliveries";
+import webhook_delivery_attempts from "./tables/webhook_delivery_attempts";
+import webhook_endpoints from "./tables/webhook_endpoints";
+import webhook_events from "./tables/webhook_events";
 
 export default $defineSchema({
   audit_entries: audit_entries.tableDefinition,
@@ -44,4 +48,8 @@ export default $defineSchema({
   signup_form_templates: signup_form_templates.tableDefinition,
   team_memberships: team_memberships.tableDefinition,
   teams: teams.tableDefinition,
+  webhook_deliveries: webhook_deliveries.tableDefinition,
+  webhook_delivery_attempts: webhook_delivery_attempts.tableDefinition,
+  webhook_endpoints: webhook_endpoints.tableDefinition,
+  webhook_events: webhook_events.tableDefinition,
 });

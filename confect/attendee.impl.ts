@@ -9,6 +9,7 @@ import type { DataModel, Doc, Id } from "../convex/_generated/dataModel";
 import databaseSchema from "./_generated/schema";
 import { MutationCtx, QueryCtx } from "./_generated/services";
 import { InvalidInput } from "./workspace.spec";
+import { emitRegistrationWebhook } from "./webhookEvents";
 
 const signupRateLimiter = new RateLimiter(components.rateLimiter, {
   publicRegistrationByAttendee: { kind: "fixed window", rate: 5, period: MINUTE },
@@ -409,6 +410,7 @@ const register = FunctionImpl.make(
               paymentStatus: "not_required",
               registeredAt: now,
               updatedAt: now,
+              webhookVersion: 1,
               ...(status === "accepted" ? { acceptedAt: now } : {}),
             });
         if (existing) {
@@ -418,6 +420,7 @@ const register = FunctionImpl.make(
             updatedAt: now,
             withdrawnAt: undefined,
             acceptedAt: status === "accepted" ? now : undefined,
+            webhookVersion: (existing.webhookVersion ?? 1) + 1,
           });
           const previousAnswers = await ctx.db
             .query("registration_answers")
@@ -456,6 +459,7 @@ const register = FunctionImpl.make(
           summary: `Registered ${displayName} for ${revision.title} as ${status}`,
           occurredAt: now,
         });
+        await emitRegistrationWebhook(ctx, "registration.created", registrationId, now);
         return { registrationId, status };
       });
     }),
@@ -485,7 +489,9 @@ const withdraw = FunctionImpl.make(
           status: "withdrawn",
           withdrawnAt: now,
           updatedAt: now,
+          webhookVersion: (registration.webhookVersion ?? 1) + 1,
         });
+        await emitRegistrationWebhook(ctx, "registration.withdrawn", registration._id, now);
         if (registration.status === "accepted") {
           const next = await ctx.db
             .query("registrations")
@@ -498,7 +504,9 @@ const withdraw = FunctionImpl.make(
               status: "accepted",
               acceptedAt: now,
               updatedAt: now,
+              webhookVersion: (next.webhookVersion ?? 1) + 1,
             });
+            await emitRegistrationWebhook(ctx, "registration.accepted", next._id, now);
           }
           await ctx.db.patch(event._id, {
             acceptedCount:

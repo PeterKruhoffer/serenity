@@ -6,6 +6,7 @@ import { render } from "solid-js/web";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 const convex = vi.hoisted(() => ({
+  useAction: vi.fn(),
   useMutation: vi.fn(),
   useQuery: vi.fn(),
 }));
@@ -39,6 +40,7 @@ beforeEach(() => {
   window.scrollTo = vi.fn();
   window.localStorage.clear();
   document.documentElement.removeAttribute("data-theme");
+  convex.useAction.mockReturnValue({ isLoading: () => false, mutate: vi.fn() });
   convex.useMutation.mockReturnValue({ isLoading: () => false, mutate: vi.fn() });
   convex.useQuery.mockImplementation((reference: FunctionReference<"query">) => {
     switch (getFunctionName(reference)) {
@@ -72,6 +74,8 @@ beforeEach(() => {
         ]);
       case "publication:listPending":
       case "registrations:list":
+      case "webhooks:listEndpoints":
+      case "webhooks:listDeliveries":
         return queryResult([]);
       case "events:listCalendarOccurrences":
         return queryResult([
@@ -204,6 +208,32 @@ describe("signed-in workspace navigation", () => {
     expect(select?.value).toBe("leadership-topic-id");
     expect(Array.from(select?.options ?? []).map((option) => option.text)).toContain("Law");
     expect(topicPicker?.querySelector("input")).toBeNull();
+  });
+
+  it("shows the administrator webhook endpoint form", async () => {
+    window.history.replaceState({}, "", "/settings");
+    const host = document.createElement("div");
+    document.body.append(host);
+    disposers.push(
+      render(
+        () => (
+          <Router>
+            <SerenityRoutes />
+          </Router>
+        ),
+        host,
+      ),
+    );
+
+    await vi.waitFor(() => expect(host.textContent).toContain("Webhooks"));
+    const addEndpoint = Array.from(host.querySelectorAll("button")).find(
+      (button) => button.textContent?.trim() === "Add endpoint",
+    );
+    addEndpoint?.click();
+
+    expect(host.querySelector('input[type="url"]')).toBeTruthy();
+    expect(host.querySelectorAll('input[type="checkbox"]')).toHaveLength(6);
+    expect(host.textContent).toContain("Create disabled endpoint");
   });
 
   it("opens the global command palette and routes actions without creating anything", async () => {

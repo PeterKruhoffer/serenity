@@ -4,9 +4,10 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import databaseSchema from "./_generated/schema";
-import { DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { DatabaseReader, DatabaseWriter, MutationCtx } from "./_generated/services";
 import { requireEventAccess as requireEventAccessPolicy, requireIdentity } from "./access";
 import registrations from "./registrations.spec";
+import { emitRegistrationWebhook } from "./webhookEvents";
 import { Conflict, Forbidden, InvalidInput } from "./workspace.spec";
 
 const getIdentity = requireIdentity("Sign in to manage registrations.");
@@ -141,6 +142,7 @@ const configure = FunctionImpl.make(
 const register = FunctionImpl.make(databaseSchema, registrations, "register", (args) =>
   Effect.gen(function* () {
     const identity = yield* getIdentity;
+    const ctx = yield* MutationCtx;
     const reader = yield* DatabaseReader;
     const writer = yield* DatabaseWriter;
     const event = yield* requireEventAccess(args.eventId, identity.tokenIdentifier);
@@ -212,6 +214,7 @@ const register = FunctionImpl.make(databaseSchema, registrations, "register", (a
       paymentStatus: args.paymentStatus,
       registeredAt: now,
       updatedAt: now,
+      webhookVersion: 1,
       ...(status === "accepted" ? { acceptedAt: now } : {}),
     });
     yield* writer.table("events").patch(args.eventId, {
@@ -227,6 +230,9 @@ const register = FunctionImpl.make(databaseSchema, registrations, "register", (a
       summary: `Registered ${displayName} for ${event.title} as ${status}`,
       occurredAt: now,
     });
+    yield* Effect.promise(() =>
+      emitRegistrationWebhook(ctx, "registration.created", registrationId, now),
+    );
     return { registrationId, status };
   }).pipe(
     Effect.catchTags({
@@ -240,6 +246,7 @@ const register = FunctionImpl.make(databaseSchema, registrations, "register", (a
 const accept = FunctionImpl.make(databaseSchema, registrations, "accept", ({ registrationId }) =>
   Effect.gen(function* () {
     const identity = yield* getIdentity;
+    const ctx = yield* MutationCtx;
     const writer = yield* DatabaseWriter;
     const { registration, event } = yield* requireRegistration(
       registrationId,
@@ -259,11 +266,15 @@ const accept = FunctionImpl.make(databaseSchema, registrations, "accept", ({ reg
       status: "accepted",
       acceptedAt: now,
       updatedAt: now,
+      webhookVersion: (registration.webhookVersion ?? 1) + 1,
     });
     yield* writer.table("events").patch(event._id, {
       acceptedCount: acceptedCount + 1,
       updatedAt: now,
     });
+    yield* Effect.promise(() =>
+      emitRegistrationWebhook(ctx, "registration.accepted", registrationId, now),
+    );
     return null;
   }).pipe(
     Effect.catchTags({
@@ -281,6 +292,7 @@ const withdraw = FunctionImpl.make(
   ({ registrationId }) =>
     Effect.gen(function* () {
       const identity = yield* getIdentity;
+      const ctx = yield* MutationCtx;
       const reader = yield* DatabaseReader;
       const writer = yield* DatabaseWriter;
       const { registration, event } = yield* requireRegistration(
@@ -293,7 +305,11 @@ const withdraw = FunctionImpl.make(
         status: "withdrawn",
         withdrawnAt: now,
         updatedAt: now,
+        webhookVersion: (registration.webhookVersion ?? 1) + 1,
       });
+      yield* Effect.promise(() =>
+        emitRegistrationWebhook(ctx, "registration.withdrawn", registrationId, now),
+      );
       if (registration.status === "accepted") {
         const next = yield* reader
           .table("registrations")
@@ -305,8 +321,14 @@ const withdraw = FunctionImpl.make(
           yield* writer.table("registrations").patch(next.value._id, {
             status: event.autoAccept ? "accepted" : "pending",
             updatedAt: now,
+            webhookVersion: (next.value.webhookVersion ?? 1) + 1,
             ...(event.autoAccept ? { acceptedAt: now } : {}),
           });
+          if (event.autoAccept) {
+            yield* Effect.promise(() =>
+              emitRegistrationWebhook(ctx, "registration.accepted", next.value._id, now),
+            );
+          }
         }
         yield* writer.table("events").patch(event._id, {
           acceptedCount:
@@ -333,6 +355,7 @@ const declineDate = FunctionImpl.make(
   ({ registrationId, eventDateId }) =>
     Effect.gen(function* () {
       const identity = yield* getIdentity;
+      const ctx = yield* MutationCtx;
       const reader = yield* DatabaseReader;
       const writer = yield* DatabaseWriter;
       const { registration, event } = yield* requireRegistration(
@@ -369,11 +392,23 @@ const declineDate = FunctionImpl.make(
         status: "declined",
         declinedAt: now,
       });
+      yield* writer.table("registrations").patch(registrationId, {
+        updatedAt: now,
+        webhookVersion: (registration.webhookVersion ?? 1) + 1,
+      });
+      yield* Effect.promise(() =>
+        emitRegistrationWebhook(ctx, "registration.date_declined", registrationId, now, {
+          id: declineId,
+          eventDateId,
+          status: "declined",
+        }),
+      );
       return { declineId };
     }).pipe(
       Effect.catchTags({
         DocumentDecodeError: (error) => Effect.die(error),
         DocumentEncodeError: (error) => Effect.die(error),
+        GetByIdFailure: (error) => Effect.die(error),
       }),
     ),
 );
@@ -385,6 +420,7 @@ const overrideDateDecline = FunctionImpl.make(
   ({ declineId }) =>
     Effect.gen(function* () {
       const identity = yield* getIdentity;
+      const ctx = yield* MutationCtx;
       const reader = yield* DatabaseReader;
       const writer = yield* DatabaseWriter;
       const decline = yield* reader
@@ -398,6 +434,19 @@ const overrideDateDecline = FunctionImpl.make(
         reversedAt: Date.now(),
         reversedByIdentity: identity.tokenIdentifier,
       });
+      const registration = yield* reader.table("registrations").get(decline.registrationId);
+      const now = Date.now();
+      yield* writer.table("registrations").patch(registration._id, {
+        updatedAt: now,
+        webhookVersion: (registration.webhookVersion ?? 1) + 1,
+      });
+      yield* Effect.promise(() =>
+        emitRegistrationWebhook(ctx, "registration.date_decline_reversed", registration._id, now, {
+          id: decline._id,
+          eventDateId: decline.eventDateId,
+          status: "reversed",
+        }),
+      );
       return null;
     }).pipe(
       Effect.catchTags({

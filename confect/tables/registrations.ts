@@ -14,6 +14,7 @@ export default Table.make(() =>
     externalPaymentReference: Schema.optional(Schema.String),
     registeredAt: Schema.Number,
     updatedAt: Schema.Number,
+    webhookVersion: Schema.optional(Schema.Number),
     acceptedAt: Schema.optional(Schema.Number),
     withdrawnAt: Schema.optional(Schema.Number),
   }),

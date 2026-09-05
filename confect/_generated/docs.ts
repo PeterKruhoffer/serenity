@@ -22,6 +22,10 @@ export type SignupFormFieldsDoc = Document.Document<typeof schemaDefinition, "si
 export type SignupFormTemplatesDoc = Document.Document<typeof schemaDefinition, "signup_form_templates">;
 export type TeamMembershipsDoc = Document.Document<typeof schemaDefinition, "team_memberships">;
 export type TeamsDoc = Document.Document<typeof schemaDefinition, "teams">;
+export type WebhookDeliveriesDoc = Document.Document<typeof schemaDefinition, "webhook_deliveries">;
+export type WebhookDeliveryAttemptsDoc = Document.Document<typeof schemaDefinition, "webhook_delivery_attempts">;
+export type WebhookEndpointsDoc = Document.Document<typeof schemaDefinition, "webhook_endpoints">;
+export type WebhookEventsDoc = Document.Document<typeof schemaDefinition, "webhook_events">;
 
 export interface Docs {
   audit_entries: AuditEntriesDoc;
@@ -45,4 +49,8 @@ export interface Docs {
   signup_form_templates: SignupFormTemplatesDoc;
   team_memberships: TeamMembershipsDoc;
   teams: TeamsDoc;
+  webhook_deliveries: WebhookDeliveriesDoc;
+  webhook_delivery_attempts: WebhookDeliveryAttemptsDoc;
+  webhook_endpoints: WebhookEndpointsDoc;
+  webhook_events: WebhookEventsDoc;
 }
