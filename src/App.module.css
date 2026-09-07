@@ -6,7 +6,7 @@
 
 .appHeader,
 .appFooter {
-  width: min(1440px, calc(100% - 36px));
+  width: min(1440px, calc(100% - 64px));
   margin: 0 auto;
 }
 
@@ -94,7 +94,7 @@
 }
 
 .appMain {
-  width: min(1440px, calc(100% - 36px));
+  width: min(1440px, calc(100% - 64px));
   margin: 0 auto;
   display: grid;
   align-items: center;
