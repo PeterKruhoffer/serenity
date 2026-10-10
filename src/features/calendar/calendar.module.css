@@ -75,6 +75,7 @@
 }
 
 .calendarFrame {
+  position: relative;
   min-height: 280px;
   border: 1px solid var(--ritual-line);
   border-radius: 0;
@@ -82,8 +83,37 @@
   overflow: hidden;
 }
 
-.calendarFrame[aria-busy="true"] {
-  opacity: 0.62;
+.loadingShimmer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--ritual-faint);
+  pointer-events: none;
+}
+
+.loadingShimmer::after {
+  content: "";
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--ritual-line-soft), transparent);
+  animation: calendarShimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes calendarShimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingShimmer::after {
+    width: 100%;
+    animation: none;
+  }
 }
 
 .weekGrid {

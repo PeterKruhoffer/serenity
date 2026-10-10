@@ -317,6 +317,11 @@ export default function CalendarPage() {
       </Show>
 
       <div class={styles.calendarFrame} aria-busy={occurrences.isLoading()}>
+        <Show when={occurrences.isLoading()}>
+          <div class={styles.loadingShimmer} role="status">
+            <span class={styles.srOnly}>Loading calendar events</span>
+          </div>
+        </Show>
         <Show when={view() === "week"}>
           <div class={styles.weekGrid}>
             <For each={range().days}>

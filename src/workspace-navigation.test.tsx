@@ -2,6 +2,7 @@
 
 import { getFunctionName, type FunctionReference } from "convex/server";
 import { Router } from "@solidjs/router";
+import { createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
@@ -567,6 +568,51 @@ describe("signed-in workspace navigation", () => {
       expect(new URLSearchParams(window.location.search).get("date")).toBe("2026-07-01"),
     );
   });
+
+  it.each(["month", "week"])(
+    "shows loading feedback in the %s calendar until events arrive",
+    async (view) => {
+      const [loading, setLoading] = createSignal(true);
+      const defaultQuery = convex.useQuery.getMockImplementation()!;
+      convex.useQuery.mockImplementation((reference: FunctionReference<"query">) => {
+        const result = defaultQuery(reference);
+        return getFunctionName(reference) === "events:listCalendarOccurrences"
+          ? { ...result, data: () => (loading() ? undefined : result.data()), isLoading: loading }
+          : result;
+      });
+      window.history.replaceState({}, "", `/calendar?view=${view}&date=2026-08-19`);
+      const host = document.createElement("div");
+      document.body.append(host);
+      disposers.push(
+        render(
+          () => (
+            <Router>
+              <SerenityRoutes />
+            </Router>
+          ),
+          host,
+        ),
+      );
+
+      await vi.waitFor(() =>
+        expect(host.querySelector('[aria-busy="true"] [role="status"]')?.textContent).toBe(
+          "Loading calendar events",
+        ),
+      );
+      expect(host.textContent).not.toContain("No events");
+      expect(host.textContent).not.toContain("Leadership essentials");
+      setLoading(false);
+      await vi.waitFor(() =>
+        expect(host.querySelector('[aria-busy="false"]')?.textContent).toContain(
+          "Leadership essentials",
+        ),
+      );
+      expect(host.textContent).not.toContain("Loading calendar events");
+      if (view === "week") expect(host.textContent).toContain("No events");
+      setLoading(true);
+      expect(host.querySelector('[aria-busy="true"] [role="status"]')).toBeTruthy();
+    },
+  );
 
   it("defaults the calendar to month view", async () => {
     window.history.replaceState({}, "", "/calendar");
