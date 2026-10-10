@@ -537,14 +537,15 @@ describe("signed-in workspace navigation", () => {
     await vi.waitFor(() => expect(host.querySelector("h1")?.textContent).toBe("Calendar"));
     expect(host.textContent).toContain("August 2026");
     expect(host.textContent).toContain("Leadership essentials");
-    expect(host.textContent).toContain("Events team · Draft · Cancelled");
+    expect(host.textContent).toContain("Events team");
+    expect(host.textContent).toContain("Draft · Cancelled");
 
     host
       .querySelector<HTMLButtonElement>('[data-corvu-popover-trigger][class*="eventChip"]')
       ?.click();
-    await vi.waitFor(() => expect(host.textContent).toContain("Harbor House"));
-    expect(host.textContent).toContain("Europe/Copenhagen");
-    Array.from(host.querySelectorAll("button"))
+    await vi.waitFor(() => expect(document.body.textContent).toContain("Harbor House"));
+    expect(document.body.textContent).toContain("Europe/Copenhagen");
+    Array.from(document.body.querySelectorAll("button"))
       .find((button) => button.textContent === "Close")
       ?.click();
 

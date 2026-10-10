@@ -42,37 +42,40 @@ function EventChip(props: { occurrence: Occurrence }) {
         classList={{ [styles.isCancelled]: props.occurrence.occurrenceStatus === "cancelled" }}
       >
         <strong>{props.occurrence.eventTitle}</strong>
+        <span>{props.occurrence.teamName}</span>
         <span>
-          {props.occurrence.teamName} · {statusLabel(props.occurrence.eventStatus)}
+          {statusLabel(props.occurrence.eventStatus)}
           <Show when={props.occurrence.occurrenceStatus === "cancelled"}> · Cancelled</Show>
         </span>
       </Popover.Trigger>
-      <Popover.Content class={styles.eventPopover}>
-        <Popover.Label>{props.occurrence.eventTitle}</Popover.Label>
-        <Popover.Description>{formatOccurrenceTime(props.occurrence)}</Popover.Description>
-        <dl>
-          <div>
-            <dt>Team</dt>
-            <dd>{props.occurrence.teamName}</dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>
-              {statusLabel(props.occurrence.eventStatus)}
-              <Show when={props.occurrence.occurrenceStatus === "cancelled"}> · Cancelled</Show>
-            </dd>
-          </div>
-          <div>
-            <dt>Venue</dt>
-            <dd>{props.occurrence.venueName}</dd>
-          </div>
-          <div>
-            <dt>Timezone</dt>
-            <dd>{props.occurrence.eventTimezone}</dd>
-          </div>
-        </dl>
-        <Popover.Close class={styles.popoverClose}>Close</Popover.Close>
-      </Popover.Content>
+      <Popover.Portal>
+        <Popover.Content class={styles.eventPopover}>
+          <Popover.Label>{props.occurrence.eventTitle}</Popover.Label>
+          <Popover.Description>{formatOccurrenceTime(props.occurrence)}</Popover.Description>
+          <dl>
+            <div>
+              <dt>Team</dt>
+              <dd>{props.occurrence.teamName}</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>
+                {statusLabel(props.occurrence.eventStatus)}
+                <Show when={props.occurrence.occurrenceStatus === "cancelled"}> · Cancelled</Show>
+              </dd>
+            </div>
+            <div>
+              <dt>Venue</dt>
+              <dd>{props.occurrence.venueName}</dd>
+            </div>
+            <div>
+              <dt>Timezone</dt>
+              <dd>{props.occurrence.eventTimezone}</dd>
+            </div>
+          </dl>
+          <Popover.Close class={styles.popoverClose}>Close</Popover.Close>
+        </Popover.Content>
+      </Popover.Portal>
     </Popover>
   );
 }

@@ -132,15 +132,15 @@
 .dayEvents {
   padding-top: 9px;
   display: grid;
-  gap: 6px;
+  gap: 10px;
 }
 
 .eventChip {
   min-width: 0;
   width: 100%;
-  padding: 8px 8px 8px 9px;
+  padding: 14px 12px;
   display: grid;
-  gap: 3px;
+  gap: 6px;
   color: var(--ritual-ink);
   background: transparent;
   border: 0;
@@ -153,19 +153,19 @@
 .eventChip strong,
 .eventChip span {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .eventChip strong {
-  font-size: 10px;
-  line-height: 1.25;
+  font-size: 15px;
+  line-height: 1.4;
 }
 
 .eventChip span {
   color: var(--ritual-muted);
-  font-size: 8px;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .eventChip.statusSubmitted {
@@ -188,6 +188,7 @@
 }
 
 .eventChip:focus-visible,
+.popoverClose:focus-visible,
 .moreButton:focus-visible,
 .toolbar button:focus-visible,
 .datePickerPopover button:focus-visible {
@@ -207,9 +208,9 @@
 }
 
 .monthGrid {
-  min-width: 700px;
+  min-width: 1260px;
   display: grid;
-  grid-template-columns: repeat(7, minmax(100px, 1fr));
+  grid-template-columns: repeat(7, minmax(180px, 1fr));
 }
 
 .monthWeekday {
@@ -254,12 +255,13 @@
 }
 
 .moreButton {
-  padding: 3px 2px;
+  min-height: 36px;
+  padding: 6px 2px;
   color: var(--ritual-muted);
   background: transparent;
   border: 0;
   cursor: pointer;
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 650;
   text-align: left;
 }
@@ -276,7 +278,11 @@
 }
 
 .eventPopover {
-  width: min(300px, calc(100vw - 24px));
+  width: min(440px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  padding: 24px;
+  overflow-wrap: anywhere;
 }
 
 .eventPopover h2,
@@ -287,45 +293,49 @@
 .eventPopover h2 {
   color: var(--ritual-ink);
   font-family: var(--ritual-display);
-  font-size: 19px;
+  font-size: 28px;
+  line-height: 1.2;
   font-weight: 400;
 }
 
 .eventPopover > p {
-  margin-top: 7px;
+  margin-top: 12px;
   color: var(--ritual-muted);
-  font-size: 11px;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 .eventPopover dl {
-  margin: 14px 0 0;
+  margin: 24px 0 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 11px;
+  gap: 20px;
 }
 
 .eventPopover dt {
-  color: var(--ritual-subtle);
-  font-size: 8px;
+  color: var(--ritual-muted);
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
 .eventPopover dd {
-  margin: 3px 0 0;
+  margin: 6px 0 0;
   overflow-wrap: anywhere;
-  font-size: 10px;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 .popoverClose {
-  margin-top: 14px;
-  padding: 0;
-  color: var(--ritual-muted);
+  margin-top: 24px;
+  min-height: 44px;
+  padding: 10px 16px;
+  color: var(--ritual-ink);
   background: transparent;
-  border: 0;
+  border: 1px solid var(--ritual-line);
   cursor: pointer;
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .datePickerPopover {
@@ -444,5 +454,12 @@
   .filterControls select {
     flex: 1 1 100%;
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .eventPopover dl {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 }
