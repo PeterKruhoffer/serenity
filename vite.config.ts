@@ -14,6 +14,11 @@ export default defineConfig({
       "confect/**/*.test.ts",
     ],
     environment: "edge-runtime",
+    // Node's built-in Web Storage (on by default since Node 25) shadows
+    // jsdom's localStorage in test workers.
+    execArgv: process.allowedNodeEnvironmentFlags.has("--no-experimental-webstorage")
+      ? ["--no-experimental-webstorage"]
+      : [],
   },
   fmt: {
     ignorePatterns: [
