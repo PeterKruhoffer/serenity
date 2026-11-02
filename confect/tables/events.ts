@@ -16,6 +16,8 @@ export default Table.make(() =>
     status: Schema.Literal("draft", "submitted", "published", "archived"),
     publishedRevisionId: Schema.optional(Id("event_revisions")),
     publishedVersion: Schema.optional(Schema.Number),
+    // True while attendees can discover the published snapshot, independent of draft/review status.
+    isPubliclyListed: Schema.optional(Schema.Boolean),
     capacity: Schema.optional(Schema.Number),
     autoAccept: Schema.optional(Schema.Boolean),
     waitingListEnabled: Schema.optional(Schema.Boolean),
@@ -27,7 +29,7 @@ export default Table.make(() =>
     updatedAt: Schema.Number,
   }),
 )
-  .index("by_status", ["status"])
+  .index("by_isPubliclyListed", ["isPubliclyListed"])
   .index("by_organizationId_and_status", ["organizationId", "status"])
   .index("by_teamId_and_status", ["teamId", "status"])
   .index("by_organizationId_and_slug", ["organizationId", "slug"]);

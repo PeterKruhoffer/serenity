@@ -97,4 +97,11 @@ export default GroupSpec.make()
       returns: () => Schema.Null,
       error: () => WorkspaceError,
     }),
+  )
+  .addFunction(
+    FunctionSpec.internalMutation({
+      name: "backfillPublicListing",
+      args: () => Schema.Struct({}),
+      returns: () => Schema.Struct({ processed: Schema.Number, listed: Schema.Number }),
+    }),
   );

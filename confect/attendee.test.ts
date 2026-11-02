@@ -4,7 +4,7 @@ import { convexTest } from "convex-test";
 import { anyApi } from "convex/server";
 import rateLimiterTest from "@convex-dev/rate-limiter/test";
 import { describe, expect, it } from "vite-plus/test";
-import { api } from "../convex/_generated/api";
+import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
 
 const modules = import.meta.glob("../convex/**/*.ts");
@@ -92,6 +92,53 @@ describe("attendee API", () => {
       title: "Autumn Supper",
       dates: [{ venueName: "The Glasshouse" }],
     });
+  });
+
+  it("keeps listing the published snapshot while a new revision is drafted and reviewed", async () => {
+    const { t, manager, event } = await publishedEvent();
+    const listed = () =>
+      t.query(attendee.listEvents, { paginationOpts: { numItems: 10, cursor: null } });
+
+    await manager.mutation(api.publication.startDraft, { eventId: event.eventId });
+    await t.run(async (ctx) => {
+      await ctx.db.patch(event.eventId, { title: "Draft-only title" });
+    });
+    await expect(listed()).resolves.toMatchObject({
+      page: [{ id: event.eventId, title: "Autumn Supper", version: 1 }],
+    });
+
+    await manager.mutation(api.publication.submit, { eventId: event.eventId });
+    await expect(listed()).resolves.toMatchObject({
+      page: [{ id: event.eventId, title: "Autumn Supper", version: 1 }],
+    });
+  });
+
+  it("backfills the public listing flag on events published before it existed", async () => {
+    const { t, manager, event } = await publishedEvent();
+    const listed = () =>
+      t.query(attendee.listEvents, { paginationOpts: { numItems: 10, cursor: null } });
+    await manager.mutation(api.publication.startDraft, { eventId: event.eventId });
+    await t.run(async (ctx) => {
+      await ctx.db.patch(event.eventId, { isPubliclyListed: undefined });
+    });
+    await expect(listed()).resolves.toMatchObject({ page: [] });
+
+    await expect(t.mutation(internal.publication.backfillPublicListing, {})).resolves.toEqual({
+      processed: 1,
+      listed: 1,
+    });
+    await expect(listed()).resolves.toMatchObject({
+      page: [{ id: event.eventId, title: "Autumn Supper" }],
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(event.eventId, { status: "archived", isPubliclyListed: undefined });
+    });
+    await expect(t.mutation(internal.publication.backfillPublicListing, {})).resolves.toEqual({
+      processed: 1,
+      listed: 0,
+    });
+    await expect(listed()).resolves.toMatchObject({ page: [] });
   });
 
   it("keeps guest registrations private and promotes the waitlist", async () => {

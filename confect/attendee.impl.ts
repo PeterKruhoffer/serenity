@@ -249,7 +249,7 @@ const listEvents = FunctionImpl.make(databaseSchema, attendee, "listEvents", ({ 
     return yield* attempt(async () => {
       const result = await ctx.db
         .query("events")
-        .withIndex("by_status", (q) => q.eq("status", "published"))
+        .withIndex("by_isPubliclyListed", (q) => q.eq("isPubliclyListed", true))
         .paginate(paginationOpts);
       const visible = await Promise.all(result.page.map((event) => readPublicEvent(ctx, event)));
       return {
