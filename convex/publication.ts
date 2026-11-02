@@ -1,7 +1,6 @@
 import registeredFunctions from "../confect/_generated/registeredFunctions/publication";
 
 export const approve = registeredFunctions.approve;
-export const backfillPublicListing = registeredFunctions.backfillPublicListing;
 export const getPublished = registeredFunctions.getPublished;
 export const listPending = registeredFunctions.listPending;
 export const reject = registeredFunctions.reject;

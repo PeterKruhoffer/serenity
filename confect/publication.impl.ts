@@ -1,5 +1,4 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
-import { makeFunctionReference } from "convex/server";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import databaseSchema from "./_generated/schema";
@@ -386,43 +385,6 @@ const startDraft = FunctionImpl.make(databaseSchema, publication, "startDraft", 
   ),
 );
 
-const BACKFILL_BATCH_SIZE = 100;
-
-const backfillPublicListingRef = makeFunctionReference<
-  "mutation",
-  Record<string, never>,
-  { processed: number; listed: number }
->("publication:backfillPublicListing");
-
-// Sets isPubliclyListed on events written before the field existed. Every processed event leaves
-// the `undefined` index range, so each batch resumes where the previous one stopped.
-const backfillPublicListing = FunctionImpl.make(
-  databaseSchema,
-  publication,
-  "backfillPublicListing",
-  () =>
-    Effect.gen(function* () {
-      const ctx = yield* MutationCtx;
-      return yield* Effect.promise(async () => {
-        const events = await ctx.db
-          .query("events")
-          .withIndex("by_isPubliclyListed", (q) => q.eq("isPubliclyListed", undefined))
-          .take(BACKFILL_BATCH_SIZE);
-        let listed = 0;
-        for (const event of events) {
-          const isPubliclyListed =
-            event.publishedRevisionId !== undefined && event.status !== "archived";
-          if (isPubliclyListed) listed += 1;
-          await ctx.db.patch(event._id, { isPubliclyListed });
-        }
-        if (events.length === BACKFILL_BATCH_SIZE) {
-          await ctx.scheduler.runAfter(0, backfillPublicListingRef, {});
-        }
-        return { processed: events.length, listed };
-      });
-    }),
-);
-
 export default GroupImpl.make(databaseSchema, publication).pipe(
   Layer.provide(listPending),
   Layer.provide(getPublished),
@@ -430,6 +392,5 @@ export default GroupImpl.make(databaseSchema, publication).pipe(
   Layer.provide(approve),
   Layer.provide(reject),
   Layer.provide(startDraft),
-  Layer.provide(backfillPublicListing),
   GroupImpl.finalize,
 );
