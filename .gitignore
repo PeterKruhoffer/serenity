@@ -32,3 +32,4 @@ dist-ssr
 .amp/portal-proxy.mjs
 .amp/portals/
 .vercel
+.vitest/
