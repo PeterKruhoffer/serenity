@@ -29,7 +29,9 @@ The API is served from the deployment's Convex HTTP Actions URL, normally the co
 GET /api/v1/events/EVENT_ID/signup-form
 ```
 
-The response includes event details, registration state, and ordered `signupFields`. Answers must reference the returned revision field IDs.
+The response includes event details, registration state, and ordered `signupFields`. Answers must reference the returned revision field IDs. Each approved revision gets new field IDs, so read the form again after an event is republished instead of storing IDs.
+
+`description` is the organizer's raw text in a small Markdown subset: paragraphs, line breaks, `- ` bullet lists, `**bold**`, `*italic*`, `[link text](https://example.com)`, and bare `https://` URLs. The iframe renders it and links only `http`, `https`, and `mailto` URLs. Custom frontends should apply the same rule, or show the text as plain text.
 
 ### Register
 

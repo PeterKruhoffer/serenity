@@ -14,6 +14,7 @@ import {
   type Component,
 } from "solid-js";
 import { createStore } from "solid-js/store";
+import { Markdown } from "./lib/markdown";
 
 type AnswerValue = string | boolean | string[];
 
@@ -160,7 +161,7 @@ const SignupEmbed: Component = () => {
                   <p>{details().organizationName}</p>
                   <h1>{details().title}</h1>
                   <Show when={details().description}>
-                    <span>{details().description}</span>
+                    <Markdown class={styles.embedDescription} source={details().description} />
                   </Show>
                 </header>
 

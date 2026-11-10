@@ -15,12 +15,15 @@ import { SectionHeader } from "../../components/section-header";
 import { StatusBadge } from "../../components/status-badge";
 import { convexErrorMessage } from "../../lib/convex-error-message";
 import { localDateTimeToMillis } from "../../lib/date-time";
+import { Markdown, markdownToPlainText } from "../../lib/markdown";
 import EventBuilder from "./EventBuilder";
+import EventDetailsForm from "./EventDetailsForm";
 
 type OrganizationRole = "administrator" | "super_user" | "event_manager";
 
 type EventEditorState = {
   error: string | null;
+  editingDetails: boolean;
   selectedDateId: Id<"event_dates"> | null;
   topicId: Id<"event_topics"> | null;
   newDate: { startsAt: string; endsAt: string; venueName: string };
@@ -65,6 +68,7 @@ const EventsPage = () => {
   const startDraft = useMutation(api.publication.startDraft);
   const [editor, setEditor] = createStore<EventEditorState>({
     error: null,
+    editingDetails: false,
     selectedDateId: null,
     topicId: null,
     newDate: { startsAt: "", endsAt: "", venueName: "" },
@@ -170,7 +174,7 @@ const EventsPage = () => {
           open={location.pathname === "/events/new"}
           onOpenChange={(builderOpen) => navigate(builderOpen ? "/events/new" : "/events")}
           onSuccess={(eventId) => {
-            setEditor({ error: null, selectedDateId: null, topicId: null });
+            setEditor({ error: null, editingDetails: false, selectedDateId: null, topicId: null });
             navigate(`/events/${eventId}`);
           }}
         >
@@ -230,9 +234,22 @@ const EventsPage = () => {
                       </Show>
                     </div>
                     <h2>{detail().event.title}</h2>
-                    <p>{detail().event.description || "No description yet."}</p>
+                    <Show when={detail().event.description} fallback={<p>No description yet.</p>}>
+                      {(description) => (
+                        <Markdown class={styles.eventDescription} source={description()} />
+                      )}
+                    </Show>
                   </div>
                   <div class={styles.eventDetailActions}>
+                    <Show when={detail().event.status === "draft" && !editor.editingDetails}>
+                      <button
+                        class={`secondary-button compact-button ${styles.inverseButton}`}
+                        type="button"
+                        onClick={() => setEditor("editingDetails", true)}
+                      >
+                        Edit details and form
+                      </button>
+                    </Show>
                     <Show when={detail().event.status === "draft"}>
                       <button
                         class="primary-button compact-button"
@@ -257,8 +274,7 @@ const EventsPage = () => {
                       class="text-button"
                       type="button"
                       onClick={() => {
-                        setEditor("selectedDateId", null);
-                        setEditor("topicId", null);
+                        setEditor({ editingDetails: false, selectedDateId: null, topicId: null });
                         navigate("/events");
                       }}
                     >
@@ -266,6 +282,18 @@ const EventsPage = () => {
                     </button>
                   </div>
                 </div>
+
+                <Show when={detail().event.status === "draft" && editor.editingDetails}>
+                  <Show when={detail().event.id} keyed>
+                    <EventDetailsForm
+                      eventId={detail().event.id}
+                      title={detail().event.title}
+                      description={detail().event.description}
+                      signupFields={detail().signupFields}
+                      onClose={() => setEditor("editingDetails", false)}
+                    />
+                  </Show>
+                </Show>
 
                 <Show when={detail().event.status === "draft"}>
                   <form
@@ -529,7 +557,12 @@ const EventsPage = () => {
                   classList={{ [styles.isSelected]: selectedEventId() === event.id }}
                   type="button"
                   onClick={() => {
-                    setEditor({ error: null, selectedDateId: null, topicId: null });
+                    setEditor({
+                      error: null,
+                      editingDetails: false,
+                      selectedDateId: null,
+                      topicId: null,
+                    });
                     navigate(`/events/${event.id}`);
                   }}
                 >
@@ -541,7 +574,7 @@ const EventsPage = () => {
                     </span>
                   </div>
                   <h3>{event.title}</h3>
-                  <p>{event.description || "No description yet."}</p>
+                  <p>{markdownToPlainText(event.description) || "No description yet."}</p>
                   <div class={styles.eventCardStats}>
                     <span>{event.occurrenceCount} dates</span>
                     <span>{event.sessionCount} sessions</span>

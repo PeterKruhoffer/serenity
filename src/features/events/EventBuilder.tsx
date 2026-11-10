@@ -10,6 +10,7 @@ import { TimezoneTypeahead } from "../../components/timezone-typeahead";
 import { convexErrorMessage } from "../../lib/convex-error-message";
 import { localDateTimeToMillis } from "../../lib/date-time";
 import { SignupFieldBuilder, createSignupFields } from "../signup-fields/SignupFieldBuilder";
+import { MarkdownHint } from "./EventDetailsForm";
 
 type Organization = {
   id: Id<"organizations">;
@@ -299,6 +300,7 @@ const EventBuilder = (props: EventBuilderProps) => {
                   onInput={(event) => setEventForm("description", event.currentTarget.value)}
                   rows="3"
                 />
+                <MarkdownHint />
               </label>
             </div>
 

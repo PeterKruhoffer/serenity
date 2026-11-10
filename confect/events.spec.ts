@@ -142,6 +142,20 @@ export default GroupSpec.make()
     }),
   )
   .addFunction(
+    FunctionSpec.publicMutation({
+      name: "updateDetails",
+      args: () =>
+        Schema.Struct({
+          eventId: Id("events"),
+          title: Schema.String,
+          description: Schema.String,
+          signupFields: Schema.Array(SignupField),
+        }),
+      returns: () => Schema.Struct({ eventId: Id("events") }),
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
     FunctionSpec.publicQuery({
       name: "listTopics",
       args: () => Schema.Struct({ organizationId: Id("organizations") }),

@@ -67,7 +67,7 @@ const publishedEvent = async (signupFields: SignupField[] = []) => {
     revisionId: submitted.revisionId,
     note: "Ready for guests",
   });
-  return { t, manager, event };
+  return { t, manager, reviewer, event };
 };
 
 describe("attendee API", () => {
@@ -268,5 +268,66 @@ describe("attendee API", () => {
     });
     const stillPublished = await t.query(attendee.getEvent, { eventId: event.eventId });
     expect(stillPublished?.signupFields[0]?.label).toBe("Job title");
+  });
+
+  it("publishes edited details and fields in a new revision without rewriting earlier answers", async () => {
+    const { t, manager, reviewer, event } = await publishedEvent([
+      { type: "text", label: "Job title", required: true, options: [] },
+    ]);
+    const original = await t.query(attendee.getEvent, { eventId: event.eventId });
+    const registration = await t.mutation(attendee.register, {
+      attendeeKey: firstAttendee,
+      eventId: event.eventId,
+      displayName: "Alex Guest",
+      answers: [{ fieldId: original!.signupFields[0]!.id, value: "Designer" }],
+    });
+    const edit = {
+      eventId: event.eventId,
+      title: "  Winter   Supper ",
+      description: "Bring a dish.\n\nRead [the house rules](https://example.com/rules).",
+      signupFields: [
+        { type: "yes_no" as const, label: "Bringing a guest?", required: true, options: [] },
+        {
+          type: "checkboxes" as const,
+          label: "Courses",
+          required: false,
+          options: ["Starter", "Dessert"],
+          section: "Your dish",
+        },
+      ],
+    };
+
+    await expect(manager.mutation(api.events.updateDetails, edit)).rejects.toThrow(
+      "Only draft events can be edited.",
+    );
+    await manager.mutation(api.publication.startDraft, { eventId: event.eventId });
+    await manager.mutation(api.events.updateDetails, edit);
+
+    const draft = await manager.query(api.events.get, { eventId: event.eventId });
+    expect(draft.event).toMatchObject({ title: "Winter Supper", description: edit.description });
+    expect(draft.signupFields.map((field) => field.label)).toEqual([
+      "Bringing a guest?",
+      "Courses",
+    ]);
+    await expect(t.query(attendee.getEvent, { eventId: event.eventId })).resolves.toMatchObject({
+      title: "Autumn Supper",
+      signupFields: [{ label: "Job title" }],
+    });
+
+    const submitted = await manager.mutation(api.publication.submit, { eventId: event.eventId });
+    await reviewer.mutation(api.publication.approve, {
+      revisionId: submitted.revisionId,
+      note: "Ready for winter",
+    });
+    const republished = await t.query(attendee.getEvent, { eventId: event.eventId });
+    expect(republished).toMatchObject({ title: "Winter Supper", description: edit.description });
+    expect(republished?.signupFields).toMatchObject([
+      { label: "Bringing a guest?", type: "yes_no", required: true },
+      { label: "Courses", options: ["Starter", "Dessert"], section: "Your dish" },
+    ]);
+    const managed = await manager.query(api.registrations.list, { eventId: event.eventId });
+    expect(managed.find((entry) => entry.id === registration.registrationId)?.answers).toEqual([
+      expect.objectContaining({ label: "Job title", value: "Designer" }),
+    ]);
   });
 });

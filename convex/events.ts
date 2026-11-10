@@ -12,6 +12,7 @@ export const listCalendarOccurrences = registeredFunctions.listCalendarOccurrenc
 export const listSignupTemplates = registeredFunctions.listSignupTemplates;
 export const listTopics = registeredFunctions.listTopics;
 export const saveSignupTemplate = registeredFunctions.saveSignupTemplate;
+export const updateDetails = registeredFunctions.updateDetails;
 export const updateEventTopic = registeredFunctions.updateEventTopic;
 export const updateSignupTemplate = registeredFunctions.updateSignupTemplate;
 export const updateTopic = registeredFunctions.updateTopic;

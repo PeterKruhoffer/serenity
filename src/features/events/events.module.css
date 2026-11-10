@@ -760,3 +760,49 @@
     grid-column: 2;
   }
 }
+
+.eventDescription {
+  max-width: 680px;
+  margin-top: 12px;
+  color: var(--ritual-panel-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.eventDetailHeading .eventDescription p {
+  margin: 0 0 8px;
+}
+
+.eventDescription ul {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}
+
+.eventDescription > :last-child {
+  margin-bottom: 0;
+}
+
+.eventDescription a {
+  color: var(--ritual-panel-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.detailsForm {
+  margin-top: 24px;
+  padding: clamp(18px, 3vw, 28px);
+  color: var(--ritual-ink);
+  background: var(--ritual-bg);
+}
+
+.detailsForm > .builderSectionHeading:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.markdownHint {
+  color: #858a81;
+  font-size: 10px;
+  line-height: 1.5;
+}

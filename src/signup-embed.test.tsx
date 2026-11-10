@@ -14,7 +14,8 @@ vi.mock("convex-solidjs", () => ({
       organizationName: "Open Table",
       teamName: "Community",
       title: "Autumn Supper",
-      description: "A shared table.",
+      description:
+        "A shared table.\n\nRead [the house rules](https://example.com/rules) and https://example.com/menu. [Unsafe](javascript:alert) stays text.",
       timezone: "UTC",
       version: 1,
       capacity: 40,
@@ -58,6 +59,20 @@ import SignupEmbed, { createAttendeeKey } from "./SignupEmbed";
 
 let dispose: (() => void) | undefined;
 
+const renderEmbed = () => {
+  const host = document.createElement("div");
+  document.body.append(host);
+  dispose = render(
+    () => (
+      <Router>
+        <Route path="/embed/events/:eventId/signup" component={SignupEmbed} />
+      </Router>
+    ),
+    host,
+  );
+  return host;
+};
+
 beforeEach(() => {
   window.history.replaceState({}, "", "/embed/events/event-id/signup");
   mutate.mockResolvedValue({ registrationId: "registration-id", status: "pending" });
@@ -76,17 +91,30 @@ describe("sign-up embed", () => {
     expect(createAttendeeKey()).toMatch(/^[a-f0-9]{64}$/);
   });
 
+  it("renders the description's paragraphs and only links web addresses", () => {
+    const host = renderEmbed();
+    const header = host.querySelector("header")!;
+    expect(
+      Array.from(header.querySelectorAll(":scope > div p"), (paragraph) => paragraph.textContent),
+    ).toEqual([
+      "A shared table.",
+      "Read the house rules and https://example.com/menu. [Unsafe](javascript:alert) stays text.",
+    ]);
+    expect(
+      Array.from(header.querySelectorAll("a"), (link) => [
+        link.getAttribute("href"),
+        link.textContent,
+        link.target,
+        link.rel,
+      ]),
+    ).toEqual([
+      ["https://example.com/rules", "the house rules", "_blank", "noopener noreferrer"],
+      ["https://example.com/menu", "https://example.com/menu", "_blank", "noopener noreferrer"],
+    ]);
+  });
+
   it("renders the published fields and submits typed answers", async () => {
-    const host = document.createElement("div");
-    document.body.append(host);
-    dispose = render(
-      () => (
-        <Router>
-          <Route path="/embed/events/:eventId/signup" component={SignupEmbed} />
-        </Router>
-      ),
-      host,
-    );
+    const host = renderEmbed();
 
     expect(host.querySelector("h1")?.textContent).toBe("Autumn Supper");
     const sectionHeadings = Array.from(host.querySelectorAll("form h2"));

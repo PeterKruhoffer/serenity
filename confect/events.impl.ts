@@ -105,6 +105,14 @@ const validateDate = (startsAt: number, endsAt: number) => {
   return Effect.succeed({ startsAt, endsAt });
 };
 
+// Descriptions keep their line breaks because attendee views render them as Markdown.
+const validateDescription = (description: string) => {
+  const trimmed = description.trim();
+  return trimmed.length > 5_000
+    ? Effect.fail(new InvalidInput({ message: "Description cannot exceed 5,000 characters." }))
+    : Effect.succeed(trimmed);
+};
+
 const toSlug = (value: string) =>
   value
     .normalize("NFKD")
@@ -875,11 +883,7 @@ const create = FunctionImpl.make(
       if (!IANAZone.isValidZone(normalizedTimezone)) {
         return yield* Effect.fail(new InvalidInput({ message: "Choose a valid IANA timezone." }));
       }
-      if (description.length > 5_000) {
-        return yield* Effect.fail(
-          new InvalidInput({ message: "Description cannot exceed 5,000 characters." }),
-        );
-      }
+      const normalizedDescription = yield* validateDescription(description);
       if (dates.length === 0 || dates.length > MAX_DATES_PER_EVENT) {
         return yield* Effect.fail(
           new InvalidInput({
@@ -978,7 +982,7 @@ const create = FunctionImpl.make(
         eventTypeVersionId,
         title,
         slug,
-        description: description.trim(),
+        description: normalizedDescription,
         topicId,
         timezone: normalizedTimezone,
         status: "draft",
@@ -1045,6 +1049,76 @@ const create = FunctionImpl.make(
       Effect.catchTags({
         DocumentDecodeError: (error) => Effect.die(error),
         DocumentEncodeError: (error) => Effect.die(error),
+      }),
+    ),
+);
+
+const updateDetails = FunctionImpl.make(
+  databaseSchema,
+  events,
+  "updateDetails",
+  ({ eventId, title: rawTitle, description, signupFields }) =>
+    Effect.gen(function* () {
+      const identity = yield* getIdentity;
+      const reader = yield* DatabaseReader;
+      const writer = yield* DatabaseWriter;
+      const event = yield* requireEvent(eventId, identity.tokenIdentifier);
+      if (event.status !== "draft") {
+        return yield* Effect.fail(new Conflict({ message: "Only draft events can be edited." }));
+      }
+      const title = yield* normalizeText(rawTitle, "Event title", 2, 120);
+      const normalizedDescription = yield* validateDescription(description);
+      const normalizedSignupFields = yield* validateSignupFields(signupFields);
+      const slug = toSlug(title);
+      if (slug !== event.slug) {
+        const existingEvent = yield* reader
+          .table("events")
+          .index("by_organizationId_and_slug", (q) =>
+            q.eq("organizationId", event.organizationId).eq("slug", slug),
+          )
+          .first();
+        if (Option.isSome(existingEvent)) {
+          return yield* Effect.fail(
+            new Conflict({ message: "An event with that title already exists." }),
+          );
+        }
+      }
+      const previousFields = yield* reader
+        .table("signup_form_fields")
+        .index("by_eventId_and_sortOrder", (q) => q.eq("eventId", eventId))
+        .take(100);
+      yield* Effect.forEach(previousFields, (field) =>
+        writer.table("signup_form_fields").delete(field._id),
+      );
+      const now = Date.now();
+      yield* Effect.forEach(normalizedSignupFields, (field, sortOrder) =>
+        writer.table("signup_form_fields").insert({
+          organizationId: event.organizationId,
+          eventId,
+          ...field,
+          sortOrder,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      );
+      yield* writer
+        .table("events")
+        .patch(eventId, { title, slug, description: normalizedDescription, updatedAt: now });
+      yield* writer.table("audit_entries").insert({
+        organizationId: event.organizationId,
+        actorIdentity: identity.tokenIdentifier,
+        action: "event.details_updated",
+        entityType: "event",
+        entityId: eventId,
+        summary: `Updated details and sign-up form of ${title}`,
+        occurredAt: now,
+      });
+      return { eventId };
+    }).pipe(
+      Effect.catchTags({
+        DocumentDecodeError: (error) => Effect.die(error),
+        DocumentEncodeError: (error) => Effect.die(error),
+        GetByIdFailure: (error) => Effect.die(error),
       }),
     ),
 );
@@ -1230,6 +1304,7 @@ export default GroupImpl.make(databaseSchema, events).pipe(
   Layer.provide(updateSignupTemplate),
   Layer.provide(deleteSignupTemplate),
   Layer.provide(create),
+  Layer.provide(updateDetails),
   Layer.provide(updateEventTopic),
   Layer.provide(addDate),
   Layer.provide(addSession),

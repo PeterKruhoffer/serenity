@@ -22,7 +22,7 @@
   border-bottom: 1px solid #e1e3dc;
 }
 
-.embedHeading p {
+.embedHeading > p {
   margin: 0 0 8px;
   color: #788071;
   font-size: 9px;
@@ -40,12 +40,30 @@
   letter-spacing: -0.035em;
 }
 
-.embedHeading > span {
+.embedDescription {
   margin-top: 10px;
-  display: block;
   color: #737970;
   font-size: 11px;
   line-height: 1.6;
+}
+
+.embedDescription p,
+.embedDescription ul {
+  margin: 0 0 8px;
+}
+
+.embedDescription > :last-child {
+  margin-bottom: 0;
+}
+
+.embedDescription ul {
+  padding-left: 18px;
+}
+
+.embedDescription a {
+  color: var(--embed-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .embedFields {
