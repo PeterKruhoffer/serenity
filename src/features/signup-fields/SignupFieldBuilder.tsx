@@ -19,6 +19,13 @@ type SavedSignupField = Omit<SignupFieldPayload, "options"> & {
   readonly options: readonly string[];
 };
 
+const fieldTypeLabels: Record<SignupFieldType, string> = {
+  text: "Short answer",
+  textarea: "Long answer",
+  yes_no: "Yes or no",
+  checkboxes: "Checkboxes",
+};
+
 let fieldId = 0;
 const sectionColorClasses = [
   styles.sectionColor0,
@@ -156,12 +163,7 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
     id: string;
     position: "before" | "after";
   }>();
-  const labels: Record<SignupFieldType, string> = {
-    text: "Short answer",
-    textarea: "Long answer",
-    yes_no: "Yes or no",
-    checkboxes: "Checkboxes",
-  };
+  const labels = fieldTypeLabels;
   return (
     <div class={`${styles.signupBuilder}${props.class ? ` ${props.class}` : ""}`}>
       {props.children}
@@ -450,3 +452,33 @@ export const SignupFieldBuilder = (props: SignupFieldBuilderProps) => {
     </div>
   );
 };
+
+type LockedSignupFieldsProps = {
+  title: string;
+  note: string;
+  fields: readonly SavedSignupField[];
+};
+
+/** Read-only fields that come from a template and can only be changed by editing it. */
+export const LockedSignupFields = (props: LockedSignupFieldsProps) => (
+  <section class={styles.lockedFields} aria-label={props.title}>
+    <div class={styles.lockedFieldsHeading}>
+      <strong>{props.title}</strong>
+      <span>{props.note}</span>
+    </div>
+    <ol>
+      <For each={props.fields}>
+        {(field) => (
+          <li>
+            <span>{field.label}</span>
+            <small>
+              {[field.section, fieldTypeLabels[field.type], field.required ? "Required" : undefined]
+                .filter(Boolean)
+                .join(" · ")}
+            </small>
+          </li>
+        )}
+      </For>
+    </ol>
+  </section>
+);

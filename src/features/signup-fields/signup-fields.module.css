@@ -313,3 +313,40 @@
     margin-left: 32px;
   }
 }
+
+.lockedFields {
+  padding: 16px 18px;
+  display: grid;
+  gap: 12px;
+  background: var(--ritual-card);
+  border-left: 3px solid #718a67;
+}
+
+.lockedFieldsHeading {
+  display: grid;
+  gap: 3px;
+}
+
+.lockedFieldsHeading strong {
+  color: #43483f;
+  font-size: 12px;
+}
+
+.lockedFieldsHeading span,
+.lockedFields small {
+  color: #858a81;
+  font-size: 10px;
+}
+
+.lockedFields ol {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  color: var(--ritual-ink);
+  font-size: 11px;
+}
+
+.lockedFields li small {
+  margin-left: 8px;
+}

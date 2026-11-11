@@ -1,10 +1,16 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
+import type { GenericId } from "convex/values";
+import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
+import type { EventsDoc } from "./_generated/docs";
+import refs from "./_generated/refs";
 import databaseSchema from "./_generated/schema";
-import { DatabaseReader, DatabaseWriter, MutationCtx } from "./_generated/services";
+import { DatabaseReader, DatabaseWriter, MutationCtx, Scheduler } from "./_generated/services";
 import { membershipFor, requireEventAccess, requireIdentity } from "./access";
 import publication from "./publication.spec";
+import { MAX_FORM_FIELDS, resolveEventForm } from "./signupForms";
 import { Conflict, Forbidden, InvalidInput } from "./workspace.spec";
 import { emitPublishedEventWebhook } from "./webhookEvents";
 
@@ -22,6 +28,111 @@ const reviewNote = (note: string) => {
 
 const canReviewRevisions = (role: "administrator" | "super_user" | "event_manager") =>
   role === "administrator" || role === "super_user";
+
+const TEMPLATE_REFRESH_BATCH_SIZE = 10;
+
+const writeRevisionSignupFields = (event: EventsDoc, revisionId: GenericId<"event_revisions">) =>
+  Effect.gen(function* () {
+    const writer = yield* DatabaseWriter;
+    const fields = yield* resolveEventForm(event);
+    yield* Effect.forEach(fields, (field, sortOrder) =>
+      writer.table("revision_signup_fields").insert({
+        organizationId: event.organizationId,
+        revisionId,
+        sourceSignupFieldId: field._id,
+        type: field.type,
+        label: field.label,
+        required: field.required,
+        options: field.options,
+        ...(field.section === undefined ? {} : { section: field.section }),
+        sortOrder,
+      }),
+    );
+  });
+
+/** Copies the event's current draft into a new revision awaiting review. */
+const submitRevision = (event: EventsDoc, actorIdentity: string, reason = "") =>
+  Effect.gen(function* () {
+    const reader = yield* DatabaseReader;
+    const writer = yield* DatabaseWriter;
+    const eventId = event._id;
+    const dates = yield* reader
+      .table("event_dates")
+      .index("by_eventId_and_sortOrder", (q) => q.eq("eventId", eventId))
+      .take(100);
+    if (dates.length === 0) {
+      return yield* Effect.fail(
+        new InvalidInput({ message: "Add at least one date before submitting." }),
+      );
+    }
+    const latestRevision = yield* reader
+      .table("event_revisions")
+      .index("by_eventId_and_revisionNumber", (q) => q.eq("eventId", eventId), "desc")
+      .first();
+    const revisionNumber =
+      latestRevision._tag === "Some" ? latestRevision.value.revisionNumber + 1 : 1;
+    const now = Date.now();
+    const revisionId = yield* writer.table("event_revisions").insert({
+      organizationId: event.organizationId,
+      eventId,
+      teamId: event.teamId,
+      eventTypeVersionId: event.eventTypeVersionId,
+      revisionNumber,
+      status: "submitted",
+      title: event.title,
+      slug: event.slug,
+      description: event.description,
+      timezone: event.timezone,
+      occurrenceCount: event.occurrenceCount,
+      sessionCount: event.sessionCount,
+      capacity: event.capacity ?? 40,
+      autoAccept: event.autoAccept ?? false,
+      waitingListEnabled: event.waitingListEnabled ?? true,
+      submittedByIdentity: actorIdentity,
+      submittedAt: now,
+    });
+    yield* writeRevisionSignupFields(event, revisionId);
+    for (const date of dates) {
+      const revisionDateId = yield* writer.table("revision_dates").insert({
+        organizationId: event.organizationId,
+        revisionId,
+        sourceEventDateId: date._id,
+        startsAt: date.startsAt,
+        endsAt: date.endsAt,
+        venueName: date.venueName,
+        status: date.status,
+        sortOrder: date.sortOrder,
+      });
+      const sessions = yield* reader
+        .table("sessions")
+        .index("by_eventDateId_and_sortOrder", (q) => q.eq("eventDateId", date._id))
+        .take(100);
+      for (const session of sessions) {
+        yield* writer.table("revision_sessions").insert({
+          organizationId: event.organizationId,
+          revisionId,
+          revisionDateId,
+          sourceSessionId: session._id,
+          title: session.title,
+          startsAt: session.startsAt,
+          endsAt: session.endsAt,
+          roomName: session.roomName,
+          sortOrder: session.sortOrder,
+        });
+      }
+    }
+    yield* writer.table("events").patch(eventId, { status: "submitted", updatedAt: now });
+    yield* writer.table("audit_entries").insert({
+      organizationId: event.organizationId,
+      actorIdentity,
+      action: "event.submitted",
+      entityType: "event_revision",
+      entityId: revisionId,
+      summary: `Submitted revision ${revisionNumber} of ${event.title}${reason}`,
+      occurredAt: now,
+    });
+    return revisionId;
+  });
 
 const listPending = FunctionImpl.make(
   databaseSchema,
@@ -104,7 +215,7 @@ const getPublished = FunctionImpl.make(databaseSchema, publication, "getPublishe
     const signupFields = yield* reader
       .table("revision_signup_fields")
       .index("by_revisionId_and_sortOrder", (q) => q.eq("revisionId", revision._id))
-      .take(50);
+      .take(MAX_FORM_FIELDS);
     return {
       eventId,
       revisionId: revision._id,
@@ -129,7 +240,6 @@ const submit = FunctionImpl.make(databaseSchema, publication, "submit", ({ event
   Effect.gen(function* () {
     const identity = yield* getIdentity;
     const reader = yield* DatabaseReader;
-    const writer = yield* DatabaseWriter;
     const { event } = yield* requireEventAccess(eventId, identity.tokenIdentifier);
     if (event.status !== "draft") {
       return yield* Effect.fail(new Conflict({ message: "Only drafts can be submitted." }));
@@ -143,97 +253,7 @@ const submit = FunctionImpl.make(databaseSchema, publication, "submit", ({ event
         new Conflict({ message: "This event already has a revision awaiting review." }),
       );
     }
-    const dates = yield* reader
-      .table("event_dates")
-      .index("by_eventId_and_sortOrder", (q) => q.eq("eventId", eventId))
-      .take(100);
-    const signupFields = yield* reader
-      .table("signup_form_fields")
-      .index("by_eventId_and_sortOrder", (q) => q.eq("eventId", eventId))
-      .take(50);
-    if (dates.length === 0) {
-      return yield* Effect.fail(
-        new InvalidInput({ message: "Add at least one date before submitting." }),
-      );
-    }
-    const latestRevision = yield* reader
-      .table("event_revisions")
-      .index("by_eventId_and_revisionNumber", (q) => q.eq("eventId", eventId), "desc")
-      .first();
-    const revisionNumber =
-      latestRevision._tag === "Some" ? latestRevision.value.revisionNumber + 1 : 1;
-    const now = Date.now();
-    const revisionId = yield* writer.table("event_revisions").insert({
-      organizationId: event.organizationId,
-      eventId,
-      teamId: event.teamId,
-      eventTypeVersionId: event.eventTypeVersionId,
-      revisionNumber,
-      status: "submitted",
-      title: event.title,
-      slug: event.slug,
-      description: event.description,
-      timezone: event.timezone,
-      occurrenceCount: event.occurrenceCount,
-      sessionCount: event.sessionCount,
-      capacity: event.capacity ?? 40,
-      autoAccept: event.autoAccept ?? false,
-      waitingListEnabled: event.waitingListEnabled ?? true,
-      submittedByIdentity: identity.tokenIdentifier,
-      submittedAt: now,
-    });
-    for (const field of signupFields) {
-      yield* writer.table("revision_signup_fields").insert({
-        organizationId: event.organizationId,
-        revisionId,
-        sourceSignupFieldId: field._id,
-        type: field.type,
-        label: field.label,
-        required: field.required,
-        options: field.options,
-        ...(field.section === undefined ? {} : { section: field.section }),
-        sortOrder: field.sortOrder,
-      });
-    }
-    for (const date of dates) {
-      const revisionDateId = yield* writer.table("revision_dates").insert({
-        organizationId: event.organizationId,
-        revisionId,
-        sourceEventDateId: date._id,
-        startsAt: date.startsAt,
-        endsAt: date.endsAt,
-        venueName: date.venueName,
-        status: date.status,
-        sortOrder: date.sortOrder,
-      });
-      const sessions = yield* reader
-        .table("sessions")
-        .index("by_eventDateId_and_sortOrder", (q) => q.eq("eventDateId", date._id))
-        .take(100);
-      for (const session of sessions) {
-        yield* writer.table("revision_sessions").insert({
-          organizationId: event.organizationId,
-          revisionId,
-          revisionDateId,
-          sourceSessionId: session._id,
-          title: session.title,
-          startsAt: session.startsAt,
-          endsAt: session.endsAt,
-          roomName: session.roomName,
-          sortOrder: session.sortOrder,
-        });
-      }
-    }
-    yield* writer.table("events").patch(eventId, { status: "submitted", updatedAt: now });
-    yield* writer.table("audit_entries").insert({
-      organizationId: event.organizationId,
-      actorIdentity: identity.tokenIdentifier,
-      action: "event.submitted",
-      entityType: "event_revision",
-      entityId: revisionId,
-      summary: `Submitted revision ${revisionNumber} of ${event.title}`,
-      occurredAt: now,
-    });
+    const revisionId = yield* submitRevision(event, identity.tokenIdentifier);
     return { revisionId };
   }).pipe(
     Effect.catchTags({
@@ -354,6 +374,73 @@ const reject = FunctionImpl.make(databaseSchema, publication, "reject", ({ revis
   ),
 );
 
+const refreshTemplateForms = FunctionImpl.make(
+  databaseSchema,
+  publication,
+  "refreshTemplateForms",
+  ({ templateId, actorIdentity, cursor }) =>
+    Effect.gen(function* () {
+      const reader = yield* DatabaseReader;
+      const writer = yield* DatabaseWriter;
+      const template = yield* reader
+        .table("signup_form_templates")
+        .get(templateId)
+        .pipe(Effect.option);
+      if (Option.isNone(template)) return null;
+      const reason = ` after ${template.value.name} changed`;
+      const linkedEvents = yield* reader
+        .table("events")
+        .index("by_signupTemplateId", (q) => q.eq("signupTemplateId", templateId))
+        .paginate({ numItems: TEMPLATE_REFRESH_BATCH_SIZE, cursor: cursor ?? null });
+      for (const event of linkedEvents.page) {
+        // Drafts read the template when they are submitted, so only snapshots need refreshing.
+        if (event.status === "published") {
+          yield* submitRevision(event, actorIdentity, reason);
+        } else if (event.status === "submitted") {
+          const pending = yield* reader
+            .table("event_revisions")
+            .index("by_eventId_and_status", (q) =>
+              q.eq("eventId", event._id).eq("status", "submitted"),
+            )
+            .first();
+          if (Option.isNone(pending)) continue;
+          const staleFields = yield* reader
+            .table("revision_signup_fields")
+            .index("by_revisionId_and_sortOrder", (q) => q.eq("revisionId", pending.value._id))
+            .take(MAX_FORM_FIELDS);
+          yield* Effect.forEach(staleFields, (field) =>
+            writer.table("revision_signup_fields").delete(field._id),
+          );
+          yield* writeRevisionSignupFields(event, pending.value._id);
+          yield* writer.table("audit_entries").insert({
+            organizationId: event.organizationId,
+            actorIdentity,
+            action: "event.revision_form_refreshed",
+            entityType: "event_revision",
+            entityId: pending.value._id,
+            summary: `Updated the sign-up form in revision ${pending.value.revisionNumber} of ${event.title}${reason}`,
+            occurredAt: Date.now(),
+          });
+        }
+      }
+      if (!linkedEvents.isDone) {
+        const scheduler = yield* Scheduler;
+        yield* scheduler.runAfter(Duration.zero, refs.internal.publication.refreshTemplateForms, {
+          templateId,
+          actorIdentity,
+          cursor: linkedEvents.continueCursor,
+        });
+      }
+      return null;
+    }).pipe(
+      Effect.catchTags({
+        DocumentDecodeError: (error) => Effect.die(error),
+        DocumentEncodeError: (error) => Effect.die(error),
+        GetByIdFailure: (error) => Effect.die(error),
+      }),
+    ),
+);
+
 const startDraft = FunctionImpl.make(databaseSchema, publication, "startDraft", ({ eventId }) =>
   Effect.gen(function* () {
     const identity = yield* getIdentity;
@@ -391,6 +478,7 @@ export default GroupImpl.make(databaseSchema, publication).pipe(
   Layer.provide(submit),
   Layer.provide(approve),
   Layer.provide(reject),
+  Layer.provide(refreshTemplateForms),
   Layer.provide(startDraft),
   GroupImpl.finalize,
 );

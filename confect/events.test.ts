@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
 
 import { convexTest } from "convex-test";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { api } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
 import schema from "../convex/schema";
 
 const modules = import.meta.glob("../convex/**/*.ts");
@@ -421,6 +422,14 @@ describe("recurring event composition", () => {
         options: ["Vegetarian", "Vegan", "Gluten-free"],
       },
     ];
+    const ownFields = [
+      {
+        type: "yes_no" as const,
+        label: "Is this your first workshop?",
+        required: false,
+        options: [],
+      },
+    ];
 
     const saved = await manager.mutation(api.events.saveSignupTemplate, {
       organizationId: workspace.organizationId,
@@ -428,114 +437,232 @@ describe("recurring event composition", () => {
       scope: "organization",
       fields,
     });
+    const academyOnly = await manager.mutation(api.events.saveSignupTemplate, {
+      organizationId: workspace.organizationId,
+      teamId: workspace.teamId,
+      name: "Academy questions",
+      scope: "team",
+      fields,
+    });
     const templates = await manager.query(api.events.listSignupTemplates, {
       organizationId: workspace.organizationId,
     });
-    expect(templates).toEqual([
-      {
-        id: saved.templateId,
-        name: "Workshop questions",
-        scope: "organization",
-        fields,
-      },
-    ]);
+    expect(templates).toContainEqual({
+      id: saved.templateId,
+      name: "Workshop questions",
+      scope: "organization",
+      inheritedFields: [],
+      fields,
+    });
 
-    const created = await manager.mutation(api.events.create, {
+    const eventInput = {
       organizationId: workspace.organizationId,
       teamId: secondTeam.teamId,
       title: "Custom Registration Workshop",
       description: "",
       topicId,
       timezone: "UTC",
-      dates: [
-        {
-          startsAt: dayOneStart,
-          endsAt: dayOneEnd,
-          venueName: "Main Hall",
-          sessions: [],
-        },
-      ],
-      signupFields: templates[0]!.fields,
+      dates: [{ startsAt: dayOneStart, endsAt: dayOneEnd, venueName: "Main Hall", sessions: [] }],
+      signupFields: ownFields,
+    };
+    await expect(
+      manager.mutation(api.events.create, {
+        ...eventInput,
+        signupTemplateId: academyOnly.templateId,
+      }),
+    ).rejects.toMatchObject({ data: { _tag: "InvalidInput" } });
+    const created = await manager.mutation(api.events.create, {
+      ...eventInput,
+      signupTemplateId: saved.templateId,
     });
     const detail = await manager.query(api.events.get, { eventId: created.eventId });
-    expect(detail.signupFields).toEqual(fields);
+    expect(detail.signupTemplate).toEqual({
+      id: saved.templateId,
+      name: "Workshop questions",
+      fields,
+    });
+    expect(detail.signupFields).toEqual(ownFields);
   });
 
-  it("updates and deletes templates without changing forms copied into events", async () => {
-    const { manager, workspace, topicId } = await setup();
-    const originalFields = [
-      {
+  it("sends linked published events back to review when a master template changes", async () => {
+    vi.useFakeTimers();
+    try {
+      const { t, manager, workspace, topicId } = await setup();
+      const field = (label: string) => ({
         type: "text" as const,
-        label: "Job title",
+        label,
         required: true,
         options: [],
-        section: "About you",
-      },
-    ];
-    const saved = await manager.mutation(api.events.saveSignupTemplate, {
-      organizationId: workspace.organizationId,
-      name: "Standard questions",
-      scope: "organization",
-      fields: originalFields,
-    });
-    const created = await manager.mutation(api.events.create, {
-      organizationId: workspace.organizationId,
-      teamId: workspace.teamId,
-      title: "Existing Event",
-      description: "",
-      topicId,
-      timezone: "UTC",
-      dates: [
-        {
-          startsAt: dayOneStart,
-          endsAt: dayOneEnd,
-          venueName: "Main Hall",
-          sessions: [],
-        },
-      ],
-      signupFields: originalFields,
-    });
-
-    await manager.mutation(api.events.updateSignupTemplate, {
-      templateId: saved.templateId,
-      teamId: workspace.teamId,
-      name: "Academy questions",
-      scope: "team",
-      fields: [
-        {
-          type: "yes_no",
-          label: "Do you need accommodation?",
-          required: false,
-          options: [],
-        },
-      ],
-    });
-    expect(
-      await manager.query(api.events.listSignupTemplates, {
+      });
+      const master = await manager.mutation(api.events.saveSignupTemplate, {
         organizationId: workspace.organizationId,
-      }),
-    ).toMatchObject([
-      {
-        id: saved.templateId,
+        name: "Organization basics",
+        scope: "organization",
+        fields: [field("Full name")],
+      });
+      const childInput = {
+        organizationId: workspace.organizationId,
         teamId: workspace.teamId,
-        name: "Academy questions",
-        scope: "team",
-        fields: [{ label: "Do you need accommodation?" }],
-      },
-    ]);
-    expect(
-      (await manager.query(api.events.get, { eventId: created.eventId })).signupFields,
-    ).toEqual(originalFields);
+        parentTemplateId: master.templateId,
+        name: "Academy workshop",
+        scope: "team" as const,
+        fields: [field("Laptop model")],
+      };
+      const child = await manager.mutation(api.events.saveSignupTemplate, childInput);
+      await expect(
+        manager.mutation(api.events.saveSignupTemplate, {
+          ...childInput,
+          parentTemplateId: child.templateId,
+        }),
+      ).rejects.toMatchObject({ data: { _tag: "InvalidInput" } });
 
-    await manager.mutation(api.events.deleteSignupTemplate, { templateId: saved.templateId });
-    expect(
-      await manager.query(api.events.listSignupTemplates, {
+      const createLinked = (
+        title: string,
+        signupTemplateId: Id<"signup_form_templates">,
+        signupFields: ReturnType<typeof field>[] = [],
+      ) =>
+        manager.mutation(api.events.create, {
+          organizationId: workspace.organizationId,
+          teamId: workspace.teamId,
+          title,
+          description: "",
+          topicId,
+          timezone: "UTC",
+          dates: [
+            { startsAt: dayOneStart, endsAt: dayOneEnd, venueName: "Main Hall", sessions: [] },
+          ],
+          signupTemplateId,
+          signupFields,
+        });
+      const formLabels = async (eventId: Id<"events">) =>
+        (await manager.query(api.publication.getPublished, { eventId })).signupFields.map(
+          (signupField) => signupField.label,
+        );
+
+      const published = await createLinked("Published Workshop", child.templateId, [
+        field("Dietary needs"),
+      ]);
+      const firstRevision = await manager.mutation(api.publication.submit, {
+        eventId: published.eventId,
+      });
+      await manager.mutation(api.publication.approve, {
+        revisionId: firstRevision.revisionId,
+        note: "",
+      });
+      const inReview = await createLinked("Workshop In Review", master.templateId);
+      const pendingRevision = await manager.mutation(api.publication.submit, {
+        eventId: inReview.eventId,
+      });
+      const draft = await createLinked("Draft Workshop", child.templateId);
+
+      const { organizationId: _childOrganization, ...childUpdate } = childInput;
+      await manager.mutation(api.events.updateSignupTemplate, {
+        ...childUpdate,
+        templateId: child.templateId,
+        name: "Academy workshop questions",
+      });
+      await t.finishAllScheduledFunctions(vi.runAllTimers);
+      expect(
+        await manager.query(api.publication.listPending, {
+          organizationId: workspace.organizationId,
+        }),
+      ).toEqual([expect.objectContaining({ eventId: inReview.eventId })]);
+
+      await manager.mutation(api.events.updateSignupTemplate, {
+        templateId: master.templateId,
+        name: "Organization basics",
+        scope: "organization",
+        fields: [field("Name on badge")],
+      });
+      await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+      expect(
+        (await manager.query(api.events.get, { eventId: draft.eventId })).signupTemplate?.fields,
+      ).toEqual([field("Name on badge"), field("Laptop model")]);
+      expect(await formLabels(published.eventId)).toEqual([
+        "Full name",
+        "Laptop model",
+        "Dietary needs",
+      ]);
+      const pending = await manager.query(api.publication.listPending, {
         organizationId: workspace.organizationId,
-      }),
-    ).toEqual([]);
-    expect(
-      (await manager.query(api.events.get, { eventId: created.eventId })).signupFields,
-    ).toEqual(originalFields);
+      });
+      const templateRevision = pending.find((revision) => revision.eventId === published.eventId);
+      expect(templateRevision).toMatchObject({ revisionNumber: 2 });
+      await manager.mutation(api.publication.approve, {
+        revisionId: templateRevision!.id,
+        note: "",
+      });
+      expect(await formLabels(published.eventId)).toEqual([
+        "Name on badge",
+        "Laptop model",
+        "Dietary needs",
+      ]);
+
+      await manager.mutation(api.publication.approve, {
+        revisionId: pendingRevision.revisionId,
+        note: "",
+      });
+      expect(await formLabels(inReview.eventId)).toEqual(["Name on badge"]);
+
+      await expect(
+        manager.mutation(api.events.deleteSignupTemplate, { templateId: master.templateId }),
+      ).rejects.toMatchObject({ data: { _tag: "Conflict" } });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("refreshes every linked published event across scheduler batches", async () => {
+    vi.useFakeTimers();
+    try {
+      const { t, manager, workspace, topicId } = await setup();
+      const templateInput = {
+        organizationId: workspace.organizationId,
+        name: "Shared questions",
+        scope: "organization" as const,
+        fields: [{ type: "text" as const, label: "Job title", required: true, options: [] }],
+      };
+      const template = await manager.mutation(api.events.saveSignupTemplate, templateInput);
+      const linkedEventCount = 12;
+      for (let index = 0; index < linkedEventCount; index += 1) {
+        const created = await manager.mutation(api.events.create, {
+          organizationId: workspace.organizationId,
+          teamId: workspace.teamId,
+          title: `Linked Event ${index}`,
+          description: "",
+          topicId,
+          timezone: "UTC",
+          dates: [
+            { startsAt: dayOneStart, endsAt: dayOneEnd, venueName: "Main Hall", sessions: [] },
+          ],
+          signupTemplateId: template.templateId,
+        });
+        const submitted = await manager.mutation(api.publication.submit, {
+          eventId: created.eventId,
+        });
+        await manager.mutation(api.publication.approve, {
+          revisionId: submitted.revisionId,
+          note: "",
+        });
+      }
+
+      const { organizationId: _organization, ...templateUpdate } = templateInput;
+      await manager.mutation(api.events.updateSignupTemplate, {
+        ...templateUpdate,
+        templateId: template.templateId,
+        fields: [{ type: "text" as const, label: "Role", required: true, options: [] }],
+      });
+      await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+      expect(
+        await manager.query(api.publication.listPending, {
+          organizationId: workspace.organizationId,
+        }),
+      ).toHaveLength(linkedEventCount);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("lets event managers use but not manage organization templates", async () => {

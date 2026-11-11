@@ -100,6 +100,7 @@ beforeEach(() => {
             id: "template-id",
             name: "Standard attendee questions",
             scope: "organization",
+            inheritedFields: [],
             fields: [
               {
                 type: "text",

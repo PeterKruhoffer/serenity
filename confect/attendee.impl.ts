@@ -9,6 +9,7 @@ import type { DataModel, Doc, Id } from "../convex/_generated/dataModel";
 import databaseSchema from "./_generated/schema";
 import { MutationCtx, QueryCtx } from "./_generated/services";
 import { InvalidInput } from "./workspace.spec";
+import { MAX_FORM_FIELDS } from "./signupForms";
 import { emitRegistrationWebhook } from "./webhookEvents";
 
 const signupRateLimiter = new RateLimiter(components.rateLimiter, {
@@ -115,7 +116,7 @@ const validateSignupAnswers = async (
   const fields = await ctx.db
     .query("revision_signup_fields")
     .withIndex("by_revisionId_and_sortOrder", (q) => q.eq("revisionId", revisionId))
-    .take(50);
+    .take(MAX_FORM_FIELDS);
   const fieldsById = new Map(fields.map((field) => [field._id, field]));
   const answersByFieldId = new Map<Id<"revision_signup_fields">, SignupAnswerInput>();
   for (const answer of answers) {
@@ -208,7 +209,7 @@ const readPublicEvent = async (ctx: ReadCtx, event: Doc<"events">): Promise<Publ
   const signupFields = await ctx.db
     .query("revision_signup_fields")
     .withIndex("by_revisionId_and_sortOrder", (q) => q.eq("revisionId", revision._id))
-    .take(50);
+    .take(MAX_FORM_FIELDS);
 
   return {
     id: event._id,
@@ -425,7 +426,7 @@ const register = FunctionImpl.make(
           const previousAnswers = await ctx.db
             .query("registration_answers")
             .withIndex("by_registrationId", (q) => q.eq("registrationId", existing._id))
-            .take(50);
+            .take(MAX_FORM_FIELDS);
           await Promise.all(previousAnswers.map((answer) => ctx.db.delete(answer._id)));
         }
         await Promise.all(

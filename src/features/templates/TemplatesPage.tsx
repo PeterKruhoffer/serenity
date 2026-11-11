@@ -9,7 +9,11 @@ import { FormError } from "../../components/form-error";
 import { Page } from "../../components/page";
 import { SectionHeader } from "../../components/section-header";
 import { convexErrorMessage } from "../../lib/convex-error-message";
-import { SignupFieldBuilder, createSignupFields } from "../signup-fields/SignupFieldBuilder";
+import {
+  LockedSignupFields,
+  SignupFieldBuilder,
+  createSignupFields,
+} from "../signup-fields/SignupFieldBuilder";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 
 export default function TemplatesPage() {
@@ -30,6 +34,9 @@ export default function TemplatesPage() {
   const [name, setName] = createSignal("");
   const [scope, setScope] = createSignal<"organization" | "team">("organization");
   const [teamId, setTeamId] = createSignal<Id<"teams"> | "">("");
+  const [parentTemplateId, setParentTemplateId] = createSignal<Id<"signup_form_templates"> | "">(
+    "",
+  );
   const [editingId, setEditingId] = createSignal<Id<"signup_form_templates"> | null>(null);
   const [loadedRoute, setLoadedRoute] = createSignal("");
   const showForm = () => location.pathname === "/templates/new" || Boolean(params.templateId);
@@ -40,8 +47,26 @@ export default function TemplatesPage() {
       !templates.isLoading() &&
       !templates.data()?.some((template) => template.id === params.templateId),
     );
+  const selectedTeamId = () => teamId() || organization()?.teams[0]?.id;
+  // Masters are one level deep: a template that other templates build on cannot have a master.
+  const isMaster = () =>
+    Boolean(editingId()) &&
+    Boolean(templates.data()?.some((template) => template.parentTemplateId === editingId()));
+  const masterOptions = () =>
+    templates
+      .data()
+      ?.filter(
+        (template) =>
+          template.parentTemplateId === undefined &&
+          template.id !== editingId() &&
+          (template.scope === "organization" ||
+            (scope() === "team" && template.teamId === selectedTeamId())),
+      ) ?? [];
+  const selectedMaster = () =>
+    isMaster() ? undefined : masterOptions().find((template) => template.id === parentTemplateId());
   const clearForm = () => {
     setName("");
+    setParentTemplateId("");
     setScope(organization()?.role === "event_manager" ? "team" : "organization");
     setTeamId(organization()?.teams[0]?.id ?? "");
     fields.reset();
@@ -73,18 +98,20 @@ export default function TemplatesPage() {
     setName(template.name);
     setScope(template.scope);
     setTeamId(template.teamId ?? organization()?.teams[0]?.id ?? "");
+    setParentTemplateId(template.parentTemplateId ?? "");
     fields.replace(template.fields);
     setLoadedRoute(route);
   });
   const save = async (event: SubmitEvent) => {
     event.preventDefault();
     const org = organization();
-    if (!org || fields.length === 0) return;
+    if (!org || (fields.length === 0 && !selectedMaster())) return;
     setFormError(null);
     const payload = {
       ...(scope() === "team" && (teamId() || org.teams[0]?.id)
         ? { teamId: (teamId() || org.teams[0]!.id) as Id<"teams"> }
         : {}),
+      ...(selectedMaster() ? { parentTemplateId: selectedMaster()!.id } : {}),
       name: name(),
       scope: scope(),
       fields: fields.payload(),
@@ -101,7 +128,7 @@ export default function TemplatesPage() {
   const remove = async (id: Id<"signup_form_templates">, templateName: string) => {
     if (
       !window.confirm(
-        `Delete “${templateName}”? Events already created from it will not be changed.`,
+        `Delete “${templateName}”? Templates still used by events or other templates cannot be deleted.`,
       )
     )
       return;
@@ -144,7 +171,10 @@ export default function TemplatesPage() {
               <div>
                 <p class="eyebrow">{editingId() ? "Edit template" : "New template"}</p>
                 <h2>{editingId() ? name() : "Build a sign-up form"}</h2>
-                <p>Changes affect future uses only, not events already created.</p>
+                <p>
+                  Events using this template pick up changes. Published events get a new revision
+                  for review.
+                </p>
               </div>
             </div>
             <div class={`form-grid ${styles.templateDetailsGrid}`}>
@@ -186,14 +216,46 @@ export default function TemplatesPage() {
                   </select>
                 </label>
               </Show>
+              <Show when={!isMaster() && masterOptions().length > 0}>
+                <label>
+                  <span>Master template</span>
+                  <select
+                    value={selectedMaster()?.id ?? ""}
+                    onChange={(event) =>
+                      setParentTemplateId(
+                        event.currentTarget.value as Id<"signup_form_templates"> | "",
+                      )
+                    }
+                  >
+                    <option value="">None</option>
+                    <For each={masterOptions()}>
+                      {(template) => <option value={template.id}>{template.name}</option>}
+                    </For>
+                  </select>
+                </label>
+              </Show>
             </div>
             <SignupFieldBuilder
               controller={fields}
               class={styles.templateFieldBuilder}
-              emptyTitle="No questions yet"
-              emptyText="Add the first field to start building this template."
+              emptyTitle={selectedMaster() ? "No extra questions yet" : "No questions yet"}
+              emptyText={
+                selectedMaster()
+                  ? "Add questions that come after the master template's questions."
+                  : "Add the first field to start building this template."
+              }
               paletteAriaLabel="Add a template field"
-            />
+            >
+              <Show when={selectedMaster()}>
+                {(master) => (
+                  <LockedSignupFields
+                    title={`From ${master().name}`}
+                    note="Edit the master template to change these."
+                    fields={master().fields}
+                  />
+                )}
+              </Show>
+            </SignupFieldBuilder>
             <Show when={formError()}>
               <FormError>{formError()}</FormError>
             </Show>
@@ -203,7 +265,7 @@ export default function TemplatesPage() {
                 type="submit"
                 disabled={
                   !name().trim() ||
-                  fields.length === 0 ||
+                  (fields.length === 0 && !selectedMaster()) ||
                   saveTemplate.isLoading() ||
                   updateTemplate.isLoading()
                 }
@@ -250,6 +312,9 @@ export default function TemplatesPage() {
                   organization()?.role !== "event_manager" || template.scope === "team";
                 const teamName = () =>
                   organization()?.teams.find((team) => team.id === template.teamId)?.name;
+                const masterName = () =>
+                  templates.data()?.find((master) => master.id === template.parentTemplateId)?.name;
+                const allFields = () => [...template.inheritedFields, ...template.fields];
                 return (
                   <article class={styles.templateCard}>
                     <div class={styles.templateCardHeading}>
@@ -282,15 +347,14 @@ export default function TemplatesPage() {
                     </div>
                     <h3>{template.name}</h3>
                     <p>
-                      {template.fields.length} question{template.fields.length === 1 ? "" : "s"}
+                      {allFields().length} question{allFields().length === 1 ? "" : "s"}
+                      <Show when={masterName()}>{(master) => <> · Based on {master()}</>}</Show>
                     </p>
                     <ol class={styles.templateQuestionPreview}>
-                      <For each={template.fields.slice(0, 3)}>
-                        {(field) => <li>{field.label}</li>}
-                      </For>
+                      <For each={allFields().slice(0, 3)}>{(field) => <li>{field.label}</li>}</For>
                     </ol>
-                    <Show when={template.fields.length > 3}>
-                      <small>+{template.fields.length - 3} more</small>
+                    <Show when={allFields().length > 3}>
+                      <small>+{allFields().length - 3} more</small>
                     </Show>
                   </article>
                 );

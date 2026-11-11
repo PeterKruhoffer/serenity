@@ -62,6 +62,14 @@ const SignupField = Schema.Struct({
 const EventDetail = Schema.Struct({
   event: EventSummary,
   dates: Schema.Array(DateSummary),
+  // The linked template's current fields. They come before the event's own fields.
+  signupTemplate: Schema.optional(
+    Schema.Struct({
+      id: Id("signup_form_templates"),
+      name: Schema.String,
+      fields: Schema.Array(SignupField),
+    }),
+  ),
   signupFields: Schema.Array(SignupField),
 });
 
@@ -82,8 +90,11 @@ const DateInput = Schema.Struct({
 const SignupTemplate = Schema.Struct({
   id: Id("signup_form_templates"),
   teamId: Schema.optional(Id("teams")),
+  parentTemplateId: Schema.optional(Id("signup_form_templates")),
   name: Schema.String,
   scope: Schema.Literal("organization", "team"),
+  // Fields from the master template, which come before this template's own fields.
+  inheritedFields: Schema.Array(SignupField),
   fields: Schema.Array(SignupField),
 });
 
@@ -135,6 +146,7 @@ export default GroupSpec.make()
           topicId: Id("event_topics"),
           timezone: Schema.String,
           dates: Schema.Array(DateInput),
+          signupTemplateId: Schema.optional(Id("signup_form_templates")),
           signupFields: Schema.optional(Schema.Array(SignupField)),
         }),
       returns: () => Schema.Struct({ eventId: Id("events") }),
@@ -213,6 +225,7 @@ export default GroupSpec.make()
         Schema.Struct({
           organizationId: Id("organizations"),
           teamId: Schema.optional(Id("teams")),
+          parentTemplateId: Schema.optional(Id("signup_form_templates")),
           name: Schema.String,
           scope: Schema.Literal("organization", "team"),
           fields: Schema.Array(SignupField),
@@ -228,6 +241,7 @@ export default GroupSpec.make()
         Schema.Struct({
           templateId: Id("signup_form_templates"),
           teamId: Schema.optional(Id("teams")),
+          parentTemplateId: Schema.optional(Id("signup_form_templates")),
           name: Schema.String,
           scope: Schema.Literal("organization", "team"),
           fields: Schema.Array(SignupField),

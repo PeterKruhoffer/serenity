@@ -7,18 +7,22 @@ import { createStore } from "solid-js/store";
 import { FormError } from "../../components/form-error";
 import { convexErrorMessage } from "../../lib/convex-error-message";
 import {
+  LockedSignupFields,
   SignupFieldBuilder,
   createSignupFields,
   type SignupFieldPayload,
 } from "../signup-fields/SignupFieldBuilder";
 
+type SavedSignupField = Omit<SignupFieldPayload, "options"> & {
+  readonly options: readonly string[];
+};
+
 type EventDetailsFormProps = {
   eventId: Id<"events">;
   title: string;
   description: string;
-  signupFields: readonly (Omit<SignupFieldPayload, "options"> & {
-    readonly options: readonly string[];
-  })[];
+  signupTemplate?: { name: string; fields: readonly SavedSignupField[] };
+  signupFields: readonly SavedSignupField[];
   onClose: () => void;
 };
 
@@ -94,10 +98,22 @@ const EventDetailsForm = (props: EventDetailsFormProps) => {
       </div>
       <SignupFieldBuilder
         controller={signupFields}
-        emptyTitle="No custom questions yet"
+        emptyTitle={
+          props.signupTemplate ? "No event-specific questions" : "No custom questions yet"
+        }
         emptyText="Add a field below, or leave the form empty for a simple sign-up."
         paletteAriaLabel="Add a sign-up field"
-      />
+      >
+        <Show when={props.signupTemplate}>
+          {(template) => (
+            <LockedSignupFields
+              title={`From ${template().name}`}
+              note="Edit the template to change these."
+              fields={template().fields}
+            />
+          )}
+        </Show>
+      </SignupFieldBuilder>
       <Show when={form.error}>
         <FormError>{form.error}</FormError>
       </Show>

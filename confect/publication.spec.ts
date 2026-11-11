@@ -91,6 +91,19 @@ export default GroupSpec.make()
     }),
   )
   .addFunction(
+    FunctionSpec.internalMutation({
+      name: "refreshTemplateForms",
+      args: () =>
+        Schema.Struct({
+          templateId: Id("signup_form_templates"),
+          actorIdentity: Schema.String,
+          cursor: Schema.optional(Schema.String),
+        }),
+      returns: () => Schema.Null,
+      error: () => WorkspaceError,
+    }),
+  )
+  .addFunction(
     FunctionSpec.publicMutation({
       name: "startDraft",
       args: () => Schema.Struct({ eventId: Id("events") }),

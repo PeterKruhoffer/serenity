@@ -10,6 +10,7 @@ entry points in `convex/`; do not hand-edit generated files.
 - `<feature>.impl.ts`: the corresponding transactions, authorization calls, and domain behavior.
 - `<feature>.test.ts`: integration tests against the generated Convex functions.
 - `access.ts`: the shared authenticated organization, team, and event access policy.
+- `signupForms.ts`: resolves a sign-up form from its linked template, master template, and event fields.
 - `auth.ts`: WorkOS JWT provider configuration.
 - `http.ts` and `publicApi.ts`: HTTP routing and request-boundary validation.
 - `_generated/`: Confect output. Regenerate it; never edit it directly.

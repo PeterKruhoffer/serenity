@@ -9,7 +9,11 @@ import { Page } from "../../components/page";
 import { TimezoneTypeahead } from "../../components/timezone-typeahead";
 import { convexErrorMessage } from "../../lib/convex-error-message";
 import { localDateTimeToMillis } from "../../lib/date-time";
-import { SignupFieldBuilder, createSignupFields } from "../signup-fields/SignupFieldBuilder";
+import {
+  LockedSignupFields,
+  SignupFieldBuilder,
+  createSignupFields,
+} from "../signup-fields/SignupFieldBuilder";
 import { MarkdownHint } from "./EventDetailsForm";
 
 type Organization = {
@@ -51,6 +55,7 @@ type EventFormState = {
   topicId: Id<"event_topics"> | "";
   teamId: Id<"teams"> | "";
   timezone: string;
+  signupTemplateId: Id<"signup_form_templates"> | "";
 };
 
 let draftItemId = 0;
@@ -90,6 +95,7 @@ const EventBuilder = (props: EventBuilderProps) => {
     topicId: "",
     teamId: "",
     timezone: props.organization.defaultTimezone,
+    signupTemplateId: "",
   });
   const [draftDateStore, setDraftDateStore] = createStore<DraftDate[]>([emptyDate()]);
   const signupFields = createSignupFields();
@@ -111,6 +117,9 @@ const EventBuilder = (props: EventBuilderProps) => {
         (template) =>
           template.scope === "organization" || template.teamId === selectedBuilderTeamId(),
       ) ?? [];
+  // Undefined when the chosen template is not available to the selected team.
+  const linkedSignupTemplate = () =>
+    availableSignupTemplates().find((template) => template.id === eventForm.signupTemplateId);
 
   const resetEventBuilder = () => {
     setEventForm({
@@ -119,6 +128,7 @@ const EventBuilder = (props: EventBuilderProps) => {
       topicId: "",
       teamId: "",
       timezone: props.organization.defaultTimezone,
+      signupTemplateId: "",
     });
     setDraftDates([emptyDate()]);
     signupFields.reset();
@@ -126,12 +136,6 @@ const EventBuilder = (props: EventBuilderProps) => {
   const closeEventBuilder = () => {
     resetEventBuilder();
     props.onOpenChange(false);
-  };
-
-  const applySignupTemplate = (templateId: string) => {
-    const template = signupTemplates.data()?.find((candidate) => candidate.id === templateId);
-    if (!template) return;
-    signupFields.replace(template.fields);
   };
 
   const saveDraftSession = (dateId: string) => {
@@ -195,6 +199,7 @@ const EventBuilder = (props: EventBuilderProps) => {
             roomName: session.roomName,
           })),
         })),
+        ...(linkedSignupTemplate() ? { signupTemplateId: linkedSignupTemplate()!.id } : {}),
         signupFields: signupFields.payload(),
       });
       resetEventBuilder();
@@ -568,26 +573,33 @@ const EventBuilder = (props: EventBuilderProps) => {
               <span>03</span>
               <div>
                 <h3>Sign-up form</h3>
-                <p>Ask only what this event needs. Reorder fields or start from a template.</p>
+                <p>
+                  Use a shared template for the standard questions, then add what only this event
+                  needs.
+                </p>
               </div>
             </div>
             <SignupFieldBuilder
               controller={signupFields}
-              emptyTitle="No custom questions yet"
+              emptyTitle={
+                linkedSignupTemplate() ? "No event-specific questions" : "No custom questions yet"
+              }
               emptyText="Add a field below, or leave the form empty for a simple sign-up."
               paletteAriaLabel="Add a sign-up field"
             >
               <Show when={availableSignupTemplates().length > 0}>
                 <label class={styles.templatePicker}>
-                  <span>Start from a saved template</span>
+                  <span>Shared template</span>
                   <select
-                    value=""
-                    onChange={(event) => {
-                      applySignupTemplate(event.currentTarget.value);
-                      event.currentTarget.value = "";
-                    }}
+                    value={linkedSignupTemplate()?.id ?? ""}
+                    onChange={(event) =>
+                      setEventForm(
+                        "signupTemplateId",
+                        event.currentTarget.value as Id<"signup_form_templates"> | "",
+                      )
+                    }
                   >
-                    <option value="">Choose a template…</option>
+                    <option value="">No template</option>
                     <For each={availableSignupTemplates()}>
                       {(template) => (
                         <option value={template.id}>
@@ -597,6 +609,15 @@ const EventBuilder = (props: EventBuilderProps) => {
                     </For>
                   </select>
                 </label>
+              </Show>
+              <Show when={linkedSignupTemplate()}>
+                {(template) => (
+                  <LockedSignupFields
+                    title={`From ${template().name}`}
+                    note="Edit the template to change these. Published events go back to review when it changes."
+                    fields={[...template().inheritedFields, ...template().fields]}
+                  />
+                )}
               </Show>
             </SignupFieldBuilder>
             <Show when={eventForm.error}>

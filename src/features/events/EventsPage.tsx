@@ -289,6 +289,7 @@ const EventsPage = () => {
                       eventId={detail().event.id}
                       title={detail().event.title}
                       description={detail().event.description}
+                      signupTemplate={detail().signupTemplate}
                       signupFields={detail().signupFields}
                       onClose={() => setEditor("editingDetails", false)}
                     />

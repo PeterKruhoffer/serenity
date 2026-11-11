@@ -6,6 +6,8 @@ export default Table.make(() =>
   Schema.Struct({
     organizationId: Id("organizations"),
     teamId: Schema.optional(Id("teams")),
+    // A master template whose fields come before this template's own fields.
+    parentTemplateId: Schema.optional(Id("signup_form_templates")),
     name: Schema.String,
     scope: Schema.Literal("organization", "team"),
     fieldCount: Schema.Number,
@@ -15,4 +17,5 @@ export default Table.make(() =>
   }),
 )
   .index("by_organizationId_and_updatedAt", ["organizationId", "updatedAt"])
-  .index("by_teamId_and_updatedAt", ["teamId", "updatedAt"]);
+  .index("by_teamId_and_updatedAt", ["teamId", "updatedAt"])
+  .index("by_parentTemplateId", ["parentTemplateId"]);

@@ -1,13 +1,16 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
 import type { GenericId } from "convex/values";
+import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { IANAZone } from "luxon";
+import refs from "./_generated/refs";
 import databaseSchema from "./_generated/schema";
-import { DatabaseReader, DatabaseWriter } from "./_generated/services";
+import { DatabaseReader, DatabaseWriter, Scheduler } from "./_generated/services";
 import { canAccessTeam, membershipFor, requireEventAccess, requireIdentity } from "./access";
 import events from "./events.spec";
+import { MAX_SIGNUP_FIELDS, resolveTemplate, toSignupField } from "./signupForms";
 import { Conflict, Forbidden, InvalidInput } from "./workspace.spec";
 
 const getIdentity = requireIdentity("Sign in to manage events.");
@@ -55,9 +58,11 @@ type SignupFieldInput = {
 
 const validateSignupFields = (fields: ReadonlyArray<SignupFieldInput>) =>
   Effect.gen(function* () {
-    if (fields.length > 50) {
+    if (fields.length > MAX_SIGNUP_FIELDS) {
       return yield* Effect.fail(
-        new InvalidInput({ message: "A sign-up form can contain at most 50 fields." }),
+        new InvalidInput({
+          message: `A sign-up form can contain at most ${MAX_SIGNUP_FIELDS} fields.`,
+        }),
       );
     }
     return yield* Effect.forEach(fields, (field) =>
@@ -96,6 +101,60 @@ const validateSignupFields = (fields: ReadonlyArray<SignupFieldInput>) =>
         };
       }),
     );
+  });
+
+const sameSignupFields = (
+  left: ReadonlyArray<SignupFieldInput>,
+  right: ReadonlyArray<SignupFieldInput>,
+) => JSON.stringify(left.map(toSignupField)) === JSON.stringify(right.map(toSignupField));
+
+type TemplatePlacement = {
+  readonly organizationId: GenericId<"organizations">;
+  readonly scope: "organization" | "team";
+  readonly teamId?: GenericId<"teams">;
+};
+
+// Whether `template` can be used by `user`, a template or event placed in the same organization.
+const templateCovers = (template: TemplatePlacement, user: TemplatePlacement) =>
+  template.organizationId === user.organizationId &&
+  (template.scope === "organization" || (user.scope === "team" && template.teamId === user.teamId));
+
+const requireMasterTemplate = (
+  masterTemplateId: GenericId<"signup_form_templates">,
+  template: TemplatePlacement & {
+    readonly id?: GenericId<"signup_form_templates">;
+    readonly fieldCount: number;
+  },
+) =>
+  Effect.gen(function* () {
+    const reader = yield* DatabaseReader;
+    if (masterTemplateId === template.id) {
+      return yield* Effect.fail(
+        new InvalidInput({ message: "A template cannot use itself as its master template." }),
+      );
+    }
+    const master = yield* reader
+      .table("signup_form_templates")
+      .get(masterTemplateId)
+      .pipe(Effect.option);
+    if (Option.isNone(master) || !templateCovers(master.value, template)) {
+      return yield* Effect.fail(
+        new InvalidInput({ message: "Choose a master template available to this template." }),
+      );
+    }
+    if (master.value.parentTemplateId !== undefined) {
+      return yield* Effect.fail(
+        new InvalidInput({ message: "A master template cannot be based on another template." }),
+      );
+    }
+    if (master.value.fieldCount + template.fieldCount > MAX_SIGNUP_FIELDS) {
+      return yield* Effect.fail(
+        new InvalidInput({
+          message: `A template and its master template can contain at most ${MAX_SIGNUP_FIELDS} fields together.`,
+        }),
+      );
+    }
+    return master.value;
   });
 
 const validateDate = (startsAt: number, endsAt: number) => {
@@ -222,7 +281,11 @@ const get = FunctionImpl.make(databaseSchema, events, "get", ({ eventId }) =>
     const signupFields = yield* reader
       .table("signup_form_fields")
       .index("by_eventId_and_sortOrder", (q) => q.eq("eventId", eventId))
-      .take(50);
+      .take(MAX_SIGNUP_FIELDS);
+    const signupTemplate =
+      event.signupTemplateId === undefined
+        ? undefined
+        : yield* resolveTemplate(event.signupTemplateId);
 
     return {
       event: {
@@ -239,13 +302,16 @@ const get = FunctionImpl.make(databaseSchema, events, "get", ({ eventId }) =>
         updatedAt: event.updatedAt,
       },
       dates: datesWithSessions,
-      signupFields: signupFields.map((field) => ({
-        type: field.type,
-        label: field.label,
-        required: field.required,
-        options: field.options,
-        ...(field.section === undefined ? {} : { section: field.section }),
-      })),
+      ...(signupTemplate === undefined
+        ? {}
+        : {
+            signupTemplate: {
+              id: signupTemplate.template._id,
+              name: signupTemplate.template.name,
+              fields: signupTemplate.fields.map(toSignupField),
+            },
+          }),
+      signupFields: signupFields.map(toSignupField),
     };
   }).pipe(Effect.catchTag("DocumentDecodeError", (error) => Effect.die(error))),
 );
@@ -550,22 +616,17 @@ const listSignupTemplates = FunctionImpl.make(
       );
       return yield* Effect.forEach(visibleTemplates, (template) =>
         Effect.gen(function* () {
-          const fields = yield* reader
-            .table("signup_form_fields")
-            .index("by_templateId_and_sortOrder", (q) => q.eq("templateId", template._id))
-            .take(50);
+          const { inherited, own } = yield* resolveTemplate(template._id);
           return {
             id: template._id,
             ...(template.teamId === undefined ? {} : { teamId: template.teamId }),
+            ...(template.parentTemplateId === undefined
+              ? {}
+              : { parentTemplateId: template.parentTemplateId }),
             name: template.name,
             scope: template.scope,
-            fields: fields.map((field) => ({
-              type: field.type,
-              label: field.label,
-              required: field.required,
-              options: field.options,
-              ...(field.section === undefined ? {} : { section: field.section }),
-            })),
+            inheritedFields: inherited.map(toSignupField),
+            fields: own.map(toSignupField),
           };
         }),
       );
@@ -576,7 +637,7 @@ const saveSignupTemplate = FunctionImpl.make(
   databaseSchema,
   events,
   "saveSignupTemplate",
-  ({ organizationId, teamId, name: rawName, scope, fields }) =>
+  ({ organizationId, teamId, parentTemplateId, name: rawName, scope, fields }) =>
     Effect.gen(function* () {
       const identity = yield* getIdentity;
       const reader = yield* DatabaseReader;
@@ -584,7 +645,7 @@ const saveSignupTemplate = FunctionImpl.make(
       const membership = yield* membershipFor(organizationId, identity.tokenIdentifier);
       const name = yield* normalizeText(rawName, "Template name", 2, 80);
       const normalizedFields = yield* validateSignupFields(fields);
-      if (normalizedFields.length === 0) {
+      if (normalizedFields.length === 0 && parentTemplateId === undefined) {
         return yield* Effect.fail(
           new InvalidInput({ message: "Add at least one field before saving a template." }),
         );
@@ -620,10 +681,22 @@ const saveSignupTemplate = FunctionImpl.make(
           );
         }
       }
+      const placement = {
+        organizationId,
+        scope,
+        ...(scope === "team" && teamId !== undefined ? { teamId } : {}),
+      };
+      if (parentTemplateId !== undefined) {
+        yield* requireMasterTemplate(parentTemplateId, {
+          ...placement,
+          fieldCount: normalizedFields.length,
+        });
+      }
       const now = Date.now();
       const templateId = yield* writer.table("signup_form_templates").insert({
         organizationId,
         ...(scope === "team" && teamId !== undefined ? { teamId } : {}),
+        ...(parentTemplateId === undefined ? {} : { parentTemplateId }),
         name,
         scope,
         fieldCount: normalizedFields.length,
@@ -663,7 +736,7 @@ const updateSignupTemplate = FunctionImpl.make(
   databaseSchema,
   events,
   "updateSignupTemplate",
-  ({ templateId, teamId, name: rawName, scope, fields }) =>
+  ({ templateId, teamId, parentTemplateId, name: rawName, scope, fields }) =>
     Effect.gen(function* () {
       const identity = yield* getIdentity;
       const reader = yield* DatabaseReader;
@@ -724,22 +797,63 @@ const updateSignupTemplate = FunctionImpl.make(
       }
       const name = yield* normalizeText(rawName, "Template name", 2, 80);
       const normalizedFields = yield* validateSignupFields(fields);
-      if (normalizedFields.length === 0) {
+      if (normalizedFields.length === 0 && parentTemplateId === undefined) {
         return yield* Effect.fail(
           new InvalidInput({ message: "Add at least one field before saving a template." }),
         );
       }
-      const previousFields = yield* reader
-        .table("signup_form_fields")
-        .index("by_templateId_and_sortOrder", (q) => q.eq("templateId", templateId))
+      const placement = {
+        organizationId: template.organizationId,
+        scope,
+        ...(scope === "team" && teamId !== undefined ? { teamId } : {}),
+      };
+      const childTemplates = yield* reader
+        .table("signup_form_templates")
+        .index("by_parentTemplateId", (q) => q.eq("parentTemplateId", templateId))
         .take(100);
-      yield* Effect.forEach(previousFields, (field) =>
+      const masterFields =
+        parentTemplateId === undefined
+          ? []
+          : yield* Effect.gen(function* () {
+              if (childTemplates.length > 0) {
+                return yield* Effect.fail(
+                  new InvalidInput({
+                    message: "A master template cannot be based on another template.",
+                  }),
+                );
+              }
+              yield* requireMasterTemplate(parentTemplateId, {
+                ...placement,
+                id: templateId,
+                fieldCount: normalizedFields.length,
+              });
+              return (yield* resolveTemplate(parentTemplateId)).fields;
+            });
+      for (const child of childTemplates) {
+        if (!templateCovers(placement, child)) {
+          return yield* Effect.fail(
+            new InvalidInput({
+              message: `${child.name} uses this as its master template, so it must stay available to that template.`,
+            }),
+          );
+        }
+        if (child.fieldCount + normalizedFields.length > MAX_SIGNUP_FIELDS) {
+          return yield* Effect.fail(
+            new InvalidInput({
+              message: `${child.name} would have more than ${MAX_SIGNUP_FIELDS} fields with these changes.`,
+            }),
+          );
+        }
+      }
+      const previous = yield* resolveTemplate(templateId);
+      yield* Effect.forEach(previous.own, (field) =>
         writer.table("signup_form_fields").delete(field._id),
       );
       const now = Date.now();
       yield* writer.table("signup_form_templates").replace(templateId, {
         organizationId: template.organizationId,
         ...(scope === "team" && teamId !== undefined ? { teamId } : {}),
+        ...(parentTemplateId === undefined ? {} : { parentTemplateId }),
         name,
         scope,
         fieldCount: normalizedFields.length,
@@ -766,6 +880,17 @@ const updateSignupTemplate = FunctionImpl.make(
         summary: `Updated sign-up template ${name}`,
         occurredAt: now,
       });
+      // Linked events read template fields live. Published and in-review events hold
+      // snapshots, so the scheduler sends them back through review with the new fields.
+      if (!sameSignupFields(previous.fields, [...masterFields, ...normalizedFields])) {
+        const scheduler = yield* Scheduler;
+        yield* Effect.forEach([templateId, ...childTemplates.map((child) => child._id)], (id) =>
+          scheduler.runAfter(Duration.zero, refs.internal.publication.refreshTemplateForms, {
+            templateId: id,
+            actorIdentity: identity.tokenIdentifier,
+          }),
+        );
+      }
       return { templateId };
     }).pipe(
       Effect.catchTags({
@@ -805,6 +930,21 @@ const deleteSignupTemplate = FunctionImpl.make(
           return yield* Effect.fail(new Forbidden({ message: "You cannot delete this template." }));
         }
       }
+      const linkedEvent = yield* reader
+        .table("events")
+        .index("by_signupTemplateId", (q) => q.eq("signupTemplateId", templateId))
+        .first();
+      const childTemplate = yield* reader
+        .table("signup_form_templates")
+        .index("by_parentTemplateId", (q) => q.eq("parentTemplateId", templateId))
+        .first();
+      if (Option.isSome(linkedEvent) || Option.isSome(childTemplate)) {
+        return yield* Effect.fail(
+          new Conflict({
+            message: "Events or other templates use this template, so it cannot be deleted.",
+          }),
+        );
+      }
       const fields = yield* reader
         .table("signup_form_fields")
         .index("by_templateId_and_sortOrder", (q) => q.eq("templateId", templateId))
@@ -843,6 +983,7 @@ const create = FunctionImpl.make(
     topicId,
     timezone,
     dates,
+    signupTemplateId,
     signupFields,
   }) =>
     Effect.gen(function* () {
@@ -924,6 +1065,20 @@ const create = FunctionImpl.make(
         }),
       );
       const normalizedSignupFields = yield* validateSignupFields(signupFields ?? []);
+      if (signupTemplateId !== undefined) {
+        const template = yield* reader
+          .table("signup_form_templates")
+          .get(signupTemplateId)
+          .pipe(Effect.option);
+        if (
+          Option.isNone(template) ||
+          !templateCovers(template.value, { organizationId, scope: "team", teamId })
+        ) {
+          return yield* Effect.fail(
+            new InvalidInput({ message: "Choose a template available to this team." }),
+          );
+        }
+      }
 
       const slug = toSlug(title);
       const existingEvent = yield* reader
@@ -984,6 +1139,7 @@ const create = FunctionImpl.make(
         slug,
         description: normalizedDescription,
         topicId,
+        ...(signupTemplateId === undefined ? {} : { signupTemplateId }),
         timezone: normalizedTimezone,
         status: "draft",
         capacity: 40,

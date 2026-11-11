@@ -12,6 +12,8 @@ export default Table.make(() =>
     description: Schema.String,
     topic: Schema.optional(Schema.String),
     topicId: Schema.optional(Id("event_topics")),
+    // The template whose fields lead this event's sign-up form. Read live, never copied.
+    signupTemplateId: Schema.optional(Id("signup_form_templates")),
     timezone: Schema.String,
     status: Schema.Literal("draft", "submitted", "published", "archived"),
     publishedRevisionId: Schema.optional(Id("event_revisions")),
@@ -30,6 +32,7 @@ export default Table.make(() =>
   }),
 )
   .index("by_isPubliclyListed", ["isPubliclyListed"])
+  .index("by_signupTemplateId", ["signupTemplateId"])
   .index("by_organizationId_and_status", ["organizationId", "status"])
   .index("by_teamId_and_status", ["teamId", "status"])
   .index("by_organizationId_and_slug", ["organizationId", "slug"]);

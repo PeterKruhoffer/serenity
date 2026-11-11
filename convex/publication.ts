@@ -3,6 +3,7 @@ import registeredFunctions from "../confect/_generated/registeredFunctions/publi
 export const approve = registeredFunctions.approve;
 export const getPublished = registeredFunctions.getPublished;
 export const listPending = registeredFunctions.listPending;
+export const refreshTemplateForms = registeredFunctions.refreshTemplateForms;
 export const reject = registeredFunctions.reject;
 export const startDraft = registeredFunctions.startDraft;
 export const submit = registeredFunctions.submit;

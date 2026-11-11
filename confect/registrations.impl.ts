@@ -7,6 +7,7 @@ import databaseSchema from "./_generated/schema";
 import { DatabaseReader, DatabaseWriter, MutationCtx } from "./_generated/services";
 import { requireEventAccess as requireEventAccessPolicy, requireIdentity } from "./access";
 import registrations from "./registrations.spec";
+import { MAX_FORM_FIELDS } from "./signupForms";
 import { emitRegistrationWebhook } from "./webhookEvents";
 import { Conflict, Forbidden, InvalidInput } from "./workspace.spec";
 
@@ -64,7 +65,7 @@ const list = FunctionImpl.make(databaseSchema, registrations, "list", ({ eventId
         const storedAnswers = yield* reader
           .table("registration_answers")
           .index("by_registrationId", (q) => q.eq("registrationId", registration._id))
-          .take(50);
+          .take(MAX_FORM_FIELDS);
         const answers = yield* Effect.forEach(storedAnswers, (answer) =>
           Effect.gen(function* () {
             const field = yield* reader

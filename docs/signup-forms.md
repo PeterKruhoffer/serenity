@@ -2,6 +2,8 @@
 
 Each approved event revision contains an immutable sign-up form. Draft edits do not affect a live form until a new revision is approved.
 
+An event can link to a shared template, which can itself build on a master template. The template's questions come first, followed by the event's own. Editing a linked template submits a new revision of each published event for review, so the live form changes only after approval.
+
 ## Iframe
 
 ```html
