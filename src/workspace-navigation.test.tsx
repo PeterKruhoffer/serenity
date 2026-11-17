@@ -132,6 +132,12 @@ beforeEach(() => {
             timezone: "Europe/Copenhagen",
           },
           dates: [],
+          registration: {
+            capacity: 40,
+            autoAccept: false,
+            waitingListEnabled: false,
+            acceptedCount: 0,
+          },
         });
       default:
         throw new Error(`Unexpected query: ${getFunctionName(reference)}`);

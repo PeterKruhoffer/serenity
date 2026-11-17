@@ -1,6 +1,7 @@
 import styles from "./participants.module.css";
 import { useMutation, useQuery } from "convex-solidjs";
 import { For, Show, createSignal } from "solid-js";
+import type { FunctionReturnType } from "convex/server";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { EmptyState } from "../../components/empty-state";
@@ -10,6 +11,8 @@ import { SectionHeader } from "../../components/section-header";
 import { StatusBadge } from "../../components/status-badge";
 import { convexErrorMessage } from "../../lib/convex-error-message";
 import { useWorkspace } from "../workspace/WorkspaceContext";
+
+type Registration = FunctionReturnType<typeof api.registrations.list>[number];
 
 const registrationAnswerText = (value: string | boolean | ReadonlyArray<string>) =>
   typeof value === "string"
@@ -41,9 +44,45 @@ export default function ParticipantsPage() {
   const registerParticipant = useMutation(api.registrations.register);
   const acceptRegistration = useMutation(api.registrations.accept);
   const withdrawRegistration = useMutation(api.registrations.withdraw);
+  const declineDate = useMutation(api.registrations.declineDate);
+  const overrideDateDecline = useMutation(api.registrations.overrideDateDecline);
   const [participantName, setParticipantName] = createSignal("");
   const [participantEmail, setParticipantEmail] = createSignal("");
   const [formError, setFormError] = createSignal<string | null>(null);
+  const [openDateCell, setOpenDateCell] = createSignal<{
+    registrationId: Id<"registrations">;
+    eventDateId: Id<"event_dates">;
+  } | null>(null);
+
+  const scheduledDates = () =>
+    eventDetail.data()?.dates.filter((date) => date.status === "scheduled") ?? [];
+  const formatDay = (timestamp: number) =>
+    new Intl.DateTimeFormat(undefined, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      timeZone: eventDetail.data()?.event.timezone,
+    }).format(timestamp);
+  const isDeclined = (registration: Registration, eventDateId: Id<"event_dates">) =>
+    registration.dateDeclines.some(
+      (decline) => decline.eventDateId === eventDateId && decline.status === "declined",
+    );
+  const acceptedRegistrations = () =>
+    registrationList.data()?.filter((registration) => registration.status === "accepted") ?? [];
+
+  const handleDateDecision = async (registration: Registration, eventDateId: Id<"event_dates">) => {
+    setFormError(null);
+    const decline = registration.dateDeclines.find(
+      (candidate) => candidate.eventDateId === eventDateId && candidate.status === "declined",
+    );
+    try {
+      if (decline) await overrideDateDecline.mutate({ declineId: decline.id });
+      else await declineDate.mutate({ registrationId: registration.id, eventDateId });
+      setOpenDateCell(null);
+    } catch (error) {
+      setFormError(convexErrorMessage(error));
+    }
+  };
 
   const handleRegistrationCreate = async (event: SubmitEvent) => {
     event.preventDefault();
@@ -113,6 +152,7 @@ export default function ParticipantsPage() {
                   aria-pressed={selectedEventId() === event.id}
                   onClick={() => {
                     setFormError(null);
+                    setOpenDateCell(null);
                     setSelectedEventId(event.id);
                   }}
                 >
@@ -146,7 +186,18 @@ export default function ParticipantsPage() {
                   <div>
                     <span>{detail().event.teamName}</span>
                     <h3>{detail().event.title}</h3>
-                    <p>Registrations</p>
+                    <p>
+                      {detail().registration.acceptedCount} of {detail().registration.capacity}{" "}
+                      seats accepted
+                      {detail().registration.waitingListEnabled
+                        ? `, ${
+                            registrationList
+                              .data()
+                              ?.filter((registration) => registration.status === "waitlisted")
+                              .length ?? 0
+                          } on the waiting list`
+                        : ""}
+                    </p>
                   </div>
                   <strong>{registrationList.data()?.length ?? 0}</strong>
                 </div>
@@ -185,6 +236,27 @@ export default function ParticipantsPage() {
                 </Show>
                 <Show when={formError()}>
                   <FormError>{formError()}</FormError>
+                </Show>
+                <Show when={scheduledDates().length > 0 && acceptedRegistrations().length > 0}>
+                  <dl class={styles.dateAttendance} aria-label="Attendance by date">
+                    <For each={scheduledDates()}>
+                      {(date) => {
+                        const out = () =>
+                          acceptedRegistrations().filter((registration) =>
+                            isDeclined(registration, date.id),
+                          ).length;
+                        return (
+                          <div>
+                            <dt>{formatDay(date.startsAt)}</dt>
+                            <dd>
+                              {acceptedRegistrations().length - out()} attending
+                              {out() > 0 ? `, ${out()} not attending` : ""}
+                            </dd>
+                          </div>
+                        );
+                      }}
+                    </For>
+                  </dl>
                 </Show>
                 <div class={styles.registrationList}>
                   <Show
@@ -254,6 +326,93 @@ export default function ParticipantsPage() {
                               </button>
                             </Show>
                           </div>
+                          <Show
+                            when={
+                              scheduledDates().length > 0 &&
+                              registration.status !== "withdrawn" &&
+                              registration.status !== "rejected"
+                            }
+                          >
+                            <div class={styles.registrationDateRow}>
+                              <div class={styles.registrationDates}>
+                                <For each={scheduledDates()}>
+                                  {(date) => (
+                                    <button
+                                      type="button"
+                                      class={styles.dateCell}
+                                      classList={{
+                                        [styles.isDeclined]: isDeclined(registration, date.id),
+                                      }}
+                                      aria-expanded={
+                                        openDateCell()?.registrationId === registration.id &&
+                                        openDateCell()?.eventDateId === date.id
+                                      }
+                                      onClick={() =>
+                                        setOpenDateCell((current) =>
+                                          current?.registrationId === registration.id &&
+                                          current.eventDateId === date.id
+                                            ? null
+                                            : {
+                                                registrationId: registration.id,
+                                                eventDateId: date.id,
+                                              },
+                                        )
+                                      }
+                                    >
+                                      <span>{formatDay(date.startsAt)}</span>
+                                      <strong>
+                                        {isDeclined(registration, date.id)
+                                          ? "Not attending"
+                                          : "Attending"}
+                                      </strong>
+                                    </button>
+                                  )}
+                                </For>
+                              </div>
+                              <Show
+                                when={
+                                  openDateCell()?.registrationId === registration.id
+                                    ? scheduledDates().find(
+                                        (date) => date.id === openDateCell()?.eventDateId,
+                                      )
+                                    : undefined
+                                }
+                              >
+                                {(date) => (
+                                  <div class={styles.dateDecision} role="group">
+                                    <p>
+                                      {isDeclined(registration, date().id)
+                                        ? `${registration.participantName} won't attend ${formatDay(date().startsAt)}. Reversing puts them back on the list for that date.`
+                                        : `Record that ${registration.participantName} won't attend ${formatDay(date().startsAt)}. Their other dates stay as they are.`}
+                                    </p>
+                                    <div>
+                                      <button
+                                        class="primary-button compact-button"
+                                        type="button"
+                                        disabled={
+                                          declineDate.isLoading() || overrideDateDecline.isLoading()
+                                        }
+                                        onClick={() =>
+                                          void handleDateDecision(registration, date().id)
+                                        }
+                                      >
+                                        {isDeclined(registration, date().id)
+                                          ? "Reverse decline"
+                                          : "Mark not attending"}
+                                      </button>
+                                      <button
+                                        class="text-button"
+                                        type="button"
+                                        onClick={() => setOpenDateCell(null)}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </Show>
+                            </div>
+                          </Show>
                         </article>
                       )}
                     </For>

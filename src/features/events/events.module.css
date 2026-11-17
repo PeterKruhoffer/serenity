@@ -572,7 +572,7 @@
   margin: 22px 0;
   padding: 20px;
   display: grid;
-  grid-template-columns: minmax(180px, 0.8fr) minmax(260px, 1.2fr) auto;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) auto;
   align-items: center;
   gap: 20px;
   background: rgb(255 255 255 / 6%);
@@ -602,6 +602,7 @@
 }
 
 .signupIntegration dl {
+  min-width: 0;
   margin: 0;
   display: grid;
   gap: 7px;
@@ -614,6 +615,7 @@
 }
 
 .signupIntegration dd {
+  min-width: 0;
   margin: 0;
 }
 
@@ -631,6 +633,175 @@
   align-items: center;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.registrationSettings {
+  margin: 22px 0;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 14px 20px;
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 9%);
+}
+
+.registrationSettings > :not(.registrationSettingsHeading) {
+  grid-column: 2;
+}
+
+.registrationSettings > button {
+  justify-self: start;
+}
+
+.registrationSettingsHeading {
+  grid-row: span 3;
+}
+
+.registrationSettingsHeading > span {
+  color: #aeb6a7;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.registrationSettingsHeading h3 {
+  margin: 5px 0;
+  color: #edf1e8;
+  font-size: 13px;
+}
+
+.registrationSettingsHeading p {
+  margin: 0;
+  color: #9fa79a;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.registrationSettings fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  border: 0;
+}
+
+.capacityField {
+  padding-bottom: 12px;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: end;
+  gap: 7px 14px;
+}
+
+.capacityField > span {
+  grid-column: 1 / -1;
+  color: #a6ad9f;
+  font-size: 9px;
+}
+
+.capacityField input {
+  min-height: 40px;
+  color: var(--ritual-panel-ink);
+  background: var(--ritual-input);
+  border-bottom-color: rgb(255 255 255 / 22%);
+  font-family: var(--ritual-display);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.capacityField small,
+.registrationToggle small {
+  color: #9fa79a;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.registrationToggle {
+  padding: 12px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 14px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  cursor: pointer;
+}
+
+.registrationToggle > span {
+  display: grid;
+  gap: 3px;
+}
+
+.registrationToggle strong {
+  color: #edf1e8;
+  font-size: 11px;
+}
+
+.registrationToggle input {
+  grid-column: 2;
+  grid-row: 1;
+  width: 34px;
+  height: 20px;
+  min-height: 0;
+  margin: 0;
+  position: relative;
+  appearance: none;
+  background: transparent;
+  border: 1px solid #a6ad9f;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.registrationToggle input::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  background: #a6ad9f;
+  border-radius: 50%;
+  transition: transform 150ms ease-out;
+}
+
+.registrationToggle input:checked {
+  background: #c8e0bf;
+  border-color: #c8e0bf;
+}
+
+.registrationToggle input:checked::after {
+  background: var(--ritual-panel);
+  transform: translateX(14px);
+}
+
+.registrationToggle input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.registrationToggle input:focus {
+  box-shadow: none;
+}
+
+.registrationToggle input:focus-visible {
+  outline: 2px solid var(--ritual-panel-ink);
+  outline-offset: 2px;
+}
+
+.registrationOutcome {
+  margin: 0;
+  padding: 12px 14px;
+  color: var(--ritual-panel-ink);
+  background: rgb(255 255 255 / 5%);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .registrationToggle input::after {
+    transition: none;
+  }
 }
 
 @media (max-width: 1000px) {
@@ -731,9 +902,18 @@
   }
 }
 
-@media (max-width: 600px) {
-  .signupIntegration {
+@media (max-width: 1000px) {
+  .signupIntegration,
+  .registrationSettings {
     grid-template-columns: 1fr;
+  }
+
+  .registrationSettings > :not(.registrationSettingsHeading) {
+    grid-column: 1;
+  }
+
+  .registrationSettingsHeading {
+    grid-row: auto;
   }
 }
 

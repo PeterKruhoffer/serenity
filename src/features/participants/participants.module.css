@@ -269,6 +269,116 @@
   color: #d9aaa4;
 }
 
+.dateAttendance {
+  margin: 18px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.dateAttendance dt {
+  color: var(--ritual-panel-ink);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.dateAttendance dd {
+  margin: 2px 0 0;
+  color: var(--ritual-panel-muted);
+  font-size: 9px;
+}
+
+.registrationList article:has(.registrationDateRow) {
+  flex-wrap: wrap;
+}
+
+.registrationDateRow {
+  min-width: 0;
+  flex: 1 0 100%;
+  padding-left: 46px;
+}
+
+.registrationDates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dateCell {
+  min-height: 28px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ritual-panel-ink);
+  background: transparent;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.dateCell span {
+  color: var(--ritual-panel-muted);
+}
+
+.dateCell strong {
+  font-weight: 600;
+}
+
+.dateCell:hover,
+.dateCell[aria-expanded="true"] {
+  border-color: var(--ritual-panel-ink);
+}
+
+.dateCell.isDeclined {
+  color: #e3d4aa;
+  background: rgb(170 143 72 / 14%);
+  border-color: rgb(227 212 170 / 40%);
+}
+
+.dateCell.isDeclined strong {
+  text-decoration: line-through;
+}
+
+.dateCell:focus-visible {
+  outline: 2px solid var(--ritual-panel-ink);
+  outline-offset: 2px;
+}
+
+.dateDecision {
+  margin-top: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 12%);
+}
+
+.registrationList .dateDecision p {
+  overflow: visible;
+  color: var(--ritual-panel-ink);
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.dateDecision :global(.primary-button) {
+  white-space: nowrap;
+}
+
+.dateDecision > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dateDecision :global(.text-button) {
+  color: #cbd1c5;
+  font-size: 10px;
+}
+
 @media (max-width: 1000px) {
   .participantsLayout {
     grid-template-columns: 1fr;

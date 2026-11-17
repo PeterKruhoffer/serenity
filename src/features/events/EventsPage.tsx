@@ -18,6 +18,7 @@ import { localDateTimeToMillis } from "../../lib/date-time";
 import { Markdown, markdownToPlainText } from "../../lib/markdown";
 import EventBuilder from "./EventBuilder";
 import EventDetailsForm from "./EventDetailsForm";
+import RegistrationSettings from "./RegistrationSettings";
 
 type OrganizationRole = "administrator" | "super_user" | "event_manager";
 
@@ -326,6 +327,14 @@ const EventsPage = () => {
                       {updateEventTopic.isLoading() ? "Saving…" : "Save topic"}
                     </button>
                   </form>
+                </Show>
+
+                <Show when={`${detail().event.id}:${detail().event.status}`} keyed>
+                  <RegistrationSettings
+                    eventId={detail().event.id}
+                    editable={detail().event.status === "draft"}
+                    settings={detail().registration}
+                  />
                 </Show>
 
                 <Show when={detail().event.status === "published"}>
