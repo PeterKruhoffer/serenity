@@ -100,7 +100,7 @@ function scene() {
   items.push({ depth: 4.5, markup: pawn(cell + 13, 3 * cell + 13, 10) });
   for (const item of items.sort((a, b) => a.depth - b.depth)) markup += item.markup;
 
-  return `<defs><filter id="calendar-hero-rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="1.8"/></filter></defs><g filter="url(#calendar-hero-rough)">${markup}</g>`;
+  return markup;
 }
 
 const markup = scene();
