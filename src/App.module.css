@@ -105,6 +105,19 @@
   max-width: 690px;
 }
 
+.landing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 48px;
+}
+
+@media (max-width: 900px) {
+  .landing {
+    grid-template-columns: 1fr;
+  }
+}
+
 .authActions {
   display: flex;
   flex-wrap: wrap;

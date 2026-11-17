@@ -1,0 +1,165 @@
+.calendarHero {
+  --iso-face: color-mix(in oklab, var(--ritual-surface) 70%, white);
+  --iso-side: color-mix(in oklab, var(--ritual-surface) 90%, var(--ritual-ink));
+  --iso-shadow: color-mix(in oklab, var(--ritual-surface) 78%, var(--ritual-ink));
+  --iso-green: #5b8a6e;
+  --iso-green-face: color-mix(in oklab, var(--iso-green) 45%, white);
+  --iso-green-side: color-mix(in oklab, var(--iso-green) 80%, white);
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+:global([data-theme="nocturne"]) .calendarHero {
+  --iso-face: var(--ritual-surface-strong);
+  --iso-side: var(--ritual-surface);
+  --iso-shadow: var(--ritual-bg);
+}
+
+.calendarHero polygon,
+.calendarHero path,
+.calendarHero ellipse,
+.calendarHero circle {
+  stroke: var(--ritual-ink);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+
+.calendarHero .grid {
+  stroke: var(--ritual-line);
+  stroke-width: 0.6;
+  fill: none;
+}
+
+.f0 {
+  fill: var(--iso-face);
+}
+
+.f1 {
+  fill: var(--iso-side);
+}
+
+.f2 {
+  fill: var(--iso-shadow);
+}
+
+.a0 {
+  fill: var(--iso-green-face);
+}
+
+.a1 {
+  fill: var(--iso-green-side);
+}
+
+.a2 {
+  fill: var(--iso-green);
+}
+
+.pawn > * {
+  fill: var(--ritual-ink);
+}
+
+.label {
+  fill: var(--ritual-ink);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.drop {
+  animation: drop 10s ease-out infinite both;
+}
+
+.goesLive .f0,
+.goesLive .f1,
+.goesLive .f2 {
+  animation: 10s infinite both;
+  animation-delay: inherit;
+}
+
+.goesLive .f0 {
+  animation-name: live-face;
+}
+
+.goesLive .f1 {
+  animation-name: live-side;
+}
+
+.goesLive .f2 {
+  animation-name: live-shadow;
+}
+
+@keyframes drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-22px);
+  }
+
+  10%,
+  82% {
+    opacity: 1;
+    transform: none;
+  }
+
+  92%,
+  100% {
+    opacity: 0;
+    transform: translateY(-22px);
+  }
+}
+
+@keyframes live-face {
+  0%,
+  38% {
+    fill: var(--iso-face);
+  }
+
+  46%,
+  100% {
+    fill: var(--iso-green-face);
+  }
+}
+
+@keyframes live-side {
+  0%,
+  38% {
+    fill: var(--iso-side);
+  }
+
+  46%,
+  100% {
+    fill: var(--iso-green-side);
+  }
+}
+
+@keyframes live-shadow {
+  0%,
+  38% {
+    fill: var(--iso-shadow);
+  }
+
+  46%,
+  100% {
+    fill: var(--iso-green);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drop,
+  .goesLive * {
+    animation: none;
+  }
+
+  .goesLive .f0 {
+    fill: var(--iso-green-face);
+  }
+
+  .goesLive .f1 {
+    fill: var(--iso-green-side);
+  }
+
+  .goesLive .f2 {
+    fill: var(--iso-green);
+  }
+}

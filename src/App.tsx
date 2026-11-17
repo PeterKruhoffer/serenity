@@ -1,6 +1,7 @@
 import styles from "./App.module.css";
 import { Match, Show, Switch, type Component, type JSX } from "solid-js";
 import { useWorkOSAuth } from "./auth";
+import { CalendarHero } from "./components/calendar-hero";
 import { FormError } from "./components/form-error";
 import { accountNameFor } from "./display-name";
 
@@ -76,21 +77,27 @@ const App: Component<{ children?: JSX.Element }> = (props) => {
             </section>
           </Match>
           <Match when={true}>
-            <section class={styles.welcome} aria-labelledby="welcome-title">
-              <p class="eyebrow">Event operations</p>
-              <h1 id="welcome-title">Open your workspace.</h1>
-              <p class="intro">Sign in to manage events, schedules, approvals, and participants.</p>
-              <div class={styles.authActions}>
-                <button class="primary-button" type="button" onClick={() => void auth.signIn()}>
-                  Continue to sign in <span aria-hidden="true">→</span>
-                </button>
+            <section class={styles.landing} aria-labelledby="welcome-title">
+              <div class={styles.welcome}>
+                <p class="eyebrow">Event operations</p>
+                <h1 id="welcome-title">Draft it. Approve it. Watch it go live.</h1>
+                <p class="intro">
+                  Every team's events on one calendar. Plan drafts together, send them for approval,
+                  and publish each one with a sign-up form people can register through.
+                </p>
+                <div class={styles.authActions}>
+                  <button class="primary-button" type="button" onClick={() => void auth.signIn()}>
+                    Continue to sign in <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+                <Show when={auth.error()}>
+                  <FormError>{auth.error()}</FormError>
+                </Show>
+                <p class={styles.authNote}>
+                  Provider selection and verification are securely handled by WorkOS AuthKit.
+                </p>
               </div>
-              <Show when={auth.error()}>
-                <FormError>{auth.error()}</FormError>
-              </Show>
-              <p class={styles.authNote}>
-                Provider selection and verification are securely handled by WorkOS AuthKit.
-              </p>
+              <CalendarHero />
             </section>
           </Match>
         </Switch>
