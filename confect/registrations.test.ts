@@ -87,8 +87,13 @@ describe("registration capacity", () => {
       registrationId: alice.registrationId,
       eventDateId: firstDateId,
     });
-    const beforeWithdrawal = await t.run((ctx) => ctx.db.get(event.eventId));
-    expect(beforeWithdrawal?.acceptedCount).toBe(1);
+    const beforeWithdrawal = await manager.query(api.events.get, { eventId: event.eventId });
+    expect(beforeWithdrawal.registration).toEqual({
+      capacity: 1,
+      autoAccept: true,
+      waitingListEnabled: true,
+      acceptedCount: 1,
+    });
 
     await manager.mutation(api.registrations.withdraw, {
       registrationId: alice.registrationId,
@@ -98,6 +103,29 @@ describe("registration capacity", () => {
     expect(listed.find((row) => row.externalParticipantId === "bob")?.status).toBe("accepted");
     const afterPromotion = await t.run((ctx) => ctx.db.get(event.eventId));
     expect(afterPromotion?.acceptedCount).toBe(1);
+  });
+
+  it("reopens a reversed date decline instead of refusing it", async () => {
+    const { manager, event, firstDateId } = await publishedEvent(true);
+    const alice = await register(manager, event.eventId, "alice", "Alice North");
+    const declinesFor = async () =>
+      (await manager.query(api.registrations.list, { eventId: event.eventId }))[0]!.dateDeclines;
+    const decline = { registrationId: alice.registrationId, eventDateId: firstDateId };
+
+    const first = await manager.mutation(api.registrations.declineDate, decline);
+    await expect(manager.mutation(api.registrations.declineDate, decline)).rejects.toThrow(
+      "already declined",
+    );
+    await manager.mutation(api.registrations.overrideDateDecline, { declineId: first.declineId });
+    expect(await declinesFor()).toEqual([
+      { id: first.declineId, eventDateId: firstDateId, status: "reversed" },
+    ]);
+
+    const again = await manager.mutation(api.registrations.declineDate, decline);
+    expect(again.declineId).toBe(first.declineId);
+    expect(await declinesFor()).toEqual([
+      { id: first.declineId, eventDateId: firstDateId, status: "declined" },
+    ]);
   });
 
   it("keeps manual registrations pending until a manager accepts them", async () => {

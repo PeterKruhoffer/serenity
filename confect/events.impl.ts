@@ -302,6 +302,12 @@ const get = FunctionImpl.make(databaseSchema, events, "get", ({ eventId }) =>
         updatedAt: event.updatedAt,
       },
       dates: datesWithSessions,
+      registration: {
+        capacity: event.capacity ?? 40,
+        autoAccept: event.autoAccept ?? false,
+        waitingListEnabled: event.waitingListEnabled ?? false,
+        acceptedCount: event.acceptedCount ?? 0,
+      },
       ...(signupTemplate === undefined
         ? {}
         : {

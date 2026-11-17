@@ -90,9 +90,11 @@ const list = FunctionImpl.make(databaseSchema, registrations, "list", ({ eventId
           status: registration.status,
           paymentStatus: registration.paymentStatus,
           registeredAt: registration.registeredAt,
-          declinedDateIds: declines
-            .filter((decline) => decline.status === "declined")
-            .map((decline) => decline.eventDateId),
+          dateDeclines: declines.map((decline) => ({
+            id: decline._id,
+            eventDateId: decline.eventDateId,
+            status: decline.status,
+          })),
           answers,
         };
       }),
@@ -378,21 +380,26 @@ const declineDate = FunctionImpl.make(
           q.eq("registrationId", registrationId).eq("eventDateId", eventDateId),
         )
         .first();
-      if (Option.isSome(existing)) {
-        return yield* Effect.fail(
-          new Conflict({ message: "This date already has a decline decision." }),
-        );
+      if (Option.isSome(existing) && existing.value.status === "declined") {
+        return yield* Effect.fail(new Conflict({ message: "This date is already declined." }));
       }
       const now = Date.now();
-      const declineId = yield* writer.table("date_declines").insert({
+      const decline = {
         organizationId: event.organizationId,
         eventId: event._id,
         eventDateId,
         registrationId,
         participantId: registration.participantId,
-        status: "declined",
+        status: "declined" as const,
         declinedAt: now,
-      });
+      };
+      // One record per registration and date: a reversed decline is reopened, dropping its reversal.
+      const declineId = Option.isSome(existing)
+        ? yield* writer
+            .table("date_declines")
+            .replace(existing.value._id, decline)
+            .pipe(Effect.as(existing.value._id))
+        : yield* writer.table("date_declines").insert(decline);
       yield* writer.table("registrations").patch(registrationId, {
         updatedAt: now,
         webhookVersion: (registration.webhookVersion ?? 1) + 1,

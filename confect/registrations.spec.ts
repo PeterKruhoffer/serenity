@@ -26,7 +26,13 @@ const RegistrationSummary = Schema.Struct({
   status: RegistrationStatus,
   paymentStatus: Schema.Literal("not_required", "unpaid", "pending", "paid", "refunded"),
   registeredAt: Schema.Number,
-  declinedDateIds: Schema.Array(Id("event_dates")),
+  dateDeclines: Schema.Array(
+    Schema.Struct({
+      id: Id("date_declines"),
+      eventDateId: Id("event_dates"),
+      status: Schema.Literal("declined", "reversed"),
+    }),
+  ),
   answers: Schema.Array(RegistrationAnswer),
 });
 

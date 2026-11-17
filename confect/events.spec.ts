@@ -62,6 +62,13 @@ const SignupField = Schema.Struct({
 const EventDetail = Schema.Struct({
   event: EventSummary,
   dates: Schema.Array(DateSummary),
+  // Unset settings are reported with the defaults registration applies.
+  registration: Schema.Struct({
+    capacity: Schema.Number,
+    autoAccept: Schema.Boolean,
+    waitingListEnabled: Schema.Boolean,
+    acceptedCount: Schema.Number,
+  }),
   // The linked template's current fields. They come before the event's own fields.
   signupTemplate: Schema.optional(
     Schema.Struct({
